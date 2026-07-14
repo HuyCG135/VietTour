@@ -1,35 +1,35 @@
 // Rate limiter đơn giản dùng in-memory Map
 const rateLimiter = (maxRequests, windowMs) => {
-  const clients = new Map();
+    const clients = new Map();
 
-  return (req, res, next) => {
-    const key = req.ip || req.socket?.remoteAddress || 'unknown';
-    const now = Date.now();
+    return (req, res, next) => {
+        const key = req.ip || req.socket?.remoteAddress || "unknown";
+        const now = Date.now();
 
-    if (!clients.has(key)) {
-      clients.set(key, { count: 1, start: now });
-      return next();
-    }
+        if (!clients.has(key)) {
+            clients.set(key, { count: 1, start: now });
+            return next();
+        }
 
-    const client = clients.get(key);
+        const client = clients.get(key);
 
-    // Reset nếu đã hết thời gian window
-    if (now - client.start > windowMs) {
-      clients.set(key, { count: 1, start: now });
-      return next();
-    }
+        // Reset nếu đã hết thời gian window
+        if (now - client.start > windowMs) {
+            clients.set(key, { count: 1, start: now });
+            return next();
+        }
 
-    client.count++;
+        client.count++;
 
-    if (client.count > maxRequests) {
-      return res.status(429).json({
-        success: false,
-        message: 'Quá nhiều yêu cầu. Vui lòng thử lại sau.'
-      });
-    }
+        if (client.count > maxRequests) {
+            return res.status(429).json({
+                success: false,
+                message: "Quá nhiều yêu cầu. Vui lòng thử lại sau.",
+            });
+        }
 
-    next();
-  };
+        next();
+    };
 };
 
-module.exports = rateLimiter;
+export default rateLimiter;
