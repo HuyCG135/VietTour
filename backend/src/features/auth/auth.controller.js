@@ -1,7 +1,6 @@
 import jwt from "jsonwebtoken";
-import User from "./user.model.js";
-import Otp from "./otp.model.js";
-import { sendVerificationOtpEmail as sendMail } from "../../shared/mailService.js";
+import User from "./auth.repository.js";
+import { sendVerificationEmail, sendResetPasswordEmail } from "../../shared/mailService.js";
 
 const generateToken = (user) => {
     return jwt.sign(
@@ -48,17 +47,16 @@ export const register = async (req, res) => {
         });
 
         const newUser = await User.findById(userId);
-        const otpCode = Math.floor(100000 + Math.random() * 900000);
 
-        await Otp.create({
-            userId,
-            email,
-            otp: otpCode,
-            type: "VERIFY_EMAIL",
-            expiresAt: new Date(Date.now() + 5 * 60 * 1000),
-        });
+        const verifyToken = jwt.sign(
+            { userId: newUser.id },
+            process.env.VERIFY_EMAIL_SECRET,
+            { expiresIn: "2h" },
+        );
 
-        await sendMail({ email, otp: otpCode });
+        const verifyUrl = `${process.env.FRONTEND_URL}/verify-email?token=${verifyToken}`;
+
+        await sendVerificationEmail({ email, verifyUrl });
 
         const token = generateToken(newUser);
 
@@ -259,6 +257,122 @@ export const changePassword = async (req, res) => {
             message: "Lỗi khi đổi mật khẩu",
             error: error.message,
         });
+    }
+};
+
+export const forgotPassword = async (req, res) => {
+    try {
+        const { email } = req.body;
+
+        const user = await User.findByEmail(email);
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: "Email không tồn tại trong hệ thống!",
+            });
+        }
+
+        if (!user.password) {
+            return res.status(400).json({
+                success: false,
+                message: "Tài khoản Google không thể đặt lại mật khẩu!",
+            });
+        }
+
+        const resetToken = jwt.sign(
+            { userId: user.id },
+            process.env.RESET_PASS_SECRET,
+            { expiresIn: "15m" },
+        );
+
+        const resetUrl = `${process.env.FRONTEND_URL}/reset-password?token=${resetToken}`;
+
+        await sendResetPasswordEmail({ email, resetUrl });
+
+        res.json({
+            success: true,
+            message: "Link đặt lại mật khẩu đã được gửi đến email của bạn!",
+        });
+    } catch (error) {
+        console.error("Forgot password error:", error);
+        res.status(500).json({
+            success: false,
+            message: "Lỗi khi xử lý quên mật khẩu",
+            error: error.message,
+        });
+    }
+};
+
+export const resetPassword = async (req, res) => {
+    try {
+        const { token, newPassword } = req.body;
+
+        const decoded = jwt.verify(token, process.env.RESET_PASS_SECRET);
+        const user = await User.findById(decoded.userId);
+
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: "Người dùng không tồn tại!",
+            });
+        }
+
+        await User.updatePassword(user.id, newPassword);
+
+        res.json({
+            success: true,
+            message: "Đặt lại mật khẩu thành công!",
+        });
+    } catch (error) {
+        console.error("Reset password error:", error);
+
+        if (error.name === "TokenExpiredError") {
+            return res.status(400).json({
+                success: false,
+                message: "Link đặt lại mật khẩu đã hết hạn!",
+            });
+        }
+
+        if (error.name === "JsonWebTokenError") {
+            return res.status(400).json({
+                success: false,
+                message: "Link đặt lại mật khẩu không hợp lệ!",
+            });
+        }
+
+        res.status(500).json({
+            success: false,
+            message: "Lỗi khi đặt lại mật khẩu",
+            error: error.message,
+        });
+    }
+};
+
+export const verifyEmail = async (req, res) => {
+    try {
+        const { token } = req.query;
+
+        if (!token) {
+            return res.redirect(`${process.env.FRONTEND_URL}/login?verified=false`);
+        }
+
+        const decoded = jwt.verify(token, process.env.VERIFY_EMAIL_SECRET);
+        const user = await User.findById(decoded.userId);
+
+        if (!user) {
+            return res.redirect(`${process.env.FRONTEND_URL}/login?verified=false`);
+        }
+
+        if (user.is_verified) {
+            return res.redirect(`${process.env.FRONTEND_URL}/login?verified=already`);
+        }
+
+        await User.verifyEmail(user.id);
+
+        res.redirect(`${process.env.FRONTEND_URL}/login?verified=true`);
+    } catch (error) {
+        console.error("Verify email error:", error);
+        res.redirect(`${process.env.FRONTEND_URL}/login?verified=false`);
     }
 };
 

@@ -1,4 +1,4 @@
-import "dotenv/config";
+import "dotenv/config"; // Cho phép sử dụng biến môi trường từ file .env
 import mysql from "mysql2";
 
 // Tạo connection pool (hiệu quả hơn single connection)
