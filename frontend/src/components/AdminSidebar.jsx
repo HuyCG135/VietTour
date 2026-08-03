@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { NavLink } from "react-router-dom";
 
 const sidebarItems = [
     { to: "/admin/tours", label: "Quản lý tour", icon: "fa-solid fa-map" },
@@ -21,11 +21,20 @@ export default function AdminSidebar() {
                 </div>
                 <ul className="list-none p-0 m-0 flex flex-col gap-1">
                     {sidebarItems.map((item) => (
-                        <li key={item.to} className="rounded-lg text-gray-800 transition-all duration-200 hover:bg-blue-50 hover:text-blue-600">
-                            <Link to={item.to} className="flex items-center gap-3 no-underline text-inherit w-full px-3 py-2.5 rounded-lg">
+                        <li key={item.to}>
+                            <NavLink
+                                to={item.to}
+                                className={({ isActive }) =>
+                                    `flex items-center gap-3 no-underline w-full px-3 py-2.5 rounded-lg transition-all duration-200 ${
+                                        isActive
+                                            ? "bg-blue-600 text-white shadow-md"
+                                            : "text-gray-800 hover:bg-blue-50 hover:text-blue-600"
+                                    }`
+                                }
+                            >
                                 <i className={item.icon} style={{ width: 18 }} />
                                 <span>{item.label}</span>
-                            </Link>
+                            </NavLink>
                         </li>
                     ))}
                 </ul>

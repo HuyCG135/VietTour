@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { register } from "./auth.api";
 
 export default function Register() {
-     const [form, setForm] = useState({ fullname: "", phone: "", email: "", password: "" });
+     const [form, setForm] = useState({ fullname: "", phone: "", email: "", password: "", confirmPassword: "" });
      const [errors, setErrors] = useState({});
      const [message, setMessage] = useState({ text: "", type: "" });
      const [showPwd, setShowPwd] = useState(false);
@@ -13,20 +13,28 @@ export default function Register() {
      const validateField = (name, value) => {
           switch (name) {
                case "fullname":
-                    return value.trim() ? "" : "Vui lòng nhập họ và tên.";
-               case "phone":
-                    if (!value) return "Vui lòng nhập số điện thoại.";
-                    if (!/^0[0-9]{9}$/.test(value)) {
-                         return "Số điện thoại không hợp lệ (bắt đầu bằng 0, 10 chữ số).";
-                    }
+                    if (!value || value.trim().length === 0) return "Vui lòng nhập họ và tên.";
+                    if (value.trim().length < 2) return "Họ và tên phải có ít nhất 2 ký tự.";
+                    if (value.trim().length > 50) return "Họ và tên không được vượt quá 50 ký tự.";
                     return "";
                case "email":
-                    if (!value) return "Vui lòng nhập email.";
+                    if (!value || value.trim().length === 0) return "Vui lòng nhập email.";
+                    if (value.trim().length < 5) return "Email phải có ít nhất 5 ký tự.";
+                    if (value.trim().length > 100) return "Email không được vượt quá 100 ký tự.";
                     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return "Email không hợp lệ.";
                     return "";
+               case "phone":
+                    if (!value || value.trim().length === 0) return "Vui lòng nhập số điện thoại.";
+                    if (!/^0[0-9]{9}$/.test(value)) return "Số điện thoại không hợp lệ (bắt đầu bằng 0, 10 chữ số).";
+                    return "";
                case "password":
-                    if (!value) return "Vui lòng nhập mật khẩu.";
+                    if (!value || value.trim().length === 0) return "Vui lòng nhập mật khẩu.";
                     if (value.length < 6) return "Mật khẩu phải có ít nhất 6 ký tự.";
+                    if (value.length > 20) return "Mật khẩu không được vượt quá 20 ký tự.";
+                    return "";
+               case "confirmPassword":
+                    if (!value || value.trim().length === 0) return "Vui lòng xác nhận mật khẩu.";
+                    if (value !== form.password) return "Mật khẩu và xác nhận mật khẩu không khớp.";
                     return "";
                default:
                     return "";
@@ -115,6 +123,24 @@ export default function Register() {
                                    {errors.fullname && <div className="text-red-500 text-sm mt-1">{errors.fullname}</div>}
                               </div>
 
+                               <div className="mb-3">
+                                   <label className="block text-sm font-medium mb-1">Email</label>
+                                   <div className="flex">
+                                        <span className="flex items-center px-3 py-2 border border-r-0 rounded-l-lg bg-gray-50 text-gray-500"><i className="fa-solid fa-envelope" /></span>
+                                        <input
+                                        id="email"
+                                        name="email"
+                                        type="email"
+                                        className={`w-full px-3 py-2 border rounded-r-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${errors.email ? "border-red-500" : "border-gray-300"}`}
+                                        placeholder="Nhập địa chỉ email"
+                                        value={form.email}
+                                        onChange={handleChange}
+                                        onBlur={handleBlur}
+                                        />
+                                   </div>
+                                   {errors.email && <div className="text-red-500 text-sm mt-1">{errors.email}</div>}
+                              </div>
+
                               <div className="mb-3">
                                    <label className="block text-sm font-medium mb-1">Số điện thoại</label>
                                    <div className="flex">
@@ -134,24 +160,6 @@ export default function Register() {
                               </div>
 
                               <div className="mb-3">
-                                   <label className="block text-sm font-medium mb-1">Email</label>
-                                   <div className="flex">
-                                        <span className="flex items-center px-3 py-2 border border-r-0 rounded-l-lg bg-gray-50 text-gray-500"><i className="fa-solid fa-envelope" /></span>
-                                        <input
-                                        id="email"
-                                        name="email"
-                                        type="email"
-                                        className={`w-full px-3 py-2 border rounded-r-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${errors.email ? "border-red-500" : "border-gray-300"}`}
-                                        placeholder="Nhập địa chỉ email"
-                                        value={form.email}
-                                        onChange={handleChange}
-                                        onBlur={handleBlur}
-                                        />
-                                   </div>
-                                   {errors.email && <div className="text-red-500 text-sm mt-1">{errors.email}</div>}
-                              </div>
-
-                              <div className="mb-6">
                                    <label className="block text-sm font-medium mb-1">Mật khẩu</label>
                                    <div className="flex">
                                         <span className="flex items-center px-3 py-2 border border-r-0 rounded-l-lg bg-gray-50 text-gray-500"><i className="fa-solid fa-key" /></span>
@@ -174,6 +182,31 @@ export default function Register() {
                                         </button>
                                    </div>
                                    {errors.password && <div className="text-red-500 text-sm mt-1">{errors.password}</div>}
+                              </div>
+
+                              <div className="mb-3">
+                                   <label className="block text-sm font-medium mb-1">Xác nhận mật khẩu</label>
+                                   <div className="flex">
+                                        <span className="flex items-center px-3 py-2 border border-r-0 rounded-l-lg bg-gray-50 text-gray-500"><i className="fa-solid fa-key" /></span>
+                                        <input
+                                        id="confirmPassword"
+                                        name="confirmPassword"
+                                        type={showPwd ? "text" : "password"}
+                                        className={`flex-1 px-3 py-2 border-t border-b text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${errors.confirmPassword ? "border-red-500" : "border-gray-300"}`}
+                                        placeholder="Xác nhận mật khẩu"
+                                        value={form.confirmPassword}
+                                        onChange={handleChange}
+                                        onBlur={handleBlur}
+                                        />
+                                        <button
+                                        className="px-3 py-2 border border-l-0 rounded-r-lg bg-white text-gray-600 hover:bg-gray-50 transition-colors text-sm cursor-pointer"
+                                        type="button"
+                                        onClick={() => setShowPwd(!showPwd)}
+                                        >
+                                        {showPwd ? "Ẩn" : "Hiện"}
+                                        </button>
+                                   </div>
+                                   {errors.confirmPassword && <div className="text-red-500 text-sm mt-1">{errors.confirmPassword}</div>}
                               </div>
 
                               <div className="mb-3">

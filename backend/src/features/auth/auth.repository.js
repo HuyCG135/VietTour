@@ -34,8 +34,8 @@ class User {
     }
 
     static async update(id, userData) {
-        const { fullname, phone, email, role } = userData;
-        const [result] = await db.query("UPDATE users SET fullname = ?, phone = ?, email = ?, role = ? WHERE id = ?", [fullname, phone, email, role, id]);
+        const { fullname, phone } = userData;
+        const [result] = await db.query("UPDATE users SET fullname = ?, phone = ? WHERE id = ?", [fullname, phone, id]);
         return result.affectedRows > 0;
     }
 

@@ -165,24 +165,12 @@ export const getProfile = async (req, res) => {
 
 export const updateProfile = async (req, res) => {
     try {
-        const { fullname, phone, email } = req.body;
+        const { fullname, phone } = req.body;
         const userId = req.user.id;
-
-        if (email && email !== req.user.email) {
-            const existingUser = await User.findByEmail(email);
-            if (existingUser && existingUser.id !== userId) {
-                return res.status(409).json({
-                    success: false,
-                    message: "Email đã được sử dụng bởi user khác!",
-                });
-            }
-        }
 
         const updated = await User.update(userId, {
             fullname: fullname || req.user.fullname,
             phone: phone || req.user.phone,
-            email: email || req.user.email,
-            role: req.user.role,
         });
 
         if (!updated) {

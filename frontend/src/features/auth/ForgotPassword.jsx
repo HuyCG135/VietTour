@@ -32,14 +32,7 @@ export default function ForgotPassword() {
                         <form onSubmit={handleSubmit}>
                             <div className="mb-3">
                                 <label className="block text-sm font-medium mb-1">Email</label>
-                                <input
-                                    type="email"
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                    placeholder="Nhập email của bạn"
-                                    value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
-                                    required
-                                />
+                                <input type="email" className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Nhập email của bạn" value={email} onChange={(e) => setEmail(e.target.value)} required />
                             </div>
                             <button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 rounded-lg transition-colors cursor-pointer disabled:opacity-50" disabled={loading}>
                                 {loading ? <span className="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2 align-middle" /> : null}
@@ -48,7 +41,9 @@ export default function ForgotPassword() {
                         </form>
 
                         <p className="text-center mt-3 mb-0 text-sm">
-                            <Link to="/login" className="text-blue-600 hover:text-blue-700">Quay lại đăng nhập</Link>
+                            <Link to="/login" className="text-blue-600 hover:text-blue-700">
+                                Quay lại đăng nhập
+                            </Link>
                         </p>
                     </div>
                 </div>

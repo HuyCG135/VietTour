@@ -1,7 +1,15 @@
-import { Link, useNavigate } from "react-router-dom";
+import { Link, NavLink, useNavigate } from "react-router-dom";
 import { getUser, logout } from "../features/auth/auth.api";
 import logoIcon from "../assets/images/icon.svg";
 import defaultAvatar from "../assets/images/image.png";
+
+const navItems = [
+    { to: "/", end: true, label: "Điểm đến" },
+    { to: "/tours", label: "Tours" },
+    { to: "/about", label: "Về chúng tôi" },
+    { to: "/contact", label: "Liên hệ" },
+    { to: "/admin", label: "Admin", adminOnly: true },
+];
 
 export default function Header() {
     const user = getUser();
@@ -12,6 +20,11 @@ export default function Header() {
         navigate("/");
     };
 
+    const navLinkClass = ({ isActive }) =>
+        `no-underline font-medium px-2 py-1 transition-colors ${
+            isActive ? "text-blue-600 border-b-2 border-blue-600" : "text-gray-700 hover:text-blue-600"
+        }`;
+
     return (
         <header className="fixed top-0 left-0 right-0 z-50 flex h-[70px] items-center justify-between border-b border-gray-200 px-12 bg-white/80 backdrop-blur-sm">
             <Link to="/" className="flex items-center gap-3 no-underline text-gray-800">
@@ -20,23 +33,13 @@ export default function Header() {
             </Link>
 
             <nav className="hidden lg:flex flex-1 justify-center items-center gap-6">
-                <Link className="no-underline text-gray-700 font-medium px-2 py-1 hover:text-blue-600 transition-colors" to="/">
-                    Điểm đến
-                </Link>
-                <Link className="no-underline text-gray-700 font-medium px-2 py-1 hover:text-blue-600 transition-colors" to="/tours">
-                    Tours
-                </Link>
-                <Link className="no-underline text-gray-700 font-medium px-2 py-1 hover:text-blue-600 transition-colors" to="/about">
-                    Về chúng tôi
-                </Link>
-                <Link className="no-underline text-gray-700 font-medium px-2 py-1 hover:text-blue-600 transition-colors" to="/contact">
-                    Liên hệ
-                </Link>
-                {user?.role === "admin" && (
-                    <Link className="no-underline text-gray-700 font-medium px-2 py-1 hover:text-blue-600 transition-colors" to="/admin">
-                        Admin
-                    </Link>
-                )}
+                {navItems
+                    .filter((item) => !item.adminOnly || user?.role === "admin") // Thêm filter để chỉ hiển thị mục Admin nếu người dùng là admin
+                    .map((item) => (
+                        <NavLink key={item.to} to={item.to} end={item.end} className={navLinkClass}>
+                            {item.label}
+                        </NavLink>
+                    ))}
             </nav>
 
             <div className="flex items-center gap-2">
