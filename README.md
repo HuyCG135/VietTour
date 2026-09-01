@@ -53,7 +53,8 @@ viettour/
 │   ├── db/
 │   │   ├── migrations/           # 11 migration, mỗi bảng 1 file (Knex)
 │   │   ├── seeds/                # 6 seeder độc lập (00_reset → 05)
-│   │   ├── factories.js          # Sinh dữ liệu mẫu
+│   │   ├── seed-data/            # TOUR_SEED — dữ liệu tour thật (từ SQL)
+│   │   ├── factories.js          # Sinh dữ liệu mẫu (users/services, faker)
 │   │   └── seed-config.js        # Chỉnh số lượng mẫu
 │   ├── knexfile.js               # Cấu hình Knex (đọc từ .env)
 │   ├── server.js                 # Điểm khởi chạy backend
@@ -157,9 +158,12 @@ Kết quả mặc định (theo `db/seed-config.js`):
 | Bảng | Số lượng |
 |------|----------|
 | `users` | 1 admin + 10 customer |
-| `tours` | 15 tour |
-| `tour_departures` | ~2–4 chuyến / tour |
-| `services` | 6 dịch vụ |
+| `tours` | 18 tour thật (từ `db/seed-data/tours.js`) |
+| `tour_images` | 90 ảnh cloudinary (5 ảnh / tour) |
+| `tour_itineraries` | 50 lịch trình theo từng ngày |
+| `tour_departures` | 134 chuyến xuất phát |
+| `services` | 5 dịch vụ |
+| `tour_services` | 80 liên kết tour-dịch vụ |
 | `bookings` | 20 booking |
 | `reviews` | ~29 đánh giá |
 
@@ -195,22 +199,18 @@ export const SEED_CONFIG = {
 
 ### Thay đổi nội dung / thêm dữ liệu mới
 
-Factory ở `backend/db/factories.js` chứa các hàm sinh dữ liệu (`makeTour`, `makeUser`, `makeDeparture`, `makeService`, `makeItinerary`...). Sửa tại đây để đổi nội dung mẫu.
+**Tours & lịch trình** dùng **dữ liệu thật** chắt lọc từ file `db_vietravel_KTPM.sql` (đồ án tiểu luận KTPM), lưu tại `backend/db/seed-data/tours.js` (`TOUR_SEED`). Mỗi mục gồm: `name`, `slug`, `description`, `location`, `region`, `duration`, `price_default`, `price_child`, `cover_image`, `images[]`, `itineraries[]`, `departures[]`. Muốn thêm/sửa tour, chỉnh trong file này.
 
-Factory dùng [`@faker-js/faker`](https://fakerjs.dev) kết hợp **bộ dữ liệu Việt Nam tự định nghĩa** (họ tên, số điện thoại đầu số `09x`, địa điểm/tour theo miền, giá làm tròn bội số 50.000đ) để sinh dữ liệu giả trông thật:
+**Users / services** dùng factory ở `backend/db/factories.js` (hàm `makeUser`, `makeService`...). Factory dùng [`@faker-js/faker`](https://fakerjs.dev) kết hợp **bộ dữ liệu Việt Nam tự định nghĩa** (họ tên, số điện thoại đầu số `09x`, giá làm tròn bội số 50.000đ) để sinh dữ liệu giả trông thật:
 
 ```js
 import { faker } from "@faker-js/faker";
 
-export function makeTour(index) {
-    const region = pick(REGIONS);
-    const location = pick(LOCATIONS[region]);
-    const activity = pick(TOUR_ACTIVITIES);
-    const name = `Tour ${location} ${activity}`;
+export function makeService(index) {
     return {
-        name,
-        slug: `${slugify(name)}-${faker.number.int({ min: 1000, max: 9999 })}`,
-        // ... price_default, price_child, region, duration
+        name: `${pick(SERVICES)} ${index}`,
+        slug: `${slugify(pick(SERVICES))}-${index}`,
+        // ...
     };
 }
 ```
