@@ -26,6 +26,8 @@ VietTour là một ứng dụng web đặt tour du lịch hoàn chỉnh, gồm h
 | `backend/` | Express 5 + MySQL 8 | REST API + migration/seed |
 | `frontend/` | React 19 + Vite 7 + Tailwind 4 | Giao diện người dùng |
 
+> 📘 **Dành cho người mới tham gia:** đọc [`AGENTS.md`](./AGENTS.md) — tài liệu tổng hợp kiến trúc, lệnh chạy, setup database (migration/seed), biến env bắt buộc và conventions của repo trước khi code.
+
 **Tính năng chính**
 - 🔐 Đăng ký / đăng nhập bằng JWT, xác thực email qua SMTP
 - 🗺️ Danh sách & tìm kiếm tour, xem chi tiết theo miền (Bắc/Trung/Nam)
@@ -44,6 +46,7 @@ viettour/
 │   ├── src/
 │   │   ├── app.js                # Khởi tạo Express, serve frontend/dist
 │   │   ├── config/db.js          # Pool kết nối MySQL (mysql2/promise)
+│   │   ├── config/knex.js        # Instance Knex query builder cho model
 │   │   ├── features/
 │   │   │   ├── auth/             # Đăng ký, đăng nhập, xác thực email...
 │   │   │   ├── booking/          # Đặt tour, lịch sử, admin quản lý
@@ -69,7 +72,7 @@ viettour/
 │       └── hooks/                # useFetch, useAuth
 │
 ├── db.sql                        # Schema MySQL chuẩn (tham khảo)
-├── AGENTS.md                     # Hướng dẫn cho AI/agent (opencode)
+├── AGENTS.md                     # Hướng dẫn repo cho dev/AI (Kiến trúc, seed, env, conventions)
 └── opencode.json                 # Config opencode
 ```
 
@@ -342,9 +345,9 @@ Base URL: `http://localhost:3000/api`
 
 ## 🧠 Ghi chú cho nhà phát triển (schema hiện tại)
 
-> ⚠️ **Lệch schema tạm thời:** các model hiện tại (`tour.model.js`, `booking.model.js`) vẫn dùng field cũ (`price`, `image`, `tour_id`, `number_of_people`) — **không khớp** với schema chuẩn mới trong `db.sql` + migration (`price_default`, `cover_image`, `departure_id`, `adults`/`children`, `contact_*`).
+> ✅ **Model đã dùng Knex query builder** (`src/config/knex.js`) thay cho raw SQL và **khớp schema mới** (`price_default`, `cover_image`, `departure_id`, `adults`/`children`, `contact_*`).
 >
-> Schema chuẩn bây giờ là **`db.sql` + migration**. Khi sửa model/API, hãy khớp về schema mới.
+> ⚠️ **Vẫn còn lệch ở các chỗ khác:** `validateBooking` / `validateTour` (`src/middlewares/validation.js`) và một số controller (`createBooking`) vẫn dùng field cũ (`tour.price`, `tour_id`, `number_of_people`). Các phần này chưa hoàn thiện — cần khớp về schema mới khi sửa tiếp.
 
 ---
 

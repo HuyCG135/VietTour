@@ -1,78 +1,57 @@
-import db from "../../config/db.js";
+import db from "../../config/knex.js";
 
 class Tour {
     static async getAll() {
-        try {
-            const [rows] = await db.query("SELECT * FROM tours ORDER BY id DESC");
-            return rows;
-        } catch (error) {
-            throw error;
-        }
+        return db("tours").orderBy("id", "desc");
     }
 
     static async getByRegion(region) {
-        try {
-            const [rows] = await db.query("SELECT * FROM tours WHERE region = ? ORDER BY id DESC", [region]);
-            return rows;
-        } catch (error) {
-            throw error;
-        }
+        return db("tours").where("region", region).orderBy("id", "desc");
     }
 
     static async getById(id) {
-        try {
-            const [rows] = await db.query("SELECT * FROM tours WHERE id = ?", [id]);
-            return rows[0];
-        } catch (error) {
-            throw error;
-        }
+        return db("tours").where("id", id).first();
     }
 
     static async create(tourData) {
-        try {
-            const { name, description, price, region, duration, image } = tourData;
-            const [result] = await db.query(
-                `
-                    INSERT INTO tours (name, description, price, region, duration, image, created_at) 
-                    VALUES (?, ?, ?, ?, ?, ?, NOW())`,
-                [name, description, price, region, duration, image],
-            );
-            return result.insertId;
-        } catch (error) {
-            throw error;
-        }
+        const data = {
+            ...tourData,
+            slug: tourData.slug ?? null,
+            description: tourData.description ?? null,
+            price_default: tourData.price_default ?? 0,
+            price_child: tourData.price_child ?? 0,
+            cover_image: tourData.cover_image ?? null,
+            created_at: new Date(),
+            updated_at: new Date(),
+        };
+        const [insertId] = await db("tours").insert(data);
+        return insertId;
     }
 
     static async update(id, tourData) {
-        try {
-            const { name, description, price, region, duration, image } = tourData;
-            const [result] = await db.query(
-                `
-                    UPDATE tours SET name = ?, description = ?, price = ?, region = ?, duration = ?, image = ?, updated_at = NOW() WHERE id = ?`,
-                [name, description, price, region, duration, image, id],
-            );
-            return result.affectedRows > 0;
-        } catch (error) {
-            throw error;
-        }
+        const data = {
+            ...tourData,
+            slug: tourData.slug ?? null,
+            description: tourData.description ?? null,
+            price_default: tourData.price_default ?? 0,
+            price_child: tourData.price_child ?? 0,
+            cover_image: tourData.cover_image ?? null,
+            updated_at: new Date(),
+        };
+        const updated = await db("tours").where("id", id).update(data);
+        return updated > 0;
     }
 
     static async delete(id) {
-        try {
-            const [result] = await db.query("DELETE FROM tours WHERE id = ?", [id]);
-            return result.affectedRows > 0;
-        } catch (error) {
-            throw error;
-        }
+        const deleted = await db("tours").where("id", id).del();
+        return deleted > 0;
     }
 
     static async search(keyword) {
-        try {
-            const [rows] = await db.query("SELECT * FROM tours WHERE name LIKE ? OR description LIKE ?", [`%${keyword}%`, `%${keyword}%`]);
-            return rows;
-        } catch (error) {
-            throw error;
-        }
+        return db("tours")
+            .where("name", "like", `%${keyword}%`)
+            .orWhere("description", "like", `%${keyword}%`)
+            .orderBy("id", "desc");
     }
 }
 
