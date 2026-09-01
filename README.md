@@ -10,6 +10,7 @@
 [![Vite](https://img.shields.io/badge/Vite-7-646CFF?logo=vite&logoColor=white)](https://vitejs.dev)
 [![MySQL](https://img.shields.io/badge/MySQL-8-4479A1?logo=mysql&logoColor=white)](https://www.mysql.com)
 [![Knex](https://img.shields.io/badge/Knex.js-3-D26B38?logo=)](https://knexjs.org)
+[![Faker](https://img.shields.io/badge/Faker-10-008080?logo=faker&logoColor=white)](https://fakerjs.dev)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 </div>
@@ -31,7 +32,7 @@ VietTour là một ứng dụng web đặt tour du lịch hoàn chỉnh, gồm h
 - 🧾 Đặt tour (chọn chuyến xuất phát `departure`, số người lớn/trẻ)
 - ⭐ Đánh giá tour, danh sách yêu thích (wishlist)
 - 👤 Phân vai `user` / `admin`, panel quản trị riêng (`/admin/*`, `/user/*`)
-- 🗄️ Migration + seeder + factory (giống Laravel) để tạo dữ liệu mẫu nhanh
+- 🗄️ Migration + seeder + factory (giống Laravel, dùng `@faker-js/faker`) để tạo dữ liệu mẫu nhanh
 
 ---
 
@@ -194,15 +195,21 @@ export const SEED_CONFIG = {
 
 ### Thay đổi nội dung / thêm dữ liệu mới
 
-Factory ở `backend/db/factories.js` chứa các hàm sinh dữ liệu (`makeTour`, `makeUser`, `makeDeparture`, `makeService`, `makeItinerary`...). Sửa tại đây để đổi nội dung mẫu:
+Factory ở `backend/db/factories.js` chứa các hàm sinh dữ liệu (`makeTour`, `makeUser`, `makeDeparture`, `makeService`, `makeItinerary`...). Sửa tại đây để đổi nội dung mẫu.
+
+Factory dùng [`@faker-js/faker`](https://fakerjs.dev) kết hợp **bộ dữ liệu Việt Nam tự định nghĩa** (họ tên, số điện thoại đầu số `09x`, địa điểm/tour theo miền, giá làm tròn bội số 50.000đ) để sinh dữ liệu giả trông thật:
 
 ```js
+import { faker } from "@faker-js/faker";
+
 export function makeTour(index) {
     const region = pick(REGIONS);
-    const name = `Tour ${pick(LOCATIONS[region])} ${randomInt(1, 20)} ngày`;
+    const location = pick(LOCATIONS[region]);
+    const activity = pick(TOUR_ACTIVITIES);
+    const name = `Tour ${location} ${activity}`;
     return {
         name,
-        slug: `${slugify(name)}-${randomInt(1000, 9999)}`,
+        slug: `${slugify(name)}-${faker.number.int({ min: 1000, max: 9999 })}`,
         // ... price_default, price_child, region, duration
     };
 }
