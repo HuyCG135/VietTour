@@ -1,49 +1,59 @@
-import Tour from "./tour.model.js";
+import {
+    getAllToursService,
+    searchToursService,
+    getToursByRegionService,
+    getTourByIdService,
+    createTourService,
+    updateTourService,
+    deleteTourService,
+} from "./tour.service.js";
+
+const handleError = (res, error) => {
+    if (error.status && error.status < 500) {
+        return res.status(error.status).json({
+            success: false,
+            message: error.message,
+        });
+    }
+
+    res.status(500).json({
+        success: false,
+        message: error.message,
+    });
+};
 
 export const getAllTours = async (req, res) => {
     try {
-        const tours = await Tour.getAll();
+        const tours = await getAllToursService();
+
         res.json({
             success: true,
             data: tours,
         });
     } catch (error) {
-        res.status(500).json({
-            success: false,
-            message: error.message,
-        });
+        handleError(res, error);
     }
 };
 
 export const searchTours = async (req, res) => {
     try {
         const keyword = String(req.query.q || "").trim();
+        const tours = await searchToursService(keyword);
 
-        if (!keyword) {
-            return res.status(400).json({
-                success: false,
-                message: "Vui long nhap tu khoa tim kiem (q)",
-            });
-        }
-
-        const tours = await Tour.search(keyword);
         res.json({
             success: true,
             count: tours.length,
             data: tours,
         });
     } catch (error) {
-        res.status(500).json({
-            success: false,
-            message: error.message,
-        });
+        handleError(res, error);
     }
 };
 
 export const getToursByRegion = async (req, res) => {
     try {
         const region = String(req.params.region || "").trim();
-        const tours = await Tour.getByRegion(region);
+        const tours = await getToursByRegionService(region);
 
         res.json({
             success: true,
@@ -51,40 +61,26 @@ export const getToursByRegion = async (req, res) => {
             data: tours,
         });
     } catch (error) {
-        res.status(500).json({
-            success: false,
-            message: error.message,
-        });
+        handleError(res, error);
     }
 };
 
 export const getTourById = async (req, res) => {
     try {
-        const tour = await Tour.getById(req.params.id);
-
-        if (!tour) {
-            return res.status(404).json({
-                success: false,
-                message: "Khong tim thay tour",
-            });
-        }
+        const tour = await getTourByIdService(req.params.id);
 
         res.json({
             success: true,
             data: tour,
         });
     } catch (error) {
-        res.status(500).json({
-            success: false,
-            message: error.message,
-        });
+        handleError(res, error);
     }
 };
 
 export const createTour = async (req, res) => {
     try {
-        const tourId = await Tour.create(req.body);
-        const createdTour = await Tour.getById(tourId);
+        const createdTour = await createTourService(req.body);
 
         res.status(201).json({
             success: true,
@@ -92,57 +88,33 @@ export const createTour = async (req, res) => {
             data: createdTour,
         });
     } catch (error) {
-        res.status(500).json({
-            success: false,
-            message: error.message,
-        });
+        handleError(res, error);
     }
 };
 
 export const updateTour = async (req, res) => {
     try {
-        const updated = await Tour.update(req.params.id, req.body);
+        const updatedTour = await updateTourService(req.params.id, req.body);
 
-        if (!updated) {
-            return res.status(404).json({
-                success: false,
-                message: "Khong tim thay tour",
-            });
-        }
-
-        const updatedTour = await Tour.getById(req.params.id);
         res.json({
             success: true,
             message: "Cap nhat tour thanh cong",
             data: updatedTour,
         });
     } catch (error) {
-        res.status(500).json({
-            success: false,
-            message: error.message,
-        });
+        handleError(res, error);
     }
 };
 
 export const deleteTour = async (req, res) => {
     try {
-        const deleted = await Tour.delete(req.params.id);
-
-        if (!deleted) {
-            return res.status(404).json({
-                success: false,
-                message: "Khong tim thay tour",
-            });
-        }
+        await deleteTourService(req.params.id);
 
         res.json({
             success: true,
             message: "Xoa tour thanh cong",
         });
     } catch (error) {
-        res.status(500).json({
-            success: false,
-            message: error.message,
-        });
+        handleError(res, error);
     }
 };

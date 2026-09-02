@@ -76,7 +76,7 @@ viettour/
 └── opencode.json                 # Config opencode
 ```
 
-> Cấu trúc backend theo **feature-based**: mỗi nhóm tính năng có đủ `*.routes.js`, `*.controller.js`, `*.model.js`/`*.repository.js` trong cùng thư mục.
+> Cấu trúc backend theo **feature-based**: mỗi nhóm tính năng có đủ `*.routes.js`, `*.controller.js`, `*.service.js`, `*.repository.js`, `*.validate.js` trong cùng thư mục. Controller chỉ lo HTTP; service chứa nghiệp vụ; repository là data access thuần.
 
 ---
 
@@ -347,7 +347,7 @@ Base URL: `http://localhost:3000/api`
 
 > ✅ **Model đã dùng Knex query builder** (`src/config/knex.js`) thay cho raw SQL và **khớp schema mới** (`price_default`, `cover_image`, `departure_id`, `adults`/`children`, `contact_*`).
 >
-> ⚠️ **Vẫn còn lệch ở các chỗ khác:** `validateBooking` / `validateTour` (`src/features/booking/booking.validate.js`, `src/features/tour/tour.validate.js`) và một số controller (`createBooking`) vẫn dùng field cũ (`tour.price`, `tour_id`, `number_of_people`). Các phần này chưa hoàn thiện — cần khớp về schema mới khi sửa tiếp.
+> ⚠️ **Vẫn còn lệch ở các chỗ khác:** `validateBooking` / `validateTour` (`src/features/booking/booking.validate.js`, `src/features/tour/tour.validate.js`) và `booking.service.js` (`createBookingService`) vẫn dùng field cũ (`tour.price`, `tour_id`, `number_of_people`). Các phần này chưa hoàn thiện — cần khớp về schema mới khi sửa tiếp.
 
 ---
 
