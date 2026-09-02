@@ -1,7 +1,7 @@
 import express from "express";
 import { getAllTours, searchTours, getToursByRegion, getTourById, createTour, updateTour, deleteTour } from "./tour.controller.js";
 import { verifyToken, isAdmin } from "../../middlewares/auth.js";
-import { validateTour } from "../../middlewares/validation.js";
+import { validateTour } from "./tour.validate.js";
 
 const router = express.Router();
 

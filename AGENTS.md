@@ -15,7 +15,7 @@ Frontend (Vite):
 
 ## Architecture
 
-- Backend feature-based: `backend/src/features/<name>/{*.routes.js, *.controller.js, *.model.js|*.repository.js}`; middleware dùng chung ở `backend/src/middlewares/`, mail ở `shared/mailService.js`.
+- Backend feature-based: `backend/src/features/<name>/{*.routes.js, *.controller.js, *.model.js|*.repository.js, *.validate.js}`; middleware dùng chung ở `backend/src/middlewares/`, mail ở `shared/mailService.js`.
 - `backend/src/app.js` phục vụ luôn `frontend/dist` nếu đã build (kèm SPA fallback cho route không phải `/api`); nếu chưa build, `/` trả 503. => Trong dev, chạy frontend riêng qua Vite, không dựa vào backend serve.
 - Routes mount tại `/api/auth`, `/api/tours`, `/api/bookings` (rate-limiter chung 100 req/15min áp lên `/api`).
 - API response wrap: `{ success: boolean, data?, message? }` — frontend `useFetch.js` đọc `response.success`/`response.data`. Giữ format này khi thêm endpoint.
@@ -43,7 +43,7 @@ Seed structure (`backend/db/`):
 
 > ✅ **Model dùng Knex query builder** (`src/config/knex.js`), khớp schema mới (`price_default`, `cover_image`, `departure_id`, `adults`/`children`, `contact_*`).
 >
-> ⚠️ **Còn lệch:** `validateBooking`/`validateTour` (`src/middlewares/validation.js`) và `createBooking` controller vẫn dùng field cũ (`price`, `tour_id`, `number_of_people`). Sửa tiếp thì khớp về schema mới. Schema chuẩn là `db.sql` + migration.
+> ⚠️ **Còn lệch:** `validateBooking`/`validateTour` (`src/features/booking/booking.validate.js`, `src/features/tour/tour.validate.js`) và `createBooking` controller vẫn dùng field cũ (`price`, `tour_id`, `number_of_people`). Sửa tiếp thì khớp về schema mới. Schema chuẩn là `db.sql` + migration.
 - Env backend bắt buộc: `JWT_SECRET`, `DB_*`. Khác: `PORT`, `VERIFY_EMAIL_SECRET`, `RESET_PASS_SECRET`, `FRONTEND_URL`, `SMTP_*` (email không bắt buộc — nếu thiếu SMTP, link verify/reset chỉ log ra console).
 - Frontend: `VITE_API_URL` (mặc định `/api`).
 - **Không có** `.env.example` trong repo — nếu cần tạo từ `process.env.*` / `import.meta.env.*` trong code.

@@ -51,7 +51,7 @@ viettour/
 │   │   │   ├── auth/             # Đăng ký, đăng nhập, xác thực email...
 │   │   │   ├── booking/          # Đặt tour, lịch sử, admin quản lý
 │   │   │   └── tour/             # CRUD + tìm kiếm tour
-│   │   ├── middlewares/          # auth (JWT), rate limiter, validation...
+│   │   ├── middlewares/          # auth (JWT), rate limiter, error handler...
 │   │   └── shared/mailService.js # Gửi email xác thực / reset mật khẩu
 │   ├── db/
 │   │   ├── migrations/           # 11 migration, mỗi bảng 1 file (Knex)
@@ -347,7 +347,7 @@ Base URL: `http://localhost:3000/api`
 
 > ✅ **Model đã dùng Knex query builder** (`src/config/knex.js`) thay cho raw SQL và **khớp schema mới** (`price_default`, `cover_image`, `departure_id`, `adults`/`children`, `contact_*`).
 >
-> ⚠️ **Vẫn còn lệch ở các chỗ khác:** `validateBooking` / `validateTour` (`src/middlewares/validation.js`) và một số controller (`createBooking`) vẫn dùng field cũ (`tour.price`, `tour_id`, `number_of_people`). Các phần này chưa hoàn thiện — cần khớp về schema mới khi sửa tiếp.
+> ⚠️ **Vẫn còn lệch ở các chỗ khác:** `validateBooking` / `validateTour` (`src/features/booking/booking.validate.js`, `src/features/tour/tour.validate.js`) và một số controller (`createBooking`) vẫn dùng field cũ (`tour.price`, `tour_id`, `number_of_people`). Các phần này chưa hoàn thiện — cần khớp về schema mới khi sửa tiếp.
 
 ---
 
