@@ -52,4 +52,5 @@ Seed structure (`backend/db/`):
 
 - Code comment và message API/UI bằng **Tiếng Việt**. Giữ nguyên ngôn ngữ khi sửa.
 - Frontend route: `/admin/*` và `/user/*` là layout riêng (`AdminRoutes.jsx` / `UserRoutes.jsx`); routes public nằm trong `MainLayout`. Tour detail dùng `:id` (không phải slug).
+- Frontend theme (Tailwind v4): design tokens khai báo trong `frontend/src/assets/styles/index.css` dùng `@theme` — `--color-primary[-light|-dark|-50|-100]` (blue family, giá trị hex cố định), `--color-accent` (amber, điểm nhấn travel), `--color-background`, `--color-surface`, `--color-foreground` (text chính), `--color-muted` (text phụ), `--color-border`, `--color-success/-warning/-danger/-info`, `--font-sans` ("Lexend Deca"). Muốn đổi brand chỉ sửa ở `@theme`; code cũ đang dùng trực tiếp `blue-*`/`gray-*` (chưa refactor sang `primary-*`). Lưu ý: Tailwind v4 chỉ emit biến `--color-*` khi có utility sử dụng; `primary-light #3b82f6` tương phản 3.68:1 trên trắng nên **chỉ dùng cho ring/large text, không cho body text** (dùng `primary` hoặc `muted` thay thế).
 - Env vars không được viết trong git (`.gitignore` đã loại `.env*`).
