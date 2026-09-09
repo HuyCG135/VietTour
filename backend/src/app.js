@@ -9,6 +9,7 @@ import requestLogger from "./middlewares/logger.js";
 import { errorHandler, notFound } from "./middlewares/errorHandler.js";
 import rateLimiter from "./middlewares/rateLimiter.js";
 import tourRoutes from "./features/tour/tour.routes.js";
+import tourAdminRoutes from "./features/tour-admin/tour-admin.routes.js";
 import authRoutes from "./features/auth/auth.routes.js";
 import bookingRoutes from "./features/booking/booking.routes.js";
 
@@ -31,6 +32,7 @@ app.use("/api", rateLimiter(100, 15 * 60 * 1000));
 const frontendDistPath = join(__dirname, "../frontend/dist");
 
 app.use("/api/tours", tourRoutes);
+app.use("/api/admin/tours", tourAdminRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/bookings", bookingRoutes);
 

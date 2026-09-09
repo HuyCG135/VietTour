@@ -10,6 +10,34 @@ export const getAllToursService = async () => {
     return Tour.getAll();
 };
 
+export const listToursService = async (query = {}) => {
+    const services = typeof query.services === "string"
+        ? query.services
+            .split(",")
+            .map((id) => id.trim())
+            .filter(Boolean)
+            .map(Number)
+        : Array.isArray(query.services)
+            ? query.services.map(Number)
+            : [];
+
+    return Tour.list({
+        q: typeof query.q === "string" ? query.q.trim() : "",
+        region: typeof query.region === "string" ? query.region.trim() : "",
+        min_price: query.min_price !== "" ? query.min_price : undefined,
+        max_price: query.max_price !== "" ? query.max_price : undefined,
+        duration: query.duration,
+        services: services.filter((id) => Number.isFinite(id)),
+        sort: query.sort,
+        page: query.page,
+        limit: query.limit,
+    });
+};
+
+export const getTourFiltersService = async () => {
+    return Tour.getFilterOptions();
+};
+
 export const searchToursService = async (keyword) => {
     if (!keyword) {
         throw createHttpError(400, "Vui long nhap tu khoa tim kiem (q)");
@@ -29,25 +57,4 @@ export const getTourByIdService = async (id) => {
     }
 
     return tour;
-};
-
-export const createTourService = async (tourData) => {
-    const tourId = await Tour.create(tourData);
-    return Tour.getById(tourId);
-};
-
-export const updateTourService = async (id, tourData) => {
-    const updated = await Tour.update(id, tourData);
-    if (!updated) {
-        throw createHttpError(404, "Khong tim thay tour");
-    }
-
-    return Tour.getById(id);
-};
-
-export const deleteTourService = async (id) => {
-    const deleted = await Tour.delete(id);
-    if (!deleted) {
-        throw createHttpError(404, "Khong tim thay tour");
-    }
 };
