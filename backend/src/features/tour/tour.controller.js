@@ -1,11 +1,4 @@
-import {
-    getAllToursService,
-    listToursService,
-    getTourFiltersService,
-    searchToursService,
-    getToursByRegionService,
-    getTourByIdService,
-} from "./tour.service.js";
+import * as tourService from "./tour.service.js";
 
 const handleError = (res, error) => {
     if (error.status && error.status < 500) {
@@ -26,7 +19,7 @@ export const getAllTours = async (req, res) => {
         const { q, region, min_price, max_price, duration, services, sort, page, limit } = req.query;
 
         if (q || region || min_price || max_price || duration || services || sort || page || limit) {
-            const result = await listToursService({
+            const result = await tourService.listToursService({
                 q, region, min_price, max_price, duration, services, sort, page, limit,
             });
 
@@ -42,7 +35,7 @@ export const getAllTours = async (req, res) => {
             });
         }
 
-        const tours = await getAllToursService();
+        const tours = await tourService.getAllToursService();
 
         res.json({
             success: true,
@@ -55,7 +48,7 @@ export const getAllTours = async (req, res) => {
 
 export const getTourFilters = async (req, res) => {
     try {
-        const filters = await getTourFiltersService();
+        const filters = await tourService.getTourFiltersService();
 
         res.json({
             success: true,
@@ -66,25 +59,10 @@ export const getTourFilters = async (req, res) => {
     }
 };
 
-export const searchTours = async (req, res) => {
-    try {
-        const keyword = String(req.query.q || "").trim();
-        const tours = await searchToursService(keyword);
-
-        res.json({
-            success: true,
-            count: tours.length,
-            data: tours,
-        });
-    } catch (error) {
-        handleError(res, error);
-    }
-};
-
 export const getToursByRegion = async (req, res) => {
     try {
         const region = String(req.params.region || "").trim();
-        const tours = await getToursByRegionService(region);
+        const tours = await tourService.getToursByRegionService(region);
 
         res.json({
             success: true,
@@ -98,7 +76,7 @@ export const getToursByRegion = async (req, res) => {
 
 export const getTourById = async (req, res) => {
     try {
-        const tour = await getTourByIdService(req.params.id);
+        const tour = await tourService.getTourByIdService(req.params.id);
 
         res.json({
             success: true,

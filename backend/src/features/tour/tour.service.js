@@ -38,14 +38,6 @@ export const getTourFiltersService = async () => {
     return Tour.getFilterOptions();
 };
 
-export const searchToursService = async (keyword) => {
-    if (!keyword) {
-        throw createHttpError(400, "Vui long nhap tu khoa tim kiem (q)");
-    }
-
-    return Tour.search(keyword);
-};
-
 export const getToursByRegionService = async (region) => {
     return Tour.getByRegion(region);
 };

@@ -95,13 +95,6 @@ class Tour {
     static async getById(id) {
         return db("tours").where("id", id).first();
     }
-
-    static async search(keyword) {
-        return db("tours")
-            .where("name", "like", `%${keyword}%`)
-            .orWhere("description", "like", `%${keyword}%`)
-            .orderBy("id", "desc");
-    }
 }
 
 export default Tour;

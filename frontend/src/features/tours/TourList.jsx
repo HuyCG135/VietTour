@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import TourCard from "./TourCard";
 import SearchBox from "../../components/SearchBox";
 import Loading from "../../components/Loading";
-import { getAllTours, searchTours } from "./tour.api";
+import { getAllTours, getTours } from "./tour.api";
 
 export default function TourList() {
     const navigate = useNavigate();
@@ -24,7 +24,9 @@ export default function TourList() {
             setError("");
             try {
                 const normalizedKeyword = (query.get("search") || "").trim();
-                const response = normalizedKeyword ? await searchTours(normalizedKeyword) : await getAllTours();
+                const response = normalizedKeyword
+                    ? await getTours({ q: normalizedKeyword })
+                    : await getAllTours();
 
                 if (!ignore) {
                     if (response?.success) {

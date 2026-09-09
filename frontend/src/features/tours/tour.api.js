@@ -10,12 +10,28 @@ export async function getToursByRegion(region) {
      return res.json();
 }
 
-export async function getTourById(id) {
-     const res = await fetch(`${API_URL}/tours/${id}`);
-     return res.json();
+export async function getTours(query = {}) {
+    const params = new URLSearchParams();
+    Object.entries(query).forEach(([key, value]) => {
+        if (value !== undefined && value !== null && value !== "") {
+            if (Array.isArray(value)) {
+                params.set(key, value.join(","));
+            } else {
+                params.set(key, value);
+            }
+        }
+    });
+    const qs = params.toString();
+    const res = await fetch(`${API_URL}/tours${qs ? `?${qs}` : ""}`);
+    return res.json();
 }
 
-export async function searchTours(keyword) {
-     const res = await fetch(`${API_URL}/tours/search?q=${encodeURIComponent(keyword)}`);
-     return res.json();
+export async function getTourFilters() {
+    const res = await fetch(`${API_URL}/tours/filters`);
+    return res.json();
+}
+
+export async function getTourById(id) {
+    const res = await fetch(`${API_URL}/tours/${id}`);
+    return res.json();
 }
