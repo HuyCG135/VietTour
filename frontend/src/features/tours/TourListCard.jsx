@@ -107,12 +107,12 @@ export default function TourListCard({ tour, isFavorite, onToggleFavorite, layou
         <div className="group bg-surface rounded-2xl border border-slate-200 shadow-[0_2px_10px_rgba(30,41,59,0.05)] hover:shadow-[0_16px_36px_rgba(30,41,59,0.12)] hover:-translate-y-1 transition-all duration-300 overflow-hidden flex flex-col md:flex-row">
             {/* Ảnh trái */}
             <div className="relative md:w-[38%] lg:w-[36%] min-h-[200px] md:min-h-[220px] bg-slate-100 overflow-hidden">
-                <Link to={`/tours/${tour.id}`} className="block w-full h-full">
+                <Link to={`/tours/${tour.id}`} className="block absolute inset-0">
                     <img
                         src={tour.cover_image || defaultTourImage}
                         alt={tour.name}
                         loading="lazy"
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     />
                 </Link>
 
@@ -127,7 +127,7 @@ export default function TourListCard({ tour, isFavorite, onToggleFavorite, layou
             </div>
 
             {/* Nội dung phải */}
-            <div className="flex-1 p-4 sm:p-5 flex flex-col">
+            <div className="flex-1 p-4 sm:p-5 flex flex-col min-w-0">
                 <Link to={`/tours/${tour.id}`} className="no-underline text-inherit flex-1 mb-2">
                     <h2 className="font-bold text-base sm:text-lg text-slate-900 group-hover:text-primary transition-colors line-clamp-2 leading-snug">
                         {tour.name}
@@ -150,7 +150,7 @@ export default function TourListCard({ tour, isFavorite, onToggleFavorite, layou
                     </span>
                 </div>
 
-                <p className="text-xs sm:text-sm text-muted line-clamp-2 mb-4 leading-relaxed flex-1">
+                <p className="text-xs sm:text-sm text-muted truncate mb-4 flex-1 min-w-0">
                     {tour.description}
                 </p>
 
