@@ -95,7 +95,7 @@ export default function TourDetail() {
             <div className="flex flex-wrap gap-4 mt-3 items-start">
                 <div className="w-full lg:w-7/12">
                     <div className="bg-white rounded-xl shadow-sm overflow-hidden border-0">
-                        <img src={tour.image || tour.cover_image || defaultTourImage} alt={tour.name} className="w-full max-w-full h-auto" style={{ height: 420, objectFit: "cover" }} />
+                        <img src={tour.image || tour.cover_image || defaultTourImage} alt={tour.name} className="w-full h-[420px] object-cover" />
                     </div>
                 </div>
 
