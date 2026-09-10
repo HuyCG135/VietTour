@@ -39,7 +39,7 @@ export default function FilterSidebar({ filters, values, onChange, onClear, onCl
     return (
         <div className="space-y-4">
             {/* Hộp bộ lọc chính */}
-            <div className="bg-white rounded-2xl shadow-[0_4px_24px_rgba(30,41,59,0.06)] border border-slate-100 p-5">
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-5">
                 {/* Header bộ lọc */}
                 <div className="flex items-center justify-between pb-3.5 mb-4 border-b border-slate-100">
                     <div className="flex items-center gap-2 font-bold text-slate-800 text-base">

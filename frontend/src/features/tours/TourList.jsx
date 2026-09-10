@@ -173,12 +173,12 @@ export default function TourList() {
     };
 
     return (
-        <div className="bg-[#f8fafc] min-h-screen pb-16">
-            <HeroCarousel />
+        <div className="bg-background min-h-screen pb-16">
+            <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 pt-4 sm:pt-6">
+                <HeroCarousel />
 
-            <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 pt-6 sm:pt-8">
                 {/* Nút lọc cho Mobile */}
-                <div className="flex justify-end mb-6 lg:hidden">
+                <div className="flex justify-end mb-6 mt-6 sm:mt-8 lg:hidden">
                     <button
                         type="button"
                         onClick={() => setMobileFilterOpen(true)}
@@ -194,8 +194,7 @@ export default function TourList() {
                     </button>
                 </div>
 
-                <div className="flex flex-col lg:flex-row gap-6 items-start">
-                    {/* Sidebar filter cho Desktop (Sticky thông minh có scrollbar chống tràn) */}
+                <div className="mt-0 lg:mt-8 flex flex-col lg:flex-row gap-6 items-start">                    {/* Sidebar filter cho Desktop (Sticky thông minh có scrollbar chống tràn) */}
                     <aside className="hidden lg:block w-[280px] xl:w-[310px] shrink-0 sticky top-[85px] max-h-[calc(100vh-100px)] overflow-y-auto pr-1 custom-scrollbar">
                         <FilterSidebar
                             filters={filters}
@@ -230,7 +229,7 @@ export default function TourList() {
                     {/* Cột Nội dung bên phải */}
                     <div className="flex-1 min-w-0 w-full">
                         {/* Toolbar: Tìm kiếm, Số lượng kết quả, Sắp xếp & View Switcher */}
-                        <div className="bg-white rounded-2xl shadow-[0_4px_24px_rgba(30,41,59,0.06)] border border-slate-100 p-4 mb-5">
+                        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 mb-5">
                             <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
                                 {/* Search Bar */}
                                 <div className="flex-1 max-w-xl">
@@ -254,7 +253,7 @@ export default function TourList() {
                                             id="sort"
                                             value={current.sort}
                                             onChange={(e) => commit({ ...current, sort: e.target.value, page: 1 })}
-                                            className="border-0 bg-transparent font-bold text-slate-800 cursor-pointer outline-none text-xs sm:text-sm"
+                                            className="border-0 bg-transparent font-bold text-slate-800 cursor-pointer outline-none focus:ring-2 focus:ring-primary/40 rounded-lg text-xs sm:text-sm"
                                         >
                                             <option value="">Phổ biến nhất</option>
                                             <option value="price_asc">Giá: Thấp đến cao</option>
@@ -301,12 +300,13 @@ export default function TourList() {
                                 {/* Các tag lọc đang active */}
                                 {activeFilterCount > 0 && (
                                     <div className="flex flex-wrap items-center gap-1.5">
-                                        <span className="text-[11px] text-slate-400 font-medium mr-1">Đang lọc:</span>
+                                        <span className="text-[11px] text-slate-500 font-medium mr-1">Đang lọc:</span>
                                         {current.q && (
                                             <span className="inline-flex items-center gap-1 bg-primary/10 text-primary text-[11px] font-semibold px-2 py-0.5 rounded-md">
                                                 "{current.q}"
                                                 <button
                                                     onClick={() => removeFilterKey("q")}
+                                                    aria-label="Xóa bộ lọc tìm kiếm"
                                                     className="hover:text-primary-dark ml-0.5 cursor-pointer"
                                                 >
                                                     ×
@@ -318,6 +318,7 @@ export default function TourList() {
                                                 {current.region}
                                                 <button
                                                     onClick={() => removeFilterKey("region")}
+                                                    aria-label="Xóa bộ lọc khu vực"
                                                     className="hover:text-slate-900 ml-0.5 cursor-pointer"
                                                 >
                                                     ×
@@ -329,6 +330,7 @@ export default function TourList() {
                                                 ≤ {new Intl.NumberFormat("vi-VN").format(current.max_price)}đ
                                                 <button
                                                     onClick={() => removeFilterKey("price")}
+                                                    aria-label="Xóa bộ lọc giá"
                                                     className="hover:text-slate-900 ml-0.5 cursor-pointer"
                                                 >
                                                     ×
@@ -340,6 +342,7 @@ export default function TourList() {
                                                 {current.duration === "short" ? "1-3 ngày" : "4+ ngày"}
                                                 <button
                                                     onClick={() => removeFilterKey("duration")}
+                                                    aria-label="Xóa bộ lọc thời gian"
                                                     className="hover:text-slate-900 ml-0.5 cursor-pointer"
                                                 >
                                                     ×
@@ -357,6 +360,7 @@ export default function TourList() {
                                                         {sObj?.name || `Dịch vụ #${sid}`}
                                                         <button
                                                             onClick={() => removeServiceId(sid)}
+                                                            aria-label={`Xóa dịch vụ ${sObj?.name || ""}`}
                                                             className="hover:text-slate-900 ml-0.5 cursor-pointer"
                                                         >
                                                             ×

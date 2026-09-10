@@ -16,66 +16,63 @@ export default function HeroCarousel() {
     const [active, setActive] = useState(0);
 
     useEffect(() => {
-        const timer = setInterval(() => setActive((prev) => (prev + 1) % SLIDES.length), 4000);
+        const prefersReduced = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
+        if (prefersReduced) return undefined;
+        const timer = setInterval(() => setActive((prev) => (prev + 1) % SLIDES.length), 5000);
         return () => clearInterval(timer);
     }, []);
 
     const goTo = (index) => setActive((index + SLIDES.length) % SLIDES.length);
 
     return (
-        <div className="relative w-full h-[220px] sm:h-[270px] lg:h-[290px] overflow-hidden">
+        <div className="relative w-full h-[280px] sm:h-[330px] lg:h-[390px] overflow-hidden rounded-2xl lg:rounded-3xl bg-slate-900">
             {SLIDES.map((slide, index) => (
                 <img
                     key={slide.image}
                     src={slide.image}
-                    alt={`Banner ${index + 1}`}
+                    alt={`Cảnh đẹp Việt Nam ${index + 1}`}
+                    fetchPriority={index === 0 ? "high" : "auto"}
                     className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ${
                         index === active ? "opacity-100" : "opacity-0"
                     }`}
                 />
             ))}
 
-            <div className="absolute inset-0 bg-linear-to-b from-slate-900/50 via-slate-900/40 to-slate-900/80" />
+            {/* Vùng tối nhẹ dồn về phía dưới để chữ đọc rõ, không phủ trùm toàn khung */}
+            <div className="absolute inset-0 bg-linear-to-t from-slate-950/75 via-slate-900/25 to-slate-900/10" />
 
-            <div className="relative z-10 h-full flex flex-col items-center justify-center text-center px-4 max-w-4xl mx-auto">
-                <span className="inline-flex items-center gap-1.5 bg-primary/80 backdrop-blur-xs border border-white/20 px-3.5 py-1 rounded-full mb-2 font-semibold tracking-wider text-white text-[11px] sm:text-xs uppercase shadow-sm">
-                    <i className="fa-solid fa-gem text-accent text-xs" /> VietTour Premium
-                </span>
-                <h1
-                    className="text-xl sm:text-3xl lg:text-4xl font-extrabold text-white uppercase mb-2 tracking-wide leading-tight [text-shadow:0_3px_10px_rgba(0,0,0,0.6)]"
-                >
+            <div className="absolute inset-x-0 bottom-0 z-10 px-6 sm:px-10 pb-16 sm:pb-20 max-w-3xl">
+                <h1 className="text-2xl sm:text-4xl lg:text-5xl font-extrabold text-white mb-2 leading-tight [text-shadow:0_1px_3px_rgba(15,23,42,0.4)]">
                     Khám Phá Hành Trình Tuyệt Đỉnh
                 </h1>
-                <p
-                    className="text-white/90 text-xs sm:text-sm leading-relaxed max-w-2xl line-clamp-2 sm:line-clamp-none [text-shadow:0_2px_4px_rgba(0,0,0,0.6)] font-light"
-                >
-                    Hàng trăm điểm đến độc đáo cùng dịch vụ đẳng cấp được tuyển chọn tinh tế, đồng hành trọn vẹn trên mọi cung đường của bạn.
+                <p className="text-white/90 text-sm sm:text-base leading-relaxed max-w-xl [text-shadow:0_1px_2px_rgba(15,23,42,0.35)]">
+                    Hàng trăm điểm đến được tuyển chọn, đồng hành trọn vẹn trên mọi cung đường của bạn.
                 </p>
             </div>
 
             <button
                 onClick={() => goTo(active - 1)}
                 aria-label="Slide trước"
-                className="absolute left-3 top-1/2 -translate-y-1/2 z-10 w-10 h-10 flex items-center justify-center rounded-full bg-white/20 hover:bg-white/35 text-white transition-colors cursor-pointer"
+                className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 z-10 w-9 h-9 flex items-center justify-center rounded-full bg-white/15 hover:bg-white/30 text-white transition-colors cursor-pointer"
             >
-                <i className="fa-solid fa-chevron-left" />
+                <i className="fa-solid fa-chevron-left text-xs" />
             </button>
             <button
                 onClick={() => goTo(active + 1)}
                 aria-label="Slide sau"
-                className="absolute right-3 top-1/2 -translate-y-1/2 z-10 w-10 h-10 flex items-center justify-center rounded-full bg-white/20 hover:bg-white/35 text-white transition-colors cursor-pointer"
+                className="absolute right-3 sm:right-4 top-1/2 -translate-y-1/2 z-10 w-9 h-9 flex items-center justify-center rounded-full bg-white/15 hover:bg-white/30 text-white transition-colors cursor-pointer"
             >
-                <i className="fa-solid fa-chevron-right" />
+                <i className="fa-solid fa-chevron-right text-xs" />
             </button>
 
-            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10 flex gap-2">
+            <div className="absolute bottom-5 right-6 sm:right-10 z-10 flex gap-2">
                 {SLIDES.map((_, index) => (
                     <button
                         key={index}
                         onClick={() => goTo(index)}
-                        aria-label={`Slide ${index + 1}`}
-                        className={`h-2.5 rounded-full transition-all cursor-pointer ${
-                            index === active ? "w-6 bg-white" : "w-2.5 bg-white/50 hover:bg-white/75"
+                        aria-label={`Đi tới slide ${index + 1}`}
+                        className={`h-1.5 rounded-full transition-all cursor-pointer ${
+                            index === active ? "w-7 bg-white" : "w-3 bg-white/50 hover:bg-white/80"
                         }`}
                     />
                 ))}
