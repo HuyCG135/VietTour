@@ -6,8 +6,9 @@ import Pagination from "./Pagination";
 import SearchBox from "../../components/SearchBox";
 import Loading from "../../components/Loading";
 import HeroCarousel from "./HeroCarousel";
+import DepartureCalendar from "./DepartureCalendar";
 import useAuth from "../../hooks/useAuth";
-import { getTours, getTourFilters } from "./tour.api";
+import { getTours, getTourFilters, getTourCalendar } from "./tour.api";
 import { getFavoriteIds, addFavorite, removeFavorite } from "../user/favorites/favorite.api";
 
 function normalizeParams(searchParams) {
@@ -24,6 +25,7 @@ function normalizeParams(searchParams) {
         duration: searchParams.get("duration") || "",
         services,
         sort: searchParams.get("sort") || "",
+        departure_date: searchParams.get("departure_date") || "",
         page: Number(searchParams.get("page")) || 1,
     };
 }
@@ -37,8 +39,15 @@ function buildQueryString(params) {
     if (params.duration) sp.set("duration", params.duration);
     if (params.services.length) sp.set("services", params.services.join(","));
     if (params.sort) sp.set("sort", params.sort);
+    if (params.departure_date) sp.set("departure_date", params.departure_date);
     if (params.page > 1) sp.set("page", params.page);
     return sp.toString();
+}
+
+function formatShortDate(dateStr) {
+    if (!dateStr) return "";
+    const [, m, d] = dateStr.split("-");
+    return `${d}/${m}`;
 }
 
 export default function TourList() {
@@ -54,6 +63,7 @@ export default function TourList() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
     const [favoriteIds, setFavoriteIds] = useState([]);
+    const [calendarCounts, setCalendarCounts] = useState({});
 
     useEffect(() => {
         const loadFilters = async () => {
@@ -90,6 +100,30 @@ export default function TourList() {
     }, [searchParams]);
 
     useEffect(() => {
+        const params = normalizeParams(searchParams);
+        const load = async () => {
+            const res = await getTourCalendar({
+                q: params.q,
+                region: params.region,
+                min_price: params.min_price,
+                max_price: params.max_price,
+                duration: params.duration,
+                services: params.services,
+            });
+            if (!res?.success) {
+                setCalendarCounts({});
+                return;
+            }
+            const map = {};
+            (res.data || []).forEach((item) => {
+                map[item.date] = item.count;
+            });
+            setCalendarCounts(map);
+        };
+        load();
+    }, [searchParams]);
+
+    useEffect(() => {
         if (!isAuthenticated) return;
         const load = async () => {
             const res = await getFavoriteIds();
@@ -106,7 +140,7 @@ export default function TourList() {
     const applyFilters = (next) => commit({ ...current, ...next, page: 1 });
 
     const clearFilters = () => {
-        setDraft({ q: "", region: "", min_price: "", max_price: "", duration: "", services: [], sort: "", page: 1 });
+        setDraft({ q: "", region: "", min_price: "", max_price: "", duration: "", services: [], sort: "", departure_date: "", page: 1 });
         setSearchParams({}, { replace: true });
     };
 
@@ -118,6 +152,12 @@ export default function TourList() {
 
     const handleSearch = (value) => {
         commit({ ...current, q: value.trim(), page: 1 });
+    };
+
+    // Bấm 1 ngày trên lịch: chọn ngày đó; bấm lại ngày đang chọn → gỡ bộ lọc (toggle)
+    const selectDate = (date) => {
+        const next = date === current.departure_date ? "" : date;
+        commit({ ...current, departure_date: next, page: 1 });
     };
 
     const toggleFavorite = async (tourId) => {
@@ -154,6 +194,7 @@ export default function TourList() {
         current.region,
         current.min_price || current.max_price,
         current.duration,
+        current.departure_date,
         ...(current.services || []),
     ].filter(Boolean).length;
 
@@ -228,6 +269,15 @@ export default function TourList() {
 
                     {/* Cột Nội dung bên phải */}
                     <div className="flex-1 min-w-0 w-full">
+                        {/* Lịch khởi hành: chọn ngày để lọc */}
+                        <div className="mb-5">
+                            <DepartureCalendar
+                                counts={calendarCounts}
+                                selectedDate={current.departure_date}
+                                onSelect={selectDate}
+                            />
+                        </div>
+
                         {/* Toolbar: Tìm kiếm, Số lượng kết quả, Sắp xếp & View Switcher */}
                         <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 mb-5">
                             <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
@@ -343,6 +393,18 @@ export default function TourList() {
                                                 <button
                                                     onClick={() => removeFilterKey("duration")}
                                                     aria-label="Xóa bộ lọc thời gian"
+                                                    className="hover:text-slate-900 ml-0.5 cursor-pointer"
+                                                >
+                                                    ×
+                                                </button>
+                                            </span>
+                                        )}
+                                        {current.departure_date && (
+                                            <span className="inline-flex items-center gap-1 bg-slate-100 text-slate-700 text-[11px] font-semibold px-2 py-0.5 rounded-md">
+                                                Khởi hành <b>{formatShortDate(current.departure_date)}</b>
+                                                <button
+                                                    onClick={() => removeFilterKey("departure_date")}
+                                                    aria-label="Xóa bộ lọc ngày khởi hành"
                                                     className="hover:text-slate-900 ml-0.5 cursor-pointer"
                                                 >
                                                     ×

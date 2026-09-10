@@ -226,41 +226,6 @@ export default function FilterSidebar({ filters, values, onChange, onClear, onCl
                     <i className="fa-solid fa-magnifying-glass text-xs" /> Áp dụng bộ lọc
                 </button>
             </div>
-
-            {/* Widget Cam kết & Trợ giúp chuyên nghiệp (Trust & Help Widget) */}
-            <div className="bg-gradient-to-br from-primary/5 via-blue-50/50 to-white rounded-2xl border border-primary/15 p-4.5 shadow-xs">
-                <div className="flex items-center gap-2.5 mb-3">
-                    <span className="w-9 h-9 rounded-xl bg-primary text-white flex items-center justify-center text-sm shadow-sm">
-                        <i className="fa-solid fa-headset" />
-                    </span>
-                    <div>
-                        <h6 className="font-bold text-slate-800 text-sm mb-0">Bạn cần tư vấn tour?</h6>
-                        <p className="text-[11px] text-slate-500 mb-0">Hỗ trợ 24/7 hoàn toàn miễn phí</p>
-                    </div>
-                </div>
-
-                <div className="space-y-2 text-xs text-slate-600 mb-3.5">
-                    <div className="flex items-center gap-2">
-                        <i className="fa-solid fa-circle-check text-emerald-500 text-[11px]" />
-                        <span>Đảm bảo giá tốt nhất thị trường</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <i className="fa-solid fa-circle-check text-emerald-500 text-[11px]" />
-                        <span>Hỗ trợ đổi dời ngày linh hoạt</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <i className="fa-solid fa-circle-check text-emerald-500 text-[11px]" />
-                        <span>Đội ngũ hướng dẫn viên giàu kinh nghiệm</span>
-                    </div>
-                </div>
-
-                <a
-                    href="tel:19001800"
-                    className="flex items-center justify-center gap-2 w-full py-2 rounded-xl bg-white hover:bg-primary hover:text-white text-primary border border-primary/30 font-bold text-xs transition-all shadow-xs no-underline"
-                >
-                    <i className="fa-solid fa-phone text-xs" /> Hotline: 1900 1800
-                </a>
-            </div>
         </div>
     );
 }

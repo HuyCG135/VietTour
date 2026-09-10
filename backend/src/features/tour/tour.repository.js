@@ -6,7 +6,7 @@ class Tour {
         price_desc: ["price_default", "desc"],
     };
 
-    static buildListQuery({ q, region, min_price, max_price, duration, services }) {
+    static buildListQuery({ q, region, min_price, max_price, duration, services, departure_date }) {
         const base = db("tours");
 
         if (q) {
@@ -40,6 +40,14 @@ class Tour {
                 db("tour_services").select("tour_id").whereIn("service_id", services),
             );
         }
+        if (departure_date) {
+            base.whereIn(
+                "tours.id",
+                db("tour_departures").select("tour_id")
+                    .where("departure_date", departure_date)
+                    .andWhere("status", "open"),
+            );
+        }
 
         return base;
     }
@@ -48,9 +56,9 @@ class Tour {
         return db("tours").orderBy("id", "desc");
     }
 
-    static async list({ q, region, min_price, max_price, duration, services, sort, page, limit }) {
-        const countQuery = this.buildListQuery({ q, region, min_price, max_price, duration, services });
-        const dataQuery = this.buildListQuery({ q, region, min_price, max_price, duration, services });
+    static async list({ q, region, min_price, max_price, duration, services, sort, page, limit, departure_date }) {
+        const countQuery = this.buildListQuery({ q, region, min_price, max_price, duration, services, departure_date });
+        const dataQuery = this.buildListQuery({ q, region, min_price, max_price, duration, services, departure_date });
 
         const [{ total }] = await countQuery.count({ total: "*" });
         const pageNum = Math.max(1, Number(page) || 1);
@@ -69,6 +77,30 @@ class Tour {
             page: pageNum,
             limit: limitNum,
         };
+    }
+
+    static async getCalendar({ from, to, q, region, min_price, max_price, duration, services }) {
+        const filtered = this.buildListQuery({ q, region, min_price, max_price, duration, services });
+
+        const rows = await filtered
+            .join("tour_departures", "tours.id", "tour_departures.tour_id")
+            .where("tour_departures.status", "open")
+            .whereBetween("tour_departures.departure_date", [from, to])
+            .groupBy("tour_departures.departure_date")
+            .orderBy("tour_departures.departure_date", "asc")
+            .select("tour_departures.departure_date")
+            .countDistinct({ count: "tours.id" });
+
+        return rows.map((row) => {
+            const date = new Date(row.departure_date);
+            const y = date.getFullYear();
+            const m = String(date.getMonth() + 1).padStart(2, "0");
+            const d = String(date.getDate()).padStart(2, "0");
+            return {
+                date: `${y}-${m}-${d}`,
+                count: Number(row.count),
+            };
+        });
     }
 
     static async getFilterOptions() {
