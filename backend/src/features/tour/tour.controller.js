@@ -1,4 +1,10 @@
-import * as tourService from "./tour.service.js";
+import {
+    listToursService,
+    getAllToursService,
+    getTourFiltersService,
+    getToursByRegionService,
+    getTourByIdService,
+} from "./tour.service.js";
 
 const handleError = (res, error) => {
     if (error.status && error.status < 500) {
@@ -19,7 +25,7 @@ export const getAllTours = async (req, res) => {
         const { q, region, min_price, max_price, duration, services, sort, page, limit } = req.query;
 
         if (q || region || min_price || max_price || duration || services || sort || page || limit) {
-            const result = await tourService.listToursService({
+            const result = await listToursService({
                 q, region, min_price, max_price, duration, services, sort, page, limit,
             });
 
@@ -35,7 +41,7 @@ export const getAllTours = async (req, res) => {
             });
         }
 
-        const tours = await tourService.getAllToursService();
+        const tours = await getAllToursService();
 
         res.json({
             success: true,
@@ -48,7 +54,7 @@ export const getAllTours = async (req, res) => {
 
 export const getTourFilters = async (req, res) => {
     try {
-        const filters = await tourService.getTourFiltersService();
+        const filters = await getTourFiltersService();
 
         res.json({
             success: true,
@@ -62,7 +68,7 @@ export const getTourFilters = async (req, res) => {
 export const getToursByRegion = async (req, res) => {
     try {
         const region = String(req.params.region || "").trim();
-        const tours = await tourService.getToursByRegionService(region);
+        const tours = await getToursByRegionService(region);
 
         res.json({
             success: true,
@@ -76,7 +82,7 @@ export const getToursByRegion = async (req, res) => {
 
 export const getTourById = async (req, res) => {
     try {
-        const tour = await tourService.getTourByIdService(req.params.id);
+        const tour = await getTourByIdService(req.params.id);
 
         res.json({
             success: true,
