@@ -1,3 +1,49 @@
+const renderSchedule = (raw) => {
+    const text = (raw || "").replace(/\\n/g, "\n");
+    const lines = text
+        .split("\n")
+        .map((line) => line.trim())
+        .filter(Boolean);
+
+    if (lines.length === 0) {
+        return null;
+    }
+
+    if (lines.length === 1) {
+        return <p className="text-sm leading-relaxed text-muted">{lines[0]}</p>;
+    }
+
+    const [title, ...schedule] = lines;
+
+    return (
+        <>
+            <p className="mb-3 text-sm font-semibold text-foreground">{title}</p>
+            <ul className="space-y-2">
+                {schedule.map((line, index) => {
+                    const match = line.match(/^(\d{1,2}:\d{2})\s*:?\s*(.*)$/);
+                    return (
+                        <li
+                            key={index}
+                            className={match ? "flex items-start gap-2.5" : "text-sm leading-relaxed text-muted"}
+                        >
+                            {match ? (
+                                <>
+                                    <span className="mt-0.5 inline-flex shrink-0 items-center rounded-md bg-primary-50 px-2 py-0.5 text-xs font-bold text-primary-dark">
+                                        {match[1]}
+                                    </span>
+                                    <span className="text-sm leading-relaxed text-muted">{match[2]}</span>
+                                </>
+                            ) : (
+                                line
+                            )}
+                        </li>
+                    );
+                })}
+            </ul>
+        </>
+    );
+};
+
 const TourItinerary = ({ itineraries = [] }) => {
     return (
         <section
@@ -21,7 +67,7 @@ const TourItinerary = ({ itineraries = [] }) => {
                             <div className="text-sm font-semibold text-foreground mb-1">
                                 Ngày {item.day}
                             </div>
-                            <p className="text-sm leading-relaxed text-muted whitespace-pre-line">{item.description}</p>
+                            {renderSchedule(item.description)}
                         </li>
                     ))}
                 </ol>

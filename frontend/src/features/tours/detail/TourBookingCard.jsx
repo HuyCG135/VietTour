@@ -1,6 +1,6 @@
 const formatPrice = (value) => Number(value || 0).toLocaleString("vi-VN");
 
-const TourBookingCard = ({ priceDefault = 0, priceChild = 0, hotline = "1900 1234" }) => {
+const TourBookingCard = ({ priceDefault = 0, priceChild = 0, hotline = "1900 1234", departures = [] }) => {
     return (
         <div className="rounded-2xl border border-slate-200 bg-surface p-6 shadow-[0_2px_10px_rgba(30,41,59,0.05)]">
             <div className="mb-5">
@@ -31,6 +31,24 @@ const TourBookingCard = ({ priceDefault = 0, priceChild = 0, hotline = "1900 123
                     </span>
                 </div>
             </div>
+
+            {departures.length > 0 && (
+                <div className="mb-5 border-t border-slate-100 pt-4">
+                    <div className="flex items-center justify-between py-1.5">
+                        <span className="text-sm text-muted">Khởi hành gần nhất</span>
+                        <span className="text-sm font-bold text-foreground">
+                            {new Date(departures[0].departure_date).toLocaleDateString("vi-VN")}
+                        </span>
+                    </div>
+                    <div className="flex items-center justify-between py-1.5">
+                        <span className="text-sm text-muted">Số chỗ còn lại</span>
+                        <span className="inline-flex items-center gap-1.5 text-sm font-bold text-foreground">
+                            <i className="fa-solid fa-user text-xs text-primary" aria-hidden="true" />
+                            {departures[0].seats_available} chỗ
+                        </span>
+                    </div>
+                </div>
+            )}
 
             <button
                 type="button"

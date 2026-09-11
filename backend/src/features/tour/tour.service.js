@@ -78,7 +78,7 @@ export const getToursByRegionService = async (region) => {
 };
 
 export const getTourByIdService = async (id) => {
-    const tour = await Tour.getById(id);
+    const tour = await Tour.getDetailById(id);
     if (!tour) {
         throw createHttpError(404, "Khong tim thay tour");
     }

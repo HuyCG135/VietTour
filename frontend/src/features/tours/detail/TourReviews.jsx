@@ -18,11 +18,13 @@ const TourReviews = ({ reviews = [], avgRating = 0, reviewCount = 0 }) => {
                     Đánh giá từ du khách
                 </h2>
 
-                <span className="inline-flex items-center gap-1.5 bg-accent/10 text-foreground font-bold text-sm px-3 py-1.5 rounded-full">
-                    <i className="fa-solid fa-star text-accent" aria-hidden="true" />
-                    {Number(avgRating).toFixed(1)}
-                    <span className="font-medium text-muted">({reviewCount} lượt)</span>
-                </span>
+                {reviewCount > 0 && (
+                    <span className="inline-flex items-center gap-1.5 bg-accent/10 text-foreground font-bold text-sm px-3 py-1.5 rounded-full">
+                        <i className="fa-solid fa-star text-accent" aria-hidden="true" />
+                        {Number(avgRating).toFixed(1)}
+                        <span className="font-medium text-muted">({reviewCount} lượt)</span>
+                    </span>
+                )}
             </div>
 
             {reviews.length === 0 ? (

@@ -127,6 +127,91 @@ class Tour {
     static async getById(id) {
         return db("tours").where("id", id).first();
     }
+
+    static async getDetailById(id) {
+        const toLocalDate = (date) => {
+            const y = date.getFullYear();
+            const m = String(date.getMonth() + 1).padStart(2, "0");
+            const d = String(date.getDate()).padStart(2, "0");
+            return `${y}-${m}-${d}`;
+        };
+        const toLocalDay = (value) => {
+            const date = value instanceof Date ? value : new Date(value);
+            if (Number.isNaN(date.getTime())) return "";
+            const d = String(date.getDate()).padStart(2, "0");
+            const m = String(date.getMonth() + 1).padStart(2, "0");
+            return `${d}/${m}/${date.getFullYear()}`;
+        };
+
+        const [tour, images, itineraries, departures, services, reviews] = await Promise.all([
+            db("tours").where("id", id).first(),
+            db("tour_images").select("image").where("tour_id", id).orderBy("id", "asc"),
+            db("tour_itineraries")
+                .select("day_number as day", "description")
+                .where("tour_id", id)
+                .orderBy("day_number", "asc"),
+            db("tour_departures")
+                .where("tour_id", id)
+                .andWhere("status", "open")
+                .andWhere("departure_date", ">=", toLocalDate(new Date()))
+                .orderBy("departure_date", "asc"),
+            db("services as s")
+                .innerJoin("tour_services as ts", "ts.service_id", "s.id")
+                .select("s.id", "s.name", "s.icon")
+                .where("ts.tour_id", id)
+                .orderBy("s.id", "asc"),
+            db("reviews as r")
+                .innerJoin("users as u", "u.id", "r.user_id")
+                .select("r.id", "u.fullname as user_name", "r.rating", "r.comment", "r.created_at")
+                .where("r.tour_id", id)
+                .orderBy("r.created_at", "desc"),
+        ]);
+
+        if (!tour) {
+            return null;
+        }
+
+        const imageList = images.map((row) => row.image).filter(Boolean);
+        if (imageList.length === 0 && tour.cover_image) {
+            imageList.push(tour.cover_image);
+        }
+
+        const count = reviews.length;
+        const avg =
+            count > 0
+                ? Math.round((reviews.reduce((sum, row) => sum + Number(row.rating), 0) / count) * 10) / 10
+                : 0;
+
+        return {
+            ...tour,
+            price_default: Number(tour.price_default),
+            price_child: Number(tour.price_child),
+            images: imageList,
+            itineraries: itineraries.map((row) => ({ day: Number(row.day), description: row.description })),
+            departures: departures.map((row) => ({
+                id: row.id,
+                departure_location: row.departure_location,
+                departure_date: toLocalDate(row.departure_date),
+                price_moving: Number(row.price_moving),
+                price_moving_child: Number(row.price_moving_child),
+                seats_total: Number(row.seats_total),
+                seats_available: Number(row.seats_available),
+                status: row.status,
+            })),
+            services,
+            reviews: reviews.map((row) => ({
+                id: row.id,
+                user_name: row.user_name,
+                avatar: null,
+                rating: Number(row.rating),
+                comment: row.comment,
+                created_at: toLocalDay(row.created_at),
+            })),
+            avg_rating: avg,
+            review_count: count,
+            is_available: departures.length > 0,
+        };
+    }
 }
 
 export default Tour;

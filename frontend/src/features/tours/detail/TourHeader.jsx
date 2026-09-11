@@ -37,9 +37,16 @@ const TourHeader = ({ tour, onShare, onToggleFavorite, isFavorite }) => {
                             <i className="fa-solid fa-map text-primary text-[11px]" />
                             {tour.region}
                         </span>
-                        <span className="inline-flex items-center gap-1.5 bg-success/10 text-success text-xs font-medium px-2.5 py-1.5 rounded-full ml-1">
-                            <i className="fa-solid fa-circle-check text-[11px]" />
-                            Đang mở bán
+                        <span className={`inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-full ml-1 ${
+                            tour.is_available === false
+                                ? "bg-warning/10 text-warning"
+                                : "bg-success/10 text-success"
+                        }`}>
+                            <i
+                                className={`fa-solid ${tour.is_available === false ? "fa-clock" : "fa-circle-check"} text-[11px]`}
+                                aria-hidden="true"
+                            />
+                            {tour.is_available === false ? "Sắp mở" : "Đang mở bán"}
                         </span>
                     </div>
                 </div>
