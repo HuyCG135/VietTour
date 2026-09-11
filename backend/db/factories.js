@@ -2,17 +2,18 @@ import bcrypt from "bcryptjs";
 import { faker } from "@faker-js/faker";
 
 // ==================== Dữ liệu Việt Nam ====================
+// Icon dùng class FontAwesome 6 (frontend load qua CDN trong index.html)
 const SERVICES = [
-    "Khách sạn 3 sao",
-    "Khách sạn 4 sao",
-    "Vé máy bay khứ hồi",
-    "Ăn uống full-board",
-    "Hướng dẫn viên tiếng Việt",
-    "Hướng dẫn viên tiếng Anh",
-    "Bảo hiểm du lịch",
-    "Vé tham quan",
-    "Đưa đón sân bay",
-    "Wifi + sim du lịch",
+    { name: "Khách sạn 3 sao", icon: "fa-solid fa-hotel" },
+    { name: "Khách sạn 4 sao", icon: "fa-solid fa-hotel" },
+    { name: "Vé máy bay khứ hồi", icon: "fa-solid fa-plane" },
+    { name: "Ăn uống full-board", icon: "fa-solid fa-utensils" },
+    { name: "Hướng dẫn viên tiếng Việt", icon: "fa-solid fa-user-tie" },
+    { name: "Hướng dẫn viên tiếng Anh", icon: "fa-solid fa-user-tie" },
+    { name: "Bảo hiểm du lịch", icon: "fa-solid fa-shield-halved" },
+    { name: "Vé tham quan", icon: "fa-solid fa-ticket" },
+    { name: "Đưa đón sân bay", icon: "fa-solid fa-van-shuttle" },
+    { name: "Wifi + sim du lịch", icon: "fa-solid fa-wifi" },
 ];
 const LAST_NAMES = ["Nguyễn", "Trần", "Lê", "Phạm", "Hoàng", "Phan", "Vũ", "Đặng", "Bùi", "Đỗ", "Hồ", "Ngô"];
 const MIDDLE_NAMES = ["Văn", "Thị", "Hữu", "Công", "Minh", "Quốc", "Gia", "Hải", "Đức", "Thu"];
@@ -41,10 +42,12 @@ const makeVietnamesePhone = () => {
 
 // ==================== Factories ====================
 export function makeService(index) {
+    const service = pick(SERVICES);
     return {
-        name: `${pick(SERVICES)} ${index}`,
-        slug: `${slugify(pick(SERVICES))}-${index}`,
-        description: `Dịch vụ ${pick(SERVICES).toLowerCase()} dành cho hành khách đi tour.`,
+        name: `${service.name} ${index}`,
+        slug: `${slugify(service.name)}-${index}`,
+        description: `Dịch vụ ${service.name.toLowerCase()} dành cho hành khách đi tour.`,
+        icon: service.icon,
         status: 1,
         created_at: new Date(),
         updated_at: new Date(),

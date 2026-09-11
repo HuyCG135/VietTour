@@ -108,7 +108,7 @@ class Tour {
         const [priceRange] = await db("tours")
             .min("price_default as min")
             .max("price_default as max");
-        const services = await db("services").select("id", "name").orderBy("id", "asc");
+        const services = await db("services").select("id", "name", "icon").orderBy("id", "asc");
 
         return {
             regions: regions.filter(Boolean).sort((a, b) => a.localeCompare(b, "vi")),
