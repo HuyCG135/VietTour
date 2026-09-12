@@ -1,5 +1,6 @@
 import React from "react";
-import FormField, { getInputClass, getSelectClass } from "./FormField.jsx";
+import FormField from "./FormField.jsx";
+import { getInputClass, getSelectClass } from "./formClasses.js";
 import { GENDER_OPTIONS } from "./bookingState.js";
 
 export default function ContactInfoForm({

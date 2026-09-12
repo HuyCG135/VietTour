@@ -1,26 +1,85 @@
 import { useCallback, useEffect, useMemo, useReducer, useState } from "react";
-import bookingReducer, { BOOKING_ACTIONS } from "./bookingReducer";
+import bookingReducer, { BOOKING_ACTIONS, seedPassengers } from "./bookingReducer";
 import { initialState, MAX_PASSENGERS } from "./bookingState";
 import { validateBookingForm, getPassengerType } from "./bookingValidation";
 import { getUnitPrices, getTotalPrice } from "./bookingPrices";
 
-const buildInitialState = (prefill) => ({
-    ...initialState,
-    contact: { ...initialState.contact, ...prefill },
-});
+const DRAFT_PREFIX = "vt_booking_draft_";
+
+const loadDraft = (tourId) => {
+    try {
+        const raw = localStorage.getItem(DRAFT_PREFIX + tourId);
+        return raw ? JSON.parse(raw) : null;
+    } catch {
+        return null;
+    }
+};
+
+const clearDraft = (tourId) => {
+    try {
+        localStorage.removeItem(DRAFT_PREFIX + tourId);
+    } catch {
+        // bỏ qua khi localStorage không khả dụng
+    }
+};
+
+const buildInitialState = (prefill, tourId) => {
+    const draft = loadDraft(tourId);
+    if (draft) {
+        return {
+            ...initialState,
+            contact: { ...initialState.contact, ...draft.contact },
+            departureId: draft.departureId ?? initialState.departureId,
+            adults: draft.adults ?? initialState.adults,
+            children: draft.children ?? initialState.children,
+            passengers: seedPassengers(draft.passengers, draft.adults + draft.children),
+        };
+    }
+    return {
+        ...initialState,
+        contact: { ...initialState.contact, ...prefill },
+    };
+};
 
 export default function useBookingForm(tour, departures, prefill = {}, onSubmit) {
-    const [state, dispatch] = useReducer(bookingReducer, undefined, () => buildInitialState(prefill));
+    const [state, dispatch] = useReducer(bookingReducer, undefined, () =>
+        buildInitialState(prefill, tour?.id ? String(tour.id) : ""),
+    );
     const [errors, setErrors] = useState({});
     const [touched, setTouched] = useState({});
     const [submitted, setSubmitted] = useState(false);
 
+    const hasDraft = useMemo(
+        () => Boolean(tour?.id && loadDraft(String(tour.id))),
+        [tour],
+    );
+
     useEffect(() => {
+        if (hasDraft) return;
         for (const [field, value] of Object.entries(prefill)) {
             if (!value) continue;
             dispatch({ type: BOOKING_ACTIONS.SET_CONTACT, field, value });
         }
-    }, [prefill]);
+    }, [prefill, hasDraft]);
+
+    useEffect(() => {
+        if (!tour?.id) return;
+        const data = {
+            contact: state.contact,
+            departureId: state.departureId,
+            adults: state.adults,
+            children: state.children,
+            passengers: state.passengers,
+        };
+        const timer = setTimeout(() => {
+            try {
+                localStorage.setItem(DRAFT_PREFIX + String(tour.id), JSON.stringify(data));
+            } catch {
+                // lưu nháp không bắt buộc
+            }
+        }, 300);
+        return () => clearTimeout(timer);
+    }, [state, tour?.id]);
 
     const departure = useMemo(
         () => departures.find((d) => d.id == state.departureId) || null,
@@ -53,12 +112,14 @@ export default function useBookingForm(tour, departures, prefill = {}, onSubmit)
             contact_gender: state.contact.gender,
             contact_email: state.contact.email,
             note: state.contact.note,
-            passengers: Object.entries(state.passengers).map(([index, pax]) => ({
-                name: pax.name,
-                gender: pax.gender,
-                dob: pax.dob,
-                type: getPassengerType(Number(index), state.adults),
-            })),
+            passengers: Object.entries(state.passengers)
+                .filter(([index]) => Number(index) < state.adults + state.children)
+                .map(([index, pax]) => ({
+                    name: pax.name,
+                    gender: pax.gender,
+                    dob: pax.dob,
+                    type: getPassengerType(Number(index), state.adults),
+                })),
         }),
         [state],
     );
@@ -109,10 +170,11 @@ export default function useBookingForm(tour, departures, prefill = {}, onSubmit)
             setErrors(nextErrors);
             setSubmitted(true);
             if (Object.keys(nextErrors).length > 0) return false;
+            if (tour?.id) clearDraft(String(tour.id));
             onSubmit(payload);
             return true;
         },
-        [validate, payload, onSubmit],
+        [validate, payload, onSubmit, tour],
     );
 
     const reset = useCallback(() => {

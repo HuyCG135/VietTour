@@ -4,7 +4,6 @@ import { formatVnd } from "./bookingPrices.js";
 export default function BookingSummaryCard({
     tour,
     departure,
-    adults,
     children,
     paxCount,
     total,
@@ -34,7 +33,7 @@ export default function BookingSummaryCard({
                 </div>
                 {departure && (
                     <div className="flex items-center justify-between py-1.5 text-sm">
-                        <span className="text-muted font-medium">Ngày &amp; điểm đón</span>
+                        <span className="text-muted font-medium">Ngày & điểm đón</span>
                         <span className="font-bold text-foreground">
                             {new Date(departure.departure_date + "T00:00:00").toLocaleDateString("vi-VN")} · {departure.departure_location}
                         </span>
@@ -42,12 +41,12 @@ export default function BookingSummaryCard({
                 )}
                 <div className="flex items-center justify-between py-1.5 text-sm">
                     <span className="text-muted font-medium">Đơn giá người lớn</span>
-                    <span className="font-bold text-primary">{formatVnd(unitPrices.adult)}</span>
+                    <span className="font-bold text-primary-dark">{formatVnd(unitPrices.adult)}</span>
                 </div>
                 {children > 0 && (
                     <div className="flex items-center justify-between py-1.5 text-sm">
                         <span className="text-muted font-medium">Đơn giá trẻ em</span>
-                        <span className="font-bold text-primary">{formatVnd(unitPrices.child)}</span>
+                        <span className="font-bold text-primary-dark">{formatVnd(unitPrices.child)}</span>
                     </div>
                 )}
             </div>
@@ -67,16 +66,30 @@ export default function BookingSummaryCard({
             <button
                 type="submit"
                 disabled={!canBook}
-                className="mt-5 w-full flex items-center justify-center gap-2 rounded-2xl bg-primary px-4 py-4 text-base font-bold text-white transition-colors duration-150 hover:bg-primary-dark active:bg-primary-dark cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                className="mt-5 hidden lg:flex w-full items-center justify-center gap-2 rounded-2xl bg-primary px-4 py-4 text-base font-bold text-white transition-colors duration-150 hover:bg-primary-dark active:bg-primary-dark cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-primary disabled:active:bg-primary"
             >
-                XÁC NHẬN ĐẶT TOUR
+                Đặt chỗ ({paxCount} hành khách)
                 <i className="fa-solid fa-circle-check text-sm" />
             </button>
 
             <p className="mt-4 flex items-center justify-center gap-1.5 text-xs text-muted text-center">
                 <i className="fa-solid fa-lock text-success" />
-                Thanh toán an tâm &amp; bảo mật
+                Ghi nhận đơn miễn phí · thanh toán VNPay ở bước tiếp theo
             </p>
+
+            <div className="mt-4 rounded-xl bg-slate-50 p-3 text-xs">
+                <p className="flex items-center gap-1.5 font-semibold text-foreground">
+                    <i className="fa-solid fa-phone text-primary" />
+                    Cần hỗ trợ đặt tour?
+                </p>
+                <p className="mt-1 text-muted leading-relaxed">
+                    Gọi{" "}
+                    <a href="tel:19001234" className="no-underline font-semibold text-primary hover:text-primary-dark">
+                        1900 1234
+                    </a>{" "}
+                    — điều kiện huỷ/đổi được niêm yết tại trang chi tiết tour.
+                </p>
+            </div>
         </div>
     );
 }

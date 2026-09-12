@@ -1,5 +1,6 @@
 import React from "react";
-import FormField, { getSelectClass } from "./FormField.jsx";
+import FormField from "./FormField.jsx";
+import { getSelectClass } from "./formClasses.js";
 import QuantityStepper from "./QuantityStepper.jsx";
 
 export default function BookingDetailsForm({
@@ -10,7 +11,6 @@ export default function BookingDetailsForm({
     children,
     maxAdults,
     maxChildren,
-    paxCount,
     setDeparture,
     setAdults,
     setChildren,

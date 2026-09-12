@@ -8,7 +8,7 @@ const QuantityStepper = memo(function QuantityStepper({ label, hint, value, min 
         <div className="flex flex-col gap-1.5">
             <label className="text-sm font-medium text-muted">
                 {label}
-                {hint && <span className="ml-1.5 text-xs text-primary font-medium">{hint}</span>}
+                {hint && <span className="ml-1.5 text-xs text-muted font-medium">{hint}</span>}
             </label>
             <div className="flex items-stretch gap-2">
                 <button
@@ -23,6 +23,7 @@ const QuantityStepper = memo(function QuantityStepper({ label, hint, value, min 
                 <input
                     type="number"
                     inputMode="numeric"
+                    aria-label={`${label}${hint ? ` ${hint}` : ""}`}
                     value={value}
                     min={min}
                     max={max}

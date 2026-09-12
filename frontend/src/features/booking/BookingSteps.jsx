@@ -1,51 +1,72 @@
-import React from "react";
 import { Link } from "react-router-dom";
 
-export default function BookingSteps({ tourCoverImage, tourName }) {
-    return (
-        <header className="relative overflow-hidden bg-foreground text-white">
-            {tourCoverImage && (
-                <div
-                    className="absolute inset-0 bg-cover bg-center blur-xl scale-110 brightness-50"
-                    aria-hidden="true"
-                    style={{ backgroundImage: `url(${tourCoverImage})` }}
-                />
-            )}
-            <div className="absolute inset-0 bg-linear-to-b from-transparent via-transparent to-foreground/30" aria-hidden="true" />
+const STEPS = [
+    { number: "01", title: "Thông tin & Đặt chỗ" },
+    { number: "02", title: "Ghi nhận đơn" },
+    { number: "03", title: "Thanh toán VNPay" },
+];
 
-            <div className="relative z-10 max-w-7xl mx-auto px-6 pt-32 pb-14 sm:pb-16 lg:mt-10">
-                <nav aria-label="breadcrumb" className="flex flex-wrap items-center gap-1.5 text-sm text-white/60 mb-6">
-                    <Link to="/" className="hover:text-white transition-colors no-underline">VietTour</Link>
-                    <i className="fa-solid fa-angle-right text-[10px] text-white/30" aria-hidden="true" />
+export default function BookingSteps({ tourName }) {
+    return (
+        <header className="relative bg-surface border-b border-border">
+            <div className="mx-auto max-w-7xl px-6 pt-[78px] sm:pt-[84px] pb-6 sm:pb-8">
+                <nav aria-label="breadcrumb" className="mb-3 flex flex-wrap items-center gap-1.5 text-sm text-muted">
+                    <Link to="/" className="no-underline font-medium text-muted hover:text-primary transition-colors">
+                        VietTour
+                    </Link>
+                    <i className="fa-solid fa-angle-right text-[10px] text-primary/40" aria-hidden="true" />
+                    <Link to="/tours" className="no-underline font-medium text-muted hover:text-primary transition-colors">
+                        Tour du lịch
+                    </Link>
+                    <i className="fa-solid fa-angle-right text-[10px] text-primary/40" aria-hidden="true" />
                     {tourName && (
                         <>
-                            <Link to="/tours" className="hover:text-white transition-colors no-underline">Tour du lịch</Link>
-                            <i className="fa-solid fa-angle-right text-[10px] text-white/30" aria-hidden="true" />
-                            <span className="font-semibold text-white truncate max-w-[200px] sm:max-w-[340px]">{tourName}</span>
-                            <i className="fa-solid fa-angle-right text-[10px] text-white/30" aria-hidden="true" />
+                            <span className="font-semibold text-foreground truncate max-w-[180px] sm:max-w-[320px]">
+                                {tourName}
+                            </span>
+                            <i className="fa-solid fa-angle-right text-[10px] text-primary/40" aria-hidden="true" />
                         </>
                     )}
-                    <span className="font-bold text-white" aria-current="page">Đặt tour</span>
+                    <span className="font-bold text-primary" aria-current="page">
+                        Đặt tour
+                    </span>
                 </nav>
 
-                <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight leading-snug mb-8">
+                <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground">
                     Hoàn tất đặt tour
                 </h1>
+                <p className="mt-2 max-w-xl text-sm sm:text-base text-muted leading-relaxed">
+                    Ghi nhận đơn không thu phí — thanh toán VNPay được thực hiện ở bước tiếp theo.
+                </p>
 
-                <div className="flex items-center gap-3 text-sm">
-                    <div className="flex items-center gap-2.5">
-                        <span className="flex items-center justify-center w-10 h-10 rounded-xl bg-white text-primary font-extrabold">
-                            01
-                        </span>
-                        <span className="font-bold text-white">Thông tin &amp; Đặt chỗ</span>
+                <div className="mt-6 sm:mt-8">
+                    <div className="flex items-center gap-1.5" aria-hidden="true">
+                        {STEPS.map((step, index) => (
+                            <span
+                                key={step.number}
+                                className={`h-1.5 rounded-full transition-colors duration-300 ${
+                                    index === 0 ? "flex-[1.15] bg-primary" : "flex-1 bg-border"
+                                }`}
+                            />
+                        ))}
                     </div>
-                    <span className="text-white/20">••••</span>
-                    <div className="flex items-center gap-2.5 opacity-40">
-                        <span className="flex items-center justify-center w-10 h-10 rounded-xl bg-white/20 font-extrabold text-white">
-                            02
-                        </span>
-                        <span className="font-bold">Thanh toán</span>
-                    </div>
+                    <ol className="mt-3 grid grid-cols-3 gap-2 text-xs sm:text-sm" aria-label="Tiến trình đặt chỗ">
+                        {STEPS.map((step, index) => (
+                            <li
+                                key={step.number}
+                                className="min-w-0 text-center"
+                                aria-current={index === 0 ? "step" : undefined}
+                            >
+                                <span
+                                    className={`block truncate px-0.5 ${
+                                        index === 0 ? "font-bold text-foreground" : "font-medium text-muted"
+                                    }`}
+                                >
+                                    {step.number}. {step.title}
+                                </span>
+                            </li>
+                        ))}
+                    </ol>
                 </div>
             </div>
         </header>

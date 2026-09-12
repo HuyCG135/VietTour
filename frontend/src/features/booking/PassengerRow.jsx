@@ -1,5 +1,6 @@
 import React, { memo } from "react";
-import FormField, { getInputClass, getSelectClass } from "./FormField.jsx";
+import FormField from "./FormField.jsx";
+import { getInputClass, getSelectClass } from "./formClasses.js";
 import { GENDER_OPTIONS } from "./bookingState.js";
 
 const PassengerRow = memo(function PassengerRow({ index, label, type, data, setPassenger, fieldError }) {
@@ -9,8 +10,8 @@ const PassengerRow = memo(function PassengerRow({ index, label, type, data, setP
             <span
                 className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${
                     isAdult
-                        ? "bg-primary/10 text-primary"
-                        : "bg-info/10 text-info"
+                        ? "bg-primary/10 text-primary-dark"
+                        : "bg-warning/10 text-warning"
                 }`}
             >
                 Hành khách {index} ({label})

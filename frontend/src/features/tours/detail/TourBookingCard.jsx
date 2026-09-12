@@ -1,6 +1,8 @@
+import { Link } from "react-router-dom";
+
 const formatPrice = (value) => Number(value || 0).toLocaleString("vi-VN");
 
-const TourBookingCard = ({ priceDefault = 0, priceChild = 0, hotline = "1900 1234", departures = [] }) => {
+const TourBookingCard = ({ tourId, priceDefault = 0, priceChild = 0, hotline = "1900 1234", departures = [] }) => {
     return (
         <div className="rounded-2xl border border-slate-200 bg-surface p-6 shadow-[0_2px_10px_rgba(30,41,59,0.05)]">
             <div className="mb-5">
@@ -16,19 +18,12 @@ const TourBookingCard = ({ priceDefault = 0, priceChild = 0, hotline = "1900 123
 
             <div className="mb-5 border-t border-slate-100 pt-4">
                 <div className="flex items-center justify-between py-1.5">
-                    <span className="text-sm text-muted">Người lớn (Từ 12 tuổi)</span>
+                    <span className="text-sm text-muted">Người lớn (Từ 6 tuổi)</span>
                     <span className="text-sm font-bold text-foreground">{formatPrice(priceDefault)} đ</span>
                 </div>
                 <div className="flex items-center justify-between py-1.5">
-                    <span className="text-sm text-muted">Trẻ em (Từ 5 - 11 tuổi)</span>
+                    <span className="text-sm text-muted">Trẻ em (Dưới 6 tuổi)</span>
                     <span className="text-sm font-bold text-foreground">{formatPrice(priceChild)} đ</span>
-                </div>
-                <div className="flex items-center justify-between py-1.5">
-                    <span className="text-sm text-muted">Em bé (Dưới 5 tuổi)</span>
-                    <span className="inline-flex items-center gap-1.5 text-sm font-bold text-foreground">
-                        <i className="fa-solid fa-circle-check text-xs text-success" aria-hidden="true" />
-                        Miễn phí
-                    </span>
                 </div>
             </div>
 
@@ -50,13 +45,13 @@ const TourBookingCard = ({ priceDefault = 0, priceChild = 0, hotline = "1900 123
                 </div>
             )}
 
-            <button
-                type="button"
-                className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary-dark px-4 py-3.5 font-bold text-white transition-colors duration-150 hover:bg-primary active:bg-primary cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2"
+            <Link
+                to={tourId ? `/booking/${tourId}` : "/tours"}
+                className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary-dark px-4 py-3.5 font-bold text-white transition-colors duration-150 hover:bg-primary active:bg-primary cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 no-underline"
             >
                 Đặt tour ngay
                 <i className="fa-solid fa-arrow-right text-sm" aria-hidden="true" />
-            </button>
+            </Link>
 
             <div className="mt-5 rounded-xl bg-primary/5 p-4 text-center">
                 <h3 className="text-sm font-bold text-foreground">Cần tư vấn thêm?</h3>

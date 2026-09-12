@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Link, Navigate, useLocation, useParams } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
+import { Link, Navigate, useLocation } from "react-router-dom";
 import useAuth from "../../hooks/useAuth.js";
 import BookingSteps from "./BookingSteps.jsx";
 import ContactInfoForm from "./ContactInfoForm.jsx";
@@ -17,10 +17,14 @@ const getContactPrefill = (user) => ({
 });
 
 export default function BookingPage() {
-    const { tourId } = useParams();
     const location = useLocation();
     const { isAuthenticated, user } = useAuth();
     const [success, setSuccess] = useState(null);
+    const successTitleRef = useRef(null);
+
+    useEffect(() => {
+        if (success) successTitleRef.current?.focus();
+    }, [success]);
 
     const tour = MOCK_TOUR;
     const departures = MOCK_TOUR_DEPARTURES;
@@ -43,11 +47,7 @@ export default function BookingPage() {
     const canBook = user?.role === "customer";
 
     const {
-        contact,
-        departureId,
-        adults,
-        children,
-        passengers,
+        state,
         departure,
         unitPrices,
         total,
@@ -64,20 +64,30 @@ export default function BookingPage() {
         fieldError,
     } = form;
 
+    const { contact, departureId, adults, children, passengers } = state;
+
     return (
-        <div className="pb-16">
-            <BookingSteps tourCoverImage={tour.cover_image} tourName={tour.name} />
+        <div className="pb-32 lg:pb-16">
+            <BookingSteps tourName={tour.name} />
             <main className="max-w-7xl mx-auto px-6">
                 {canBook && success && (
-                    <div className="max-w-2xl mx-auto -mt-10 rounded-3xl border border-success/30 bg-surface p-8 sm:p-10 shadow-[0_2px_10px_rgba(30,41,59,0.05)] text-center">
+                    <div
+                        role="status"
+                        aria-live="polite"
+                        className="max-w-2xl mx-auto -mt-10 rounded-3xl border border-success/30 bg-surface p-8 sm:p-10 shadow-[0_2px_10px_rgba(30,41,59,0.05)] text-center"
+                    >
                         <span className="mx-auto flex w-16 h-16 items-center justify-center rounded-full bg-success/10 text-success text-2xl">
                             <i className="fa-solid fa-circle-check" />
                         </span>
-                        <h2 className="mt-5 text-2xl font-extrabold text-foreground">Đặt tour thành công</h2>
+                        <h2 ref={successTitleRef} tabIndex={-1} className="mt-5 text-2xl font-extrabold text-foreground outline-none">
+                            Đặt tour ghi nhận thành công
+                        </h2>
                         <p className="mt-2 text-muted">
                             Đơn <strong className="text-foreground">{success.code}</strong> cho{" "}
-                            <strong className="text-foreground">{success.pax} hành khách</strong> đang được xác nhận.
-                            Chúng tôi sẽ liên hệ {success.contact_name} để hoàn tất thanh toán.
+                            <strong className="text-foreground">{success.pax} hành khách</strong> đã được ghi nhận.
+                        </p>
+                        <p className="mt-1 text-muted">
+                            Bước tiếp theo: hoàn tất thanh toán để xác nhận chỗ của {success.contact_name}.
                         </p>
                         <p className="mt-4 text-2xl font-extrabold text-primary">{formatVnd(success.total)}</p>
                         <div className="mt-7 flex flex-col sm:flex-row items-center justify-center gap-3">
@@ -113,7 +123,7 @@ export default function BookingPage() {
 
                 {(!canBook || (canBook && !success)) && (
                     <form onSubmit={handleSubmit} noValidate className="mt-8 grid grid-cols-1 lg:grid-cols-12 gap-8">
-                        <div className="lg:col-span-7 space-y-5 order-2 lg:order-1">
+                        <div className="lg:col-span-7 space-y-5">
                             <ContactInfoForm
                                 contact={contact}
                                 setContact={setContact}
@@ -128,7 +138,6 @@ export default function BookingPage() {
                                 children={children}
                                 maxAdults={maxAdults}
                                 maxChildren={maxChildren}
-                                paxCount={paxCount}
                                 setDeparture={setDeparture}
                                 setAdults={setAdults}
                                 setChildren={setChildren}
@@ -143,7 +152,7 @@ export default function BookingPage() {
                             />
                         </div>
 
-                        <div className="lg:col-span-5 order-1 lg:order-2 lg:sticky lg:top-28 lg:self-start">
+                        <div className="lg:col-span-5 lg:sticky lg:top-28 lg:self-start">
                             <BookingSummaryCard
                                 tour={tour}
                                 departure={departure}
@@ -154,6 +163,27 @@ export default function BookingPage() {
                                 unitPrices={unitPrices}
                                 canBook={canBook}
                             />
+                        </div>
+
+                        <div className="lg:hidden fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-surface/95 px-4 py-3 shadow-[0_-2px_10px_rgba(30,41,59,0.08)]">
+                            <div className="flex items-center justify-between gap-4">
+                                <div className="min-w-0">
+                                    <p className="text-xs text-muted truncate">
+                                        Tổng tiền
+                                        {departure &&
+                                            ` · Khởi hành ${new Date(departure.departure_date + "T00:00:00").toLocaleDateString("vi-VN")}`}
+                                    </p>
+                                    <p className="text-lg font-extrabold text-primary truncate">{formatVnd(total)}</p>
+                                </div>
+                                <button
+                                    type="submit"
+                                    disabled={!canBook}
+                                    className="inline-flex shrink-0 items-center gap-2 rounded-xl bg-primary px-5 py-3 font-bold text-white transition-colors duration-150 hover:bg-primary-dark cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-primary"
+                                >
+                                    Đặt chỗ ({paxCount} hành khách)
+                                    <i className="fa-solid fa-circle-check text-sm" />
+                                </button>
+                            </div>
                         </div>
                     </form>
                 )}

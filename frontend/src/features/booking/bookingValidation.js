@@ -51,7 +51,9 @@ export const validateBookingForm = (state, tour, departure) => {
         errors.pax = `Lịch khởi hành này chỉ còn ${departure.seats_available} chỗ`;
     }
 
+    const paxCount = adults + children;
     for (const [index, pax] of Object.entries(passengers)) {
+        if (Number(index) >= paxCount) continue;
         const isAdult = getPassengerType(Number(index), adults) === "adult";
         if (!pax.name.trim()) {
             errors[`ps_name_${index}`] = "Vui lòng nhập họ tên";

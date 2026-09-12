@@ -13,10 +13,10 @@ const clampQty = (type, value) => {
     return type === "adults" ? Math.max(1, num) : Math.max(0, num);
 };
 
-const resizePassengers = (passengers, total) => {
-    const next = {};
-    for (const [index, pax] of Object.entries(passengers)) {
-        if (Number(index) <= total) next[index] = pax;
+export const seedPassengers = (passengers, total) => {
+    const next = { ...passengers };
+    for (let i = 0; i < total; i++) {
+        if (!next[i]) next[i] = { name: "", gender: GENDER_OPTIONS[0], dob: "" };
     }
     return next;
 };
@@ -37,7 +37,7 @@ export default function bookingReducer(state, action) {
                 ...state,
                 adults,
                 children,
-                passengers: resizePassengers(state.passengers, adults + children),
+                passengers: seedPassengers(state.passengers, adults + children),
             };
         }
         case BOOKING_ACTIONS.SET_PASSENGER:

@@ -72,12 +72,12 @@ const TourHeader = ({ tour, onShare, onToggleFavorite, isFavorite }) => {
                             }`}
                         />
                     </button>
-                    <button
-                        type="button"
-                        className="hidden md:inline-flex items-center gap-2 bg-primary hover:bg-primary-dark text-white font-bold px-6 py-2.5 rounded-full transition-colors duration-150 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2"
+                    <Link
+                        to={`/booking/${tour.id}`}
+                        className="hidden md:inline-flex items-center gap-2 bg-primary hover:bg-primary-dark text-white font-bold px-6 py-2.5 rounded-full transition-colors duration-150 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 no-underline"
                     >
                         Đặt Tour ngay
-                    </button>
+                    </Link>
                 </div>
             </div>
         </div>

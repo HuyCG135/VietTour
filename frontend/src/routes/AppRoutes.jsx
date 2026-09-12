@@ -4,6 +4,7 @@ import MainLayout from "../layouts/MainLayout";
 import Home from "../pages/Home";
 import TourList from "../features/tours/TourList";
 import TourDetail from "../features/tours/TourDetail";
+import BookingPage from "../features/booking/BookingPage";
 import Login from "../features/auth/Login";
 import Register from "../features/auth/Register";
 import ForgotPassword from "../features/auth/ForgotPassword";
@@ -30,6 +31,7 @@ export default function AppRoutes() {
                     <Route path="/" element={<Home />} />
                     <Route path="/tours" element={<TourList />} />
                     <Route path="/tours/:id" element={<TourDetail />} />
+                    <Route path="/booking/:tourId" element={<BookingPage />} />
                     <Route path="/about" element={<About />} />
                     <Route path="/contact" element={<Contact />} />
 

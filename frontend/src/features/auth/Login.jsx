@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { login } from "./auth.api";
 import bgLogin from "../../assets/images/bgLogin.jpg";
 
@@ -10,6 +10,9 @@ export default function Login() {
     const [showPwd, setShowPwd] = useState(false);
     const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
+    const redirect = searchParams.get("redirect");
+    const redirectTarget = redirect && redirect.startsWith("/") ? redirect : "/";
 
     const validateField = (name, value) => {
         switch (name) {
@@ -61,7 +64,7 @@ export default function Login() {
             if (data.success) {
                 localStorage.setItem("token", data?.data?.token || "");
                 localStorage.setItem("user", JSON.stringify(data?.data?.user || null));
-                navigate("/");
+                navigate(redirectTarget);
             } else {
                 setMessage({ text: data.message || "Đăng nhập thất bại.", type: "danger" });
             }

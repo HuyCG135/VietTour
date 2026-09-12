@@ -119,6 +119,7 @@ const TourDetail = () => {
 
                 <aside className="order-first lg:order-none lg:col-span-4 lg:sticky lg:top-24">
                     <TourBookingCard
+                        tourId={tour.id}
                         priceDefault={tour.price_default}
                         priceChild={tour.price_child}
                         hotline="1900 1234"
