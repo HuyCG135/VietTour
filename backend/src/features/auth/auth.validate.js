@@ -78,6 +78,39 @@ export const validateLogin = (req, res, next) => {
     next();
 };
 
+export const validateProfile = (req, res, next) => {
+    const { fullname, phone, address } = req.body;
+    const errors = [];
+
+    if (!fullname || fullname.trim().length === 0) {
+        errors.push("Họ và tên không được để trống");
+    } else if (fullname.trim().length < 2) {
+        errors.push("Họ và tên phải có ít nhất 2 ký tự");
+    } else if (fullname.trim().length > 50) {
+        errors.push("Họ và tên không được vượt quá 50 ký tự");
+    }
+
+    if (!phone || phone.trim().length === 0) {
+        errors.push("Số điện thoại không được để trống");
+    } else if (!/^0[0-9]{9}$/.test(phone)) {
+        errors.push("Số điện thoại không hợp lệ (bắt đầu bằng 0 và có đúng 10 chữ số)");
+    }
+
+    if (address && address.trim().length > 255) {
+        errors.push("Địa chỉ không được vượt quá 255 ký tự");
+    }
+
+    if (errors.length > 0) {
+        return res.status(400).json({
+            success: false,
+            message: "Dữ liệu không hợp lệ",
+            errors: errors,
+        });
+    }
+
+    next();
+};
+
 export const validateChangePassword = (req, res, next) => {
     const { currentPassword, newPassword, confirmPassword } = req.body;
     const errors = [];

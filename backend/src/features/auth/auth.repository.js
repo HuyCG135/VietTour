@@ -1,32 +1,39 @@
 import bcrypt from "bcryptjs";
-import db from "../../config/db.js";
+import db from "../../config/knex.js";
 
 class User {
     static async findByEmail(email) {
-        const [rows] = await db.query("SELECT * FROM users WHERE email = ?", [email]);
-        return rows[0];
+        return db("users").where("email", email).first();
     }
 
     static async findByPhone(phone) {
-        const [rows] = await db.query("SELECT * FROM users WHERE phone = ?", [phone]);
-        return rows[0];
+        return db("users").where("phone", phone).first();
     }
 
     static async findByEmailOrPhone(value) {
-        const [rows] = await db.query("SELECT * FROM users WHERE email = ? OR phone = ?", [value, value]);
-        return rows[0];
+        return db("users").where("email", value).orWhere("phone", value).first();
     }
 
     static async findById(id) {
-        const [rows] = await db.query("SELECT id, fullname, phone, email, role, is_verified, created_at FROM users WHERE id = ?", [id]);
-        return rows[0];
+        return db("users")
+            .select("id", "fullname", "phone", "email", "address", "role", "is_verified", "created_at")
+            .where("id", id)
+            .first();
     }
 
     static async create(userData) {
         const { fullname, phone, email, password, role = "customer", is_verified = false } = userData;
         const hashedPassword = await bcrypt.hash(password, 10);
-        const [result] = await db.query("INSERT INTO users (fullname, phone, email, password, role, is_verified, created_at) VALUES (?, ?, ?, ?, ?, ?, NOW())", [fullname, phone, email, hashedPassword, role, is_verified ? 1 : 0]);
-        return result.insertId;
+        const [insertId] = await db("users").insert({
+            fullname,
+            phone,
+            email,
+            password: hashedPassword,
+            role,
+            is_verified: is_verified ? 1 : 0,
+            created_at: db.fn.now(),
+        });
+        return insertId;
     }
 
     static async comparePassword(plainPassword, hashedPassword) {
@@ -34,22 +41,25 @@ class User {
     }
 
     static async update(id, userData) {
-        const { fullname, phone } = userData;
-        const [result] = await db.query("UPDATE users SET fullname = ?, phone = ? WHERE id = ?", [fullname, phone, id]);
-        return result.affectedRows > 0;
+        const { fullname, phone, address = null } = userData;
+        const result = await db("users")
+            .where("id", id)
+            .update({ fullname, phone, address, updated_at: db.fn.now() });
+        return result > 0;
     }
 
     static async updatePassword(id, newPassword) {
         const hashedPassword = await bcrypt.hash(newPassword, 10);
-        const [result] = await db.query("UPDATE users SET password = ? WHERE id = ?", [hashedPassword, id]);
-        return result.affectedRows > 0;
+        const result = await db("users")
+            .where("id", id)
+            .update({ password: hashedPassword, updated_at: db.fn.now() });
+        return result > 0;
     }
 
     static async verifyEmail(id) {
-        const [result] = await db.query("UPDATE users SET is_verified = 1 WHERE id = ?", [id]);
-        return result.affectedRows > 0;
+        const result = await db("users").where("id", id).update({ is_verified: 1 });
+        return result > 0;
     }
-
 }
 
 export default User;

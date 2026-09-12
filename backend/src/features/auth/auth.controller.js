@@ -149,6 +149,7 @@ export const getProfile = async (req, res) => {
                 fullname: user.fullname,
                 phone: user.phone,
                 email: user.email,
+                address: user.address || "",
                 role: user.role,
                 created_at: user.created_at,
             },
@@ -165,12 +166,13 @@ export const getProfile = async (req, res) => {
 
 export const updateProfile = async (req, res) => {
     try {
-        const { fullname, phone } = req.body;
+        const { fullname, phone, address } = req.body;
         const userId = req.user.id;
 
         const updated = await User.update(userId, {
             fullname: fullname || req.user.fullname,
             phone: phone || req.user.phone,
+            address: (address && address.trim()) || null,
         });
 
         if (!updated) {
@@ -190,6 +192,7 @@ export const updateProfile = async (req, res) => {
                 fullname: updatedUser.fullname,
                 phone: updatedUser.phone,
                 email: updatedUser.email,
+                address: updatedUser.address || "",
                 role: updatedUser.role,
             },
         });
