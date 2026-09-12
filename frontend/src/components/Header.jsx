@@ -22,12 +22,12 @@ export default function Header() {
 
     const navLinkClass = ({ isActive }) =>
         `no-underline font-medium px-2 py-1 transition-colors ${
-            isActive ? "text-blue-600 border-b-2 border-blue-600" : "text-gray-700 hover:text-blue-600"
+            isActive ? "text-primary border-b-2 border-primary" : "text-muted hover:text-primary"
         }`;
 
     return (
-        <header className="fixed top-0 left-0 right-0 z-50 flex h-[70px] items-center justify-between border-b border-gray-200 px-12 bg-white/80 backdrop-blur-sm">
-            <Link to="/" className="flex items-center gap-3 no-underline text-gray-800">
+        <header className="fixed top-0 left-0 right-0 z-50 flex h-[70px] items-center justify-between border-b border-border px-12 bg-surface/80 backdrop-blur-sm">
+            <Link to="/" className="flex items-center gap-3 no-underline text-foreground">
                 <img className="mr-2" src={logoIcon} alt="VietTour" width="32" height="32" />
                 <h2 className="text-lg font-bold mb-0">VietTour</h2>
             </Link>
@@ -48,16 +48,16 @@ export default function Header() {
                         <Link to="/user/profile" className="rounded-full overflow-hidden block" style={{ width: 40, height: 40 }} title="Thông tin cá nhân">
                             <img src={defaultAvatar} alt="Avatar" className="w-full h-full object-cover" />
                         </Link>
-                        <button onClick={handleLogout} className="hidden sm:inline-flex items-center bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold rounded-full px-6 py-2 border border-gray-300 transition-colors cursor-pointer">
+                        <button onClick={handleLogout} className="hidden sm:inline-flex items-center bg-primary-50 hover:bg-primary-100 text-primary font-bold rounded-full px-6 py-2 border border-primary-100 transition-colors cursor-pointer">
                             Đăng xuất
                         </button>
                     </>
                 ) : (
                     <>
-                        <Link to="/login" className="hidden sm:inline-flex items-center bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-full px-6 py-2 transition-colors">
+                        <Link to="/login" className="hidden sm:inline-flex items-center bg-primary hover:bg-primary-dark text-white font-bold rounded-full px-6 py-2 transition-colors">
                             Đăng nhập
                         </Link>
-                        <Link to="/register" className="hidden sm:inline-flex items-center bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold rounded-full px-6 py-2 border border-gray-300 transition-colors">
+                        <Link to="/register" className="hidden sm:inline-flex items-center bg-primary-50 hover:bg-primary-100 text-primary font-bold rounded-full px-6 py-2 border border-primary-100 transition-colors">
                             Đăng ký
                         </Link>
                     </>
