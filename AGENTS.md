@@ -43,7 +43,8 @@ Seed structure (`backend/db/`):
 
 > ✅ **Repository dùng Knex query builder** (`src/config/knex.js`), khớp schema mới (`price_default`, `cover_image`, `departure_id`, `adults`/`children`, `contact_*`).
 >
-> ⚠️ **Còn lệch:** `validateBooking`/`validateTour` (`src/features/booking/booking.validate.js`, `src/features/tour/tour.validate.js`) và `booking.service.js` (`createBookingService`) vẫn dùng field cũ (`price`, `tour_id`, `number_of_people`). Sửa tiếp thì khớp về schema mới. Schema chuẩn là `db.sql` + migration.
+> ⚠️ **Còn lệch:** `validateTour` (`src/features/tour/tour.validate.js`) vẫn dùng field cũ (`price`). `bookings` đã khớp schema mới (`departure_id`, `adults`/`children`, `contact_*`, `payment_status`); bảng `passengers` thêm qua migration `20260912_000014_create_passengers.js` (PK `booking_id` → `bookings(id)` ON DELETE CASCADE, `gender` ENUM('Nam','Nữ','Khác'), `passenger_type` ENUM('adult','child'), `dob` nullable).
+> - VNPay: dùng package `vnpay@^2.5.0`; endpoints trong `booking.payment.controller.js` (`POST /create-payment-url`, `GET /vnpay-return` — route public, đặt trước route param). Env cần: `VNP_TMN_CODE`, `VNP_SECURE_SECRET`, `VNP_HOST`, `VNP_RETURN_URL` (xem `backend/.env`). Flow: **tạo booking `unpaid/pending` trước → tạo URL VNPay → callback xác nhận `paid/confirmed`**.
 - Env backend bắt buộc: `JWT_SECRET`, `DB_*`. Khác: `PORT`, `VERIFY_EMAIL_SECRET`, `RESET_PASS_SECRET`, `FRONTEND_URL`, `SMTP_*` (email không bắt buộc — nếu thiếu SMTP, link verify/reset chỉ log ra console).
 - Frontend: `VITE_API_URL` (mặc định `/api`).
 - **Không có** `.env.example` trong repo — nếu cần tạo từ `process.env.*` / `import.meta.env.*` trong code.

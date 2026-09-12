@@ -9,7 +9,7 @@ const STEPS = [
 export default function BookingSteps({ tourName }) {
     return (
         <header className="relative bg-surface border-b border-border">
-            <div className="mx-auto max-w-7xl px-6 pt-[78px] sm:pt-[84px] pb-6 sm:pb-8">
+            <div className="mx-auto max-w-7xl px-6 pt-8 pb-6 sm:pb-8">
                 <nav aria-label="breadcrumb" className="mb-3 flex flex-wrap items-center gap-1.5 text-sm text-muted">
                     <Link to="/" className="no-underline font-medium text-muted hover:text-primary transition-colors">
                         VietTour

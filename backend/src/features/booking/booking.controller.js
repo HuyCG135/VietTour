@@ -25,7 +25,7 @@ const handleError = (res, error, fallbackMessage) => {
 
 export const createBooking = async (req, res) => {
     try {
-        const booking = await createBookingService(req.user.id, req.body);
+        const booking = await createBookingService(req.user.id, req.user.role, req.body);
 
         res.status(201).json({
             success: true,

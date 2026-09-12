@@ -1,193 +1,98 @@
-import { useEffect, useRef, useState } from "react";
-import { Link, Navigate, useLocation } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Link, Navigate, useLocation, useParams } from "react-router-dom";
 import useAuth from "../../hooks/useAuth.js";
-import BookingSteps from "./BookingSteps.jsx";
-import ContactInfoForm from "./ContactInfoForm.jsx";
-import BookingDetailsForm from "./BookingDetailsForm.jsx";
-import PassengerForms from "./PassengerForms.jsx";
-import BookingSummaryCard from "./BookingSummaryCard.jsx";
-import useBookingForm from "./useBookingForm.js";
-import { getTotalPrice, formatVnd } from "./bookingPrices.js";
-import { MOCK_TOUR, MOCK_TOUR_DEPARTURES } from "./booking.mock.js";
-
-const getContactPrefill = (user) => ({
-    name: user?.fullname || "",
-    phone: user?.phone || "",
-    email: user?.email || "",
-});
+import { getTourById } from "../tours/tour.api.js";
+import BookingFlow from "./BookingFlow.jsx";
 
 export default function BookingPage() {
+    const { tourId } = useParams();
     const location = useLocation();
     const { isAuthenticated, user } = useAuth();
-    const [success, setSuccess] = useState(null);
-    const successTitleRef = useRef(null);
+    const [tour, setTour] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState("");
+    const [reloadKey, setReloadKey] = useState(0);
 
     useEffect(() => {
-        if (success) successTitleRef.current?.focus();
-    }, [success]);
+        let cancelled = false;
 
-    const tour = MOCK_TOUR;
-    const departures = MOCK_TOUR_DEPARTURES;
+        const load = async () => {
+            setLoading(true);
+            setError("");
+            try {
+                const res = await getTourById(tourId);
+                if (cancelled) return;
+                if (!res.success) {
+                    throw new Error(res.message || "Không tải được dữ liệu tour.");
+                }
+                setTour(res.data);
+            } catch (err) {
+                if (!cancelled) setError(err.message || "Đã xảy ra lỗi khi tải dữ liệu.");
+            } finally {
+                if (!cancelled) setLoading(false);
+            }
+        };
 
-    const form = useBookingForm(tour, departures, getContactPrefill(user), (payload) => {
-        const selectedDeparture = departures.find((d) => d.id === payload.departure_id) || null;
-        setSuccess({
-            code: `#TOUR${String(tour.id).padStart(3, "0")}`,
-            pax: payload.adults + payload.children,
-            total: getTotalPrice(tour, selectedDeparture, payload.adults, payload.children),
-            contact_name: payload.contact_name,
-        });
-    });
+        load();
+
+        return () => {
+            cancelled = true;
+        };
+    }, [tourId, reloadKey]);
 
     if (!isAuthenticated) {
         const redirect = encodeURIComponent(location.pathname);
         return <Navigate to={`/login?redirect=${redirect}`} replace />;
     }
 
-    const canBook = user?.role === "customer";
+    if (loading) {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-[50vh] text-muted">
+                <i className="fa-solid fa-circle-notch fa-spin text-primary text-3xl" aria-hidden="true" />
+                <p className="mt-3 text-sm">Đang tải tour...</p>
+            </div>
+        );
+    }
 
-    const {
-        state,
-        departure,
-        unitPrices,
-        total,
-        paxCount,
-        maxAdults,
-        maxChildren,
-        setContact,
-        setDeparture,
-        setAdults,
-        setChildren,
-        setPassenger,
-        markTouched,
-        handleSubmit,
-        fieldError,
-    } = form;
-
-    const { contact, departureId, adults, children, passengers } = state;
-
-    return (
-        <div className="pb-32 lg:pb-16">
-            <BookingSteps tourName={tour.name} />
-            <main className="max-w-7xl mx-auto px-6">
-                {canBook && success && (
-                    <div
-                        role="status"
-                        aria-live="polite"
-                        className="max-w-2xl mx-auto -mt-10 rounded-3xl border border-success/30 bg-surface p-8 sm:p-10 shadow-[0_2px_10px_rgba(30,41,59,0.05)] text-center"
+    if (error) {
+        return (
+            <div className="max-w-xl mx-auto text-center py-24">
+                <i className="fa-solid fa-triangle-exclamation text-3xl text-warning" aria-hidden="true" />
+                <p className="mt-3 font-semibold text-foreground">Không thể tải tour</p>
+                <p className="mt-1 text-sm text-muted">{error}</p>
+                <div className="mt-5 flex items-center justify-center gap-3">
+                    <button
+                        type="button"
+                        onClick={() => setReloadKey((key) => key + 1)}
+                        className="rounded-full bg-primary px-6 py-2.5 font-bold text-white transition-colors duration-150 hover:bg-primary-dark cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2"
                     >
-                        <span className="mx-auto flex w-16 h-16 items-center justify-center rounded-full bg-success/10 text-success text-2xl">
-                            <i className="fa-solid fa-circle-check" />
-                        </span>
-                        <h2 ref={successTitleRef} tabIndex={-1} className="mt-5 text-2xl font-extrabold text-foreground outline-none">
-                            Đặt tour ghi nhận thành công
-                        </h2>
-                        <p className="mt-2 text-muted">
-                            Đơn <strong className="text-foreground">{success.code}</strong> cho{" "}
-                            <strong className="text-foreground">{success.pax} hành khách</strong> đã được ghi nhận.
-                        </p>
-                        <p className="mt-1 text-muted">
-                            Bước tiếp theo: hoàn tất thanh toán để xác nhận chỗ của {success.contact_name}.
-                        </p>
-                        <p className="mt-4 text-2xl font-extrabold text-primary">{formatVnd(success.total)}</p>
-                        <div className="mt-7 flex flex-col sm:flex-row items-center justify-center gap-3">
-                            <Link
-                                to="/tours"
-                                className="inline-flex items-center gap-2 rounded-xl bg-primary px-6 py-3 font-bold text-white transition-colors duration-150 hover:bg-primary-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2"
-                            >
-                                Xem các tour khác
-                                <i className="fa-solid fa-arrow-right text-sm" />
-                            </Link>
-                            <Link
-                                to={`/tours/${tour.id}`}
-                                className="inline-flex items-center gap-2 rounded-xl border border-slate-300 px-6 py-3 font-bold text-foreground transition-colors duration-150 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2"
-                            >
-                                Về trang tour
-                            </Link>
-                        </div>
-                    </div>
-                )}
+                        Thử lại
+                    </button>
+                    <Link
+                        to="/tours"
+                        className="rounded-full border border-slate-200 px-6 py-2.5 font-bold text-foreground transition-colors duration-150 hover:bg-slate-50 no-underline"
+                    >
+                        Về danh sách tour
+                    </Link>
+                </div>
+            </div>
+        );
+    }
 
-                {!canBook && (
-                    <div className="mt-8 flex items-start gap-3 rounded-2xl border border-warning/40 bg-surface p-4 shadow-[0_2px_10px_rgba(30,41,59,0.05)]">
-                        <i className="fa-regular fa-circle-exclamation mt-0.5 text-warning" />
-                        <div>
-                            <p className="font-bold text-foreground">Thông báo quyền hạn</p>
-                            <p className="mt-0.5 text-sm text-muted">
-                                Chỉ tài khoản khách hàng mới có thể đặt tour. Vui lòng đăng nhập bằng tài khoản khách
-                                hàng.
-                            </p>
-                        </div>
-                    </div>
-                )}
+    if (!tour) {
+        return (
+            <div className="max-w-xl mx-auto text-center py-24">
+                <i className="fa-solid fa-route text-3xl text-muted" aria-hidden="true" />
+                <p className="mt-3 font-semibold text-foreground">Chưa có thông tin tour</p>
+                <Link
+                    to="/tours"
+                    className="mt-5 inline-block rounded-full border border-slate-200 px-6 py-2.5 font-bold text-foreground transition-colors duration-150 hover:bg-slate-50 no-underline"
+                >
+                    Về danh sách tour
+                </Link>
+            </div>
+        );
+    }
 
-                {(!canBook || (canBook && !success)) && (
-                    <form onSubmit={handleSubmit} noValidate className="mt-8 grid grid-cols-1 lg:grid-cols-12 gap-8">
-                        <div className="lg:col-span-7 space-y-5">
-                            <ContactInfoForm
-                                contact={contact}
-                                setContact={setContact}
-                                markTouched={markTouched}
-                                fieldError={fieldError}
-                            />
-                            <BookingDetailsForm
-                                departures={departures}
-                                departureId={departureId}
-                                departure={departure}
-                                adults={adults}
-                                children={children}
-                                maxAdults={maxAdults}
-                                maxChildren={maxChildren}
-                                setDeparture={setDeparture}
-                                setAdults={setAdults}
-                                setChildren={setChildren}
-                                fieldError={fieldError}
-                            />
-                            <PassengerForms
-                                paxCount={paxCount}
-                                adults={adults}
-                                passengers={passengers}
-                                setPassenger={setPassenger}
-                                fieldError={fieldError}
-                            />
-                        </div>
-
-                        <div className="lg:col-span-5 lg:sticky lg:top-28 lg:self-start">
-                            <BookingSummaryCard
-                                tour={tour}
-                                departure={departure}
-                                adults={adults}
-                                children={children}
-                                paxCount={paxCount}
-                                total={total}
-                                unitPrices={unitPrices}
-                                canBook={canBook}
-                            />
-                        </div>
-
-                        <div className="lg:hidden fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-surface/95 px-4 py-3 shadow-[0_-2px_10px_rgba(30,41,59,0.08)]">
-                            <div className="flex items-center justify-between gap-4">
-                                <div className="min-w-0">
-                                    <p className="text-xs text-muted truncate">
-                                        Tổng tiền
-                                        {departure &&
-                                            ` · Khởi hành ${new Date(departure.departure_date + "T00:00:00").toLocaleDateString("vi-VN")}`}
-                                    </p>
-                                    <p className="text-lg font-extrabold text-primary truncate">{formatVnd(total)}</p>
-                                </div>
-                                <button
-                                    type="submit"
-                                    disabled={!canBook}
-                                    className="inline-flex shrink-0 items-center gap-2 rounded-xl bg-primary px-5 py-3 font-bold text-white transition-colors duration-150 hover:bg-primary-dark cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-primary"
-                                >
-                                    Đặt chỗ ({paxCount} hành khách)
-                                    <i className="fa-solid fa-circle-check text-sm" />
-                                </button>
-                            </div>
-                        </div>
-                    </form>
-                )}
-            </main>
-        </div>
-    );
+    return <BookingFlow user={user} tour={tour} />;
 }

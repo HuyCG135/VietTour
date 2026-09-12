@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useReducer, useState } from "react";
+import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from "react";
 import bookingReducer, { BOOKING_ACTIONS, seedPassengers } from "./bookingReducer";
 import { initialState, MAX_PASSENGERS } from "./bookingState";
 import { validateBookingForm, getPassengerType } from "./bookingValidation";
@@ -54,12 +54,18 @@ export default function useBookingForm(tour, departures, prefill = {}, onSubmit)
         [tour],
     );
 
+    const appliedPrefillRef = useRef({});
+
     useEffect(() => {
         if (hasDraft) return;
+        const prev = appliedPrefillRef.current;
         for (const [field, value] of Object.entries(prefill)) {
             if (!value) continue;
-            dispatch({ type: BOOKING_ACTIONS.SET_CONTACT, field, value });
+            if (prev[field] !== value) {
+                dispatch({ type: BOOKING_ACTIONS.SET_CONTACT, field, value });
+            }
         }
+        appliedPrefillRef.current = { ...prev, ...prefill };
     }, [prefill, hasDraft]);
 
     useEffect(() => {
