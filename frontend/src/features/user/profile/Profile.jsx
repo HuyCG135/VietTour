@@ -1,6 +1,7 @@
 import { useState } from "react";
 import EditableField from "./EditableField";
 import ChangePasswordForm from "./ChangePasswordForm";
+import UserPageHeader from "../../../components/UserPageHeader";
 
 // Data mock — giai đoạn gắn backend sẽ thay bằng dữ liệu từ getUser() / GET profile
 const MOCK_PROFILE = {
@@ -90,15 +91,10 @@ export default function Profile() {
 
     return (
         <div className="space-y-6">
-            {/* Header chung */}
-            <div className="pb-5 border-b border-border">
-                <h2 className="text-xl sm:text-2xl font-bold text-foreground tracking-tight mb-1">
-                    Hồ sơ &amp; Bảo mật
-                </h2>
-                <p className="text-sm text-muted mb-0">
-                    Quản lý thông tin liên hệ và thiết lập mật khẩu bảo vệ tài khoản
-                </p>
-            </div>
+            <UserPageHeader
+                title="Hồ sơ & Bảo mật"
+                subtitle="Quản lý thông tin liên hệ và thiết lập mật khẩu bảo vệ tài khoản"
+            />
 
             {/* Grid 2 cột: Cột trái Thông tin cá nhân, Cột phải Đổi mật khẩu */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
@@ -166,7 +162,7 @@ export default function Profile() {
                     className="lg:col-span-5 border-t lg:border-t-0 lg:border-l border-border pt-6 lg:pt-0 lg:pl-8"
                 >
                     <header className="flex items-center gap-3 mb-5">
-                        <span className="w-9 h-9 shrink-0 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center text-sm shadow-xs">
+                        <span className="w-9 h-9 shrink-0 rounded-xl bg-accent/20 text-accent flex items-center justify-center text-sm shadow-xs">
                             <i className="fa-solid fa-key" />
                         </span>
                         <div>
