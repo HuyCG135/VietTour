@@ -1,5 +1,6 @@
 import Booking from "./booking.repository.js";
 import Tour from "../tour/tour.repository.js";
+import { ProductCode, VnpLocale, dateFormat } from "vnpay";
 
 const createHttpError = (status, message) => {
     const err = new Error(message);
@@ -135,4 +136,82 @@ export const deleteBookingService = async (bookingId) => {
     if (!deleted) {
         throw createHttpError(404, "Không tìm thấy booking");
     }
+};
+
+// ================= VNPay =================
+
+// Tạo URL thanh toán cho booking đã tồn tại (đã tạo trước với payment_status = unpaid)
+export const createPaymentUrlService = async (req, bookingId, vnpay) => {
+    if (!bookingId || isNaN(bookingId)) {
+        throw createHttpError(400, "Thiếu booking_id");
+    }
+
+    const booking = await Booking.getByIdWithDeparture(bookingId);
+    if (!booking) {
+        throw createHttpError(404, "Không tìm thấy booking");
+    }
+
+    // Kiểm tra quyền sở hữu
+    if (String(booking.user_id) !== String(req.user.id) && req.user.role !== "admin") {
+        throw createHttpError(403, "Bạn không có quyền thanh toán booking này");
+    }
+
+    if (booking.payment_status === "paid") {
+        throw createHttpError(400, "Booking này đã được thanh toán");
+    }
+
+    const { VNP_RETURN_URL } = process.env;
+    if (!VNP_RETURN_URL) {
+        throw createHttpError(500, "Thiếu VNP_RETURN_URL trong cấu hình");
+    }
+
+    // Loại bỏ ký tự đặc biệt trong tên tour (VNPay dễ lỗi với ký tự lạ)
+    const safeTourName = String(booking.tour_name || "").replace(/[^\w\s]/gi, "");
+    const orderInfo = `Thanh toan tour ${safeTourName} BOK${booking.id}`.slice(0, 250);
+
+    const uniqueStr = Math.random().toString(36).substring(2, 10).toUpperCase();
+    const txnRef = `BOK${booking.id}_${Date.now()}_${uniqueStr}`;
+
+    const expireDate = new Date();
+    expireDate.setMinutes(expireDate.getMinutes() + 30);
+
+    const ipAddr =
+        req.headers?.["x-forwarded-for"] ||
+        req.socket?.remoteAddress ||
+        req.ip ||
+        "127.0.0.1";
+
+    const vnpayResponse = await vnpay.buildPaymentUrl({
+        vnp_Amount: Number(booking.total_price),
+        vnp_IpAddr: ipAddr,
+        vnp_TxnRef: txnRef,
+        vnp_OrderInfo: orderInfo,
+        vnp_OrderType: ProductCode.Other,
+        vnp_ReturnUrl: VNP_RETURN_URL,
+        vnp_Locale: VnpLocale.VN,
+        vnp_CreateDate: dateFormat(new Date()),
+        vnp_ExpireDate: dateFormat(expireDate),
+    });
+
+    return typeof vnpayResponse === "string" ? vnpayResponse : vnpayResponse.url || vnpayResponse.paymentUrl;
+};
+
+// Xác nhận thanh toán thành công: payment_status -> paid, status -> confirmed
+export const confirmPaymentService = async (bookingId) => {
+    const booking = await Booking.getById(bookingId);
+    if (!booking) {
+        throw createHttpError(404, "Không tìm thấy booking");
+    }
+
+    // Idempotent: nếu đã paid rồi thì không đổi gì thêm
+    if (booking.payment_status === "paid") {
+        return booking;
+    }
+
+    const updated = await Booking.markPaid(bookingId);
+    if (!updated) {
+        throw createHttpError(500, "Không thể cập nhật trạng thái thanh toán");
+    }
+
+    return booking;
 };
