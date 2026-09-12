@@ -1,5 +1,14 @@
 import { SEED_CONFIG } from "../seed-config.js";
 
+const GENDERS = ["Nam", "Nữ", "Khác"];
+const randomGender = () => GENDERS[Math.floor(Math.random() * GENDERS.length)];
+const randomDob = (minAge, maxAge) => {
+    const year = new Date().getFullYear() - minAge - Math.floor(Math.random() * (maxAge - minAge));
+    const month = String(1 + Math.floor(Math.random() * 12)).padStart(2, "0");
+    const day = String(1 + Math.floor(Math.random() * 28)).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+};
+
 export async function seed(knex) {
     const userIds = (await knex("users").select("id").orderBy("id")).map((r) => r.id);
     const departureIds = (await knex("tour_departures").select("id").orderBy("id")).map((r) => r.id);
@@ -25,4 +34,20 @@ export async function seed(knex) {
         });
     }
     await knex("bookings").insert(bookings);
+
+    const inserted = (await knex("bookings").select("id", "adults", "children").orderBy("id")).slice(-SEED_CONFIG.bookings);
+
+    const passengers = [];
+    for (const b of inserted) {
+        for (let p = 1; p <= b.adults + b.children; p++) {
+            passengers.push({
+                booking_id: b.id,
+                fullname: `Hành khách ${b.id} - ${p}`,
+                gender: randomGender(),
+                dob: randomDob(p <= b.adults ? 6 : 1, p <= b.adults ? 70 : 5),
+                passenger_type: p <= b.adults ? "adult" : "child",
+            });
+        }
+    }
+    await knex("passengers").insert(passengers);
 }
