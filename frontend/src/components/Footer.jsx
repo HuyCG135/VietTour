@@ -1,13 +1,11 @@
 export default function Footer() {
     return (
-        <footer className="bg-gray-900 text-white pt-16 pb-6 mt-12">
+        <footer className="bg-gray-900 text-white pt-16 pb-6">
             <div className="max-w-7xl mx-auto px-6">
                 <div className="flex flex-wrap gap-8">
                     <div className="w-full md:w-5/12 lg:w-1/3">
                         <h5 className="font-bold text-lg mb-3">VietTour</h5>
-                        <p className="text-gray-400 text-sm leading-relaxed">
-                            Khám phá Việt Nam cùng VietTour — đồng hành cùng bạn trên mọi hành trình.
-                        </p>
+                        <p className="text-gray-400 text-sm leading-relaxed">Khám phá Việt Nam cùng VietTour — đồng hành cùng bạn trên mọi hành trình.</p>
                     </div>
 
                     <div className="w-full md:w-5/12 lg:w-1/6">
@@ -22,9 +20,18 @@ export default function Footer() {
                     <div className="w-full md:w-5/12 lg:w-1/4">
                         <h6 className="font-bold mb-3">Liên hệ</h6>
                         <ul className="list-none p-0 m-0 text-sm text-gray-400 space-y-1">
-                            <li><i className="fa-solid fa-envelope mr-2" />info@viettour.vn</li>
-                            <li><i className="fa-solid fa-phone mr-2" />1900 xxxx</li>
-                            <li><i className="fa-solid fa-location-dot mr-2" />Hà Nội, Việt Nam</li>
+                            <li>
+                                <i className="fa-solid fa-envelope mr-2" />
+                                info@viettour.vn
+                            </li>
+                            <li>
+                                <i className="fa-solid fa-phone mr-2" />
+                                1900 xxxx
+                            </li>
+                            <li>
+                                <i className="fa-solid fa-location-dot mr-2" />
+                                Hà Nội, Việt Nam
+                            </li>
                         </ul>
                     </div>
 
@@ -39,9 +46,7 @@ export default function Footer() {
                 </div>
 
                 <hr className="my-6 border-gray-700" />
-                <p className="text-center text-gray-500 text-sm mb-0">
-                    &copy; {new Date().getFullYear()} VietTour. All rights reserved.
-                </p>
+                <p className="text-center text-gray-500 text-sm mb-0">&copy; {new Date().getFullYear()} VietTour. All rights reserved.</p>
             </div>
         </footer>
     );

@@ -117,6 +117,7 @@ export const login = async (req, res) => {
                     phone: user.phone,
                     email: user.email,
                     role: user.role,
+                    is_verified: user.is_verified,
                 },
                 token,
             },
@@ -364,6 +365,49 @@ export const verifyEmail = async (req, res) => {
     } catch (error) {
         console.error("Verify email error:", error);
         res.redirect(`${process.env.FRONTEND_URL}/login?verified=false`);
+    }
+};
+
+export const resendVerification = async (req, res) => {
+    try {
+        const { email } = req.body;
+
+        const user = await User.findByEmail(email);
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: "Email không tồn tại trong hệ thống!",
+            });
+        }
+
+        if (user.is_verified) {
+            return res.status(400).json({
+                success: false,
+                message: "Email này đã được xác thực!",
+            });
+        }
+
+        const verifyToken = jwt.sign(
+            { userId: user.id },
+            process.env.VERIFY_EMAIL_SECRET,
+            { expiresIn: "2h" },
+        );
+
+        const verifyUrl = `${process.env.FRONTEND_URL}/verify-email?token=${verifyToken}`;
+
+        await sendVerificationEmail({ email, verifyUrl });
+
+        res.json({
+            success: true,
+            message: "Link xác thực đã được gửi lại đến email của bạn!",
+        });
+    } catch (error) {
+        console.error("Resend verification error:", error);
+        res.status(500).json({
+            success: false,
+            message: "Lỗi khi gửi lại email xác thực",
+            error: error.message,
+        });
     }
 };
 

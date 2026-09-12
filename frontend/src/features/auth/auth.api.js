@@ -18,6 +18,15 @@ export async function register(data) {
      return res.json();
 }
 
+export async function resendVerification(email) {
+     const res = await fetch(`${API_URL}/auth/resend-verification`, {
+     method: 'POST',
+     headers: { 'Content-Type': 'application/json' },
+     body: JSON.stringify({ email }),
+     });
+     return res.json();
+}
+
 export function logout() {
      localStorage.removeItem('token');
      localStorage.removeItem('user');

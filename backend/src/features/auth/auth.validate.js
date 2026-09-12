@@ -165,7 +165,28 @@ export const validateForgotPassword = (req, res, next) => {
     if (errors.length > 0) {
         return res.status(400).json({
             success: false,
-            message: "Dữ liệu không hợp lệ",
+            message: "Vui lòng điền đầy đủ thông tin",
+            errors: errors,
+        });
+    }
+
+    next();
+};
+
+export const validateResendVerification = (req, res, next) => {
+    const { email } = req.body;
+    const errors = [];
+
+    if (!email || email.trim().length === 0) {
+        errors.push("Email không được để trống");
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        errors.push("Email không hợp lệ");
+    }
+
+    if (errors.length > 0) {
+        return res.status(400).json({
+            success: false,
+            message: "Vui lòng điền đầy đủ thông tin",
             errors: errors,
         });
     }

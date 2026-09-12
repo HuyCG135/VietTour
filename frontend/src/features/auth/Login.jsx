@@ -4,15 +4,25 @@ import { login } from "./auth.api";
 import bgLogin from "../../assets/images/bgLogin.jpg";
 
 export default function Login() {
-    const [form, setForm] = useState({ username: "", password: "" });
-    const [errors, setErrors] = useState({});
-    const [message, setMessage] = useState({ text: "", type: "" });
-    const [showPwd, setShowPwd] = useState(false);
-    const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
     const redirect = searchParams.get("redirect");
     const redirectTarget = redirect && redirect.startsWith("/") ? redirect : "/";
+
+    const verified = searchParams.get("verified");
+    const verifiedMessages = {
+        true: { text: "Xác thực email thành công! Bạn có thể đăng nhập ngay bây giờ.", type: "success" },
+        already: { text: "Email của bạn đã được xác thực trước đó.", type: "success" },
+        false: { text: "Xác thực email thất bại. Link không hợp lệ hoặc đã hết hạn.", type: "danger" },
+        error: { text: "Có lỗi xảy ra khi xác thực email. Vui lòng thử lại.", type: "danger" },
+    };
+    const initialMessage = verified ? verifiedMessages[verified] : null;
+
+    const [form, setForm] = useState({ username: "", password: "" });
+    const [errors, setErrors] = useState({});
+    const [message, setMessage] = useState(initialMessage || { text: "", type: "" });
+    const [showPwd, setShowPwd] = useState(false);
+    const [loading, setLoading] = useState(false);
 
     const validateField = (name, value) => {
         switch (name) {
@@ -64,7 +74,11 @@ export default function Login() {
             if (data.success) {
                 localStorage.setItem("token", data?.data?.token || "");
                 localStorage.setItem("user", JSON.stringify(data?.data?.user || null));
-                navigate(redirectTarget);
+                if (data.data?.user?.is_verified === 0) {
+                    navigate(`/register-success?email=${encodeURIComponent(data.data.user.email || "")}`);
+                } else {
+                    navigate(redirectTarget);
+                }
             } else {
                 setMessage({ text: data.message || "Đăng nhập thất bại.", type: "danger" });
             }

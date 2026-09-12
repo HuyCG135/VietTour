@@ -75,7 +75,7 @@ export default function Register() {
             const data = await register(form);
             if (data.success) {
                 setMessage({ text: "Đăng ký thành công! Đang chuyển hướng...", type: "success" });
-                setTimeout(() => navigate("/login"), 1500);
+                setTimeout(() => navigate(`/register-success?email=${encodeURIComponent(form.email)}`), 1000);
             } else {
                 setMessage({ text: data.message || "Đăng ký thất bại.", type: "danger" });
             }
