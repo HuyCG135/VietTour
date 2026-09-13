@@ -8,10 +8,6 @@ app.listen(PORT, () => {
           Website:  http://localhost:${PORT}
           API:      http://localhost:${PORT}/api
           Database: ${process.env.DB_NAME || "web_du_lich"}
-
-          Các trang có thể truy cập:
-          • http://localhost:${PORT}/              → Trang chủ
-          • http://localhost:${PORT}/tours         → Danh sách tours
-          • http://localhost:${PORT}/login         → Đăng nhập
+          Vui lòng bật frontend để truy cập vào website: http://localhost:5173
      `);
 });

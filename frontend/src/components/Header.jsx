@@ -45,6 +45,14 @@ export default function Header() {
             <div className="flex items-center gap-2">
                 {user ? (
                     <>
+                        {!user?.is_verified && (
+                            <Link
+                                to={`/register-success?email=${encodeURIComponent(user.email || "")}`}
+                                className="hidden sm:inline-flex items-center bg-red-50 hover:bg-red-100 text-red-600 font-bold rounded-full px-4 py-2 border border-red-200 transition-colors"
+                            >
+                                Chưa xác thực
+                            </Link>
+                        )}
                         <Link to="/user/profile" className="rounded-full overflow-hidden block" style={{ width: 40, height: 40 }} title="Thông tin cá nhân">
                             <img src={defaultAvatar} alt="Avatar" className="w-full h-full object-cover" />
                         </Link>
