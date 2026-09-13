@@ -1,15 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import EditableField from "./EditableField";
 import ChangePasswordForm from "./ChangePasswordForm";
 import UserPageHeader from "../../../components/UserPageHeader";
-
-// Data mock — giai đoạn gắn backend sẽ thay bằng dữ liệu từ getUser() / GET profile
-const MOCK_PROFILE = {
-    fullname: "Nguyễn Minh Anh",
-    email: "minhanh.nguyen@example.com",
-    phone: "0912 345 678",
-    address: "12 Lê Lợi, Quận 1, TP. Hồ Chí Minh",
-};
+import { getProfile, updateProfile } from "../user.api";
+import { getUser, setUser } from "../../auth/auth.api.js";
+import { useToast } from "../../../context/ToastContext";
 
 const FIELDS = [
     { id: "fullname", label: "Họ và tên", icon: "fa-regular fa-user" },
@@ -25,13 +20,47 @@ const secondaryBtn =
     "inline-flex items-center justify-center gap-2 font-bold rounded-xl px-5 py-2.5 border border-border text-foreground hover:bg-primary-50 hover:text-primary transition-colors duration-150 cursor-pointer text-sm shadow-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2";
 
 export default function Profile() {
-    const [values, setValues] = useState(MOCK_PROFILE);
+    const toast = useToast();
+    const [values, setValues] = useState(() => {
+        const user = getUser();
+        return {
+            fullname: user?.fullname || "",
+            email: user?.email || "",
+            phone: user?.phone || "",
+            address: user?.address || "",
+        };
+    });
     const [editing, setEditing] = useState({});
     const [drafts, setDrafts] = useState({});
     const [saving, setSaving] = useState(false);
-    const [message, setMessage] = useState({ text: "", type: "" });
+    const [loadError, setLoadError] = useState("");
 
     const editingCount = Object.keys(editing).length;
+
+    useEffect(() => {
+        let mounted = true;
+        (async () => {
+            try {
+                const res = await getProfile();
+                if (!mounted) return;
+                if (res.success && res.data) {
+                    setValues({
+                        fullname: res.data.fullname || "",
+                        email: res.data.email || "",
+                        phone: res.data.phone || "",
+                        address: res.data.address || "",
+                    });
+                } else {
+                    setLoadError(res.message || "Không thể tải thông tin cá nhân");
+                }
+            } catch {
+                if (mounted) setLoadError("Lỗi khi tải thông tin cá nhân");
+            }
+        })();
+        return () => {
+            mounted = false;
+        };
+    }, []);
 
     const toggleEdit = (id) => {
         if (editing[id]) {
@@ -45,7 +74,6 @@ export default function Profile() {
                 delete next[id];
                 return next;
             });
-            setMessage({ text: "", type: "" });
         } else {
             setEditing((prev) => ({ ...prev, [id]: true }));
             setDrafts((prev) => ({ ...prev, [id]: values[id] || "" }));
@@ -62,32 +90,40 @@ export default function Profile() {
     const handleSave = async () => {
         if (saving) return;
         setSaving(true);
-        setMessage({ text: "", type: "" });
-        // Mock gọi API updateProfile — thay bằng user.api thật ở giai đoạn gắn backend
-        await new Promise((r) => setTimeout(r, 800));
-        setValues((prev) => {
-            const next = { ...prev };
-            Object.keys(editing).forEach((id) => {
-                next[id] = (drafts[id] ?? "").trim();
+        try {
+            const res = await updateProfile({
+                fullname: values.fullname,
+                phone: values.phone,
+                address: values.address,
             });
-            return next;
-        });
-        setEditing({});
-        setDrafts({});
-        setSaving(false);
-        setMessage({ text: "Cập nhật thông tin thành công!", type: "success" });
+            if (res.success) {
+                const user = getUser() || {};
+                const saved = res.data || {};
+                setUser({ ...user, ...saved });
+                setValues((prev) => ({
+                    ...prev,
+                    fullname: saved.fullname ?? prev.fullname,
+                    phone: saved.phone ?? prev.phone,
+                    address: saved.address ?? prev.address,
+                }));
+                setEditing({});
+                setDrafts({});
+                toast.success(res.message || "Cập nhật thông tin thành công!");
+            } else {
+                const errorsText = Array.isArray(res.errors) ? res.errors.join("; ") : "";
+                toast.danger(errorsText || res.message || "Cập nhật thông tin thất bại");
+            }
+        } catch {
+            toast.danger("Lỗi kết nối, vui lòng thử lại");
+        } finally {
+            setSaving(false);
+        }
     };
 
     const handleCancelAll = () => {
         setEditing({});
         setDrafts({});
-        setMessage({ text: "", type: "" });
     };
-
-    const alertClass =
-        message.type === "danger"
-            ? "bg-danger/10 text-danger border-danger/30"
-            : "bg-success/10 text-success border-success/30";
 
     return (
         <div className="space-y-6">
@@ -114,11 +150,11 @@ export default function Profile() {
                         </div>
                     </header>
 
-                    {/* Alert thông báo */}
-                    {message.text && (
-                        <div role="alert" className={`flex items-center gap-2 rounded-xl border px-4 py-3 text-sm mb-4 ${alertClass}`}>
-                            <i className={message.type === "danger" ? "fa-solid fa-circle-exclamation" : "fa-solid fa-circle-check"} />
-                            <span>{message.text}</span>
+                    {/* Alert tải profile lỗi */}
+                    {loadError && (
+                        <div role="alert" className="flex items-center gap-2 rounded-xl border border-danger/30 bg-danger/10 text-danger px-4 py-3 text-sm mb-4">
+                            <i className="fa-solid fa-circle-exclamation" />
+                            <span>{loadError}</span>
                         </div>
                     )}
 

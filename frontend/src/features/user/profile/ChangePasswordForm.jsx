@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { changePassword } from "../user.api";
+import { useToast } from "../../../context/ToastContext";
 
 const PASSWORD_FIELDS = [
     {
@@ -23,15 +25,14 @@ const inputClass =
     "w-full px-3.5 py-2.5 pr-11 border border-border rounded-xl text-sm text-foreground bg-surface placeholder:text-muted/60 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors duration-150";
 
 export default function ChangePasswordForm() {
+    const toast = useToast();
     const [form, setForm] = useState({ currentPassword: "", newPassword: "", confirmPassword: "" });
     const [visible, setVisible] = useState({});
     const [saving, setSaving] = useState(false);
-    const [message, setMessage] = useState({ text: "", type: "" });
 
     const handleChange = (e) => {
         const { name, value } = e.target;
         setForm((prev) => ({ ...prev, [name]: value }));
-        setMessage({ text: "", type: "" });
     };
 
     const toggleVisible = (name) => {
@@ -50,35 +51,34 @@ export default function ChangePasswordForm() {
         e.preventDefault();
         const err = validate();
         if (err) {
-            setMessage({ text: err, type: "danger" });
+            toast.danger(err);
             return;
         }
 
         setSaving(true);
-        // Mock gọi API change-password — giai đoạn gắn backend sẽ gọi user.api thật
-        await new Promise((r) => setTimeout(r, 800));
-        setSaving(false);
-        setForm({ currentPassword: "", newPassword: "", confirmPassword: "" });
-        setVisible({});
-        setMessage({ text: "Đổi mật khẩu thành công!", type: "success" });
+        try {
+            const res = await changePassword({
+                currentPassword: form.currentPassword,
+                newPassword: form.newPassword,
+                confirmPassword: form.confirmPassword,
+            });
+            if (res.success) {
+                setForm({ currentPassword: "", newPassword: "", confirmPassword: "" });
+                setVisible({});
+                toast.success(res.message || "Đổi mật khẩu thành công!");
+            } else {
+                const errorsText = Array.isArray(res.errors) ? res.errors.join("; ") : "";
+                toast.danger(errorsText || res.message || "Đổi mật khẩu thất bại");
+            }
+        } catch {
+            toast.danger("Lỗi kết nối, vui lòng thử lại");
+        } finally {
+            setSaving(false);
+        }
     };
 
     return (
         <div>
-            {message.text && (
-                <div
-                    role="alert"
-                    className={`flex items-center gap-2 rounded-xl border px-4 py-3 text-sm mb-4 ${
-                        message.type === "danger"
-                            ? "bg-danger/10 text-danger border-danger/30"
-                            : "bg-success/10 text-success border-success/30"
-                    }`}
-                >
-                    <i className={message.type === "danger" ? "fa-solid fa-circle-exclamation" : "fa-solid fa-circle-check"} />
-                    <span>{message.text}</span>
-                </div>
-            )}
-
             <form onSubmit={handleSubmit} className="space-y-3.5" noValidate>
                 {PASSWORD_FIELDS.map((field) => (
                     <div key={field.name}>
