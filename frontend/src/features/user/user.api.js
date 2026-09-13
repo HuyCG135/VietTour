@@ -6,7 +6,7 @@ const authHeaders = (extra = {}) => ({
     ...extra,
 });
 
-const jsonHeaders = authHeaders({ 'Content-Type': 'application/json' });
+const jsonHeaders = (extra = {}) => authHeaders({ 'Content-Type': 'application/json', ...extra });
 
 export async function getProfile() {
     const res = await fetch(`${API_URL}/auth/profile`, {
@@ -15,10 +15,10 @@ export async function getProfile() {
     return res.json();
 }
 
-export async function updateProfile(data) {
+export async function patchProfile(data) {
     const res = await fetch(`${API_URL}/auth/profile`, {
-        method: 'PUT',
-        headers: jsonHeaders,
+        method: 'PATCH',
+        headers: jsonHeaders(),
         body: JSON.stringify(data),
     });
     return res.json();
@@ -27,7 +27,7 @@ export async function updateProfile(data) {
 export async function changePassword(data) {
     const res = await fetch(`${API_URL}/auth/change-password`, {
         method: 'POST',
-        headers: jsonHeaders,
+        headers: jsonHeaders(),
         body: JSON.stringify(data),
     });
     return res.json();

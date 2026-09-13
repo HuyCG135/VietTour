@@ -207,6 +207,49 @@ export const updateProfile = async (req, res) => {
     }
 };
 
+export const patchProfile = async (req, res) => {
+    try {
+        const { fullname, phone, address } = req.body;
+        const userId = req.user.id;
+
+        const fields = {};
+        if (fullname !== undefined) fields.fullname = fullname.trim();
+        if (phone !== undefined) fields.phone = phone.trim();
+        if (address !== undefined) fields.address = address.trim() || null;
+
+        const updated = await User.update(userId, fields);
+
+        if (!updated) {
+            return res.status(404).json({
+                success: false,
+                message: "Không tìm thấy user",
+            });
+        }
+
+        const updatedUser = await User.findById(userId);
+
+        res.json({
+            success: true,
+            message: "Cập nhật profile thành công!",
+            data: {
+                id: updatedUser.id,
+                fullname: updatedUser.fullname,
+                phone: updatedUser.phone,
+                email: updatedUser.email,
+                address: updatedUser.address || "",
+                role: updatedUser.role,
+            },
+        });
+    } catch (error) {
+        console.error("Patch profile error:", error);
+        res.status(500).json({
+            success: false,
+            message: "Lỗi khi cập nhật profile",
+            error: error.message,
+        });
+    }
+};
+
 export const changePassword = async (req, res) => {
     try {
         const { currentPassword, newPassword } = req.body;

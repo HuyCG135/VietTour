@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import EditableField from "./EditableField";
 import ChangePasswordForm from "./ChangePasswordForm";
 import UserPageHeader from "../../../components/UserPageHeader";
-import { getProfile, updateProfile } from "../user.api";
+import { getProfile, patchProfile } from "../user.api";
 import { getUser, setUser } from "../../auth/auth.api.js";
 import { useToast } from "../../../context/ToastContext";
 
@@ -12,12 +12,6 @@ const FIELDS = [
     { id: "phone", label: "Số điện thoại", icon: "fa-solid fa-phone" },
     { id: "address", label: "Địa chỉ", icon: "fa-solid fa-location-dot" },
 ];
-
-const primaryBtn =
-    "inline-flex items-center justify-center gap-2 font-bold rounded-xl px-5 py-2.5 bg-primary hover:bg-primary-dark text-white transition-colors duration-150 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed text-sm shadow-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2";
-
-const secondaryBtn =
-    "inline-flex items-center justify-center gap-2 font-bold rounded-xl px-5 py-2.5 border border-border text-foreground hover:bg-primary-50 hover:text-primary transition-colors duration-150 cursor-pointer text-sm shadow-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2";
 
 export default function Profile() {
     const toast = useToast();
@@ -32,10 +26,8 @@ export default function Profile() {
     });
     const [editing, setEditing] = useState({});
     const [drafts, setDrafts] = useState({});
-    const [saving, setSaving] = useState(false);
+    const [savingId, setSavingId] = useState(null);
     const [loadError, setLoadError] = useState("");
-
-    const editingCount = Object.keys(editing).length;
 
     useEffect(() => {
         let mounted = true;
@@ -63,6 +55,7 @@ export default function Profile() {
     }, []);
 
     const toggleEdit = (id) => {
+        if (savingId) return;
         if (editing[id]) {
             setEditing((prev) => {
                 const next = { ...prev };
@@ -80,25 +73,20 @@ export default function Profile() {
         }
     };
 
-    const changeDraft = (id, draft) => setDrafts((prev) => ({ ...prev, [id]: draft }));
-
-    const commitField = (id) => {
-        setValues((prev) => ({ ...prev, [id]: (drafts[id] ?? "").trim() }));
-        toggleEdit(id);
+    const changeDraft = (id, draft) => {
+        if (savingId) return;
+        setDrafts((prev) => ({ ...prev, [id]: draft }));
     };
 
-    const handleSave = async () => {
-        if (saving) return;
-        setSaving(true);
+    const commitField = async (id) => {
+        if (savingId) return;
+        const value = (drafts[id] ?? "").trim();
+        setSavingId(id);
         try {
-            const res = await updateProfile({
-                fullname: values.fullname,
-                phone: values.phone,
-                address: values.address,
-            });
+            const res = await patchProfile({ [id]: value });
             if (res.success) {
-                const user = getUser() || {};
                 const saved = res.data || {};
+                const user = getUser() || {};
                 setUser({ ...user, ...saved });
                 setValues((prev) => ({
                     ...prev,
@@ -106,23 +94,26 @@ export default function Profile() {
                     phone: saved.phone ?? prev.phone,
                     address: saved.address ?? prev.address,
                 }));
-                setEditing({});
-                setDrafts({});
-                toast.success(res.message || "Cập nhật thông tin thành công!");
+                setEditing((prev) => {
+                    const next = { ...prev };
+                    delete next[id];
+                    return next;
+                });
+                setDrafts((prev) => {
+                    const next = { ...prev };
+                    delete next[id];
+                    return next;
+                });
+                toast.success(res.message || "Đã lưu thông tin!");
             } else {
                 const errorsText = Array.isArray(res.errors) ? res.errors.join("; ") : "";
-                toast.danger(errorsText || res.message || "Cập nhật thông tin thất bại");
+                toast.danger(errorsText || res.message || "Không thể cập nhật");
             }
         } catch {
             toast.danger("Lỗi kết nối, vui lòng thử lại");
         } finally {
-            setSaving(false);
+            setSavingId(null);
         }
-    };
-
-    const handleCancelAll = () => {
-        setEditing({});
-        setDrafts({});
     };
 
     return (
@@ -171,6 +162,7 @@ export default function Profile() {
                                 editing={!!editing[field.id]}
                                 draft={drafts[field.id]}
                                 editable={field.editable !== false}
+                                saving={savingId === field.id}
                                 onToggleEdit={toggleEdit}
                                 onDraftChange={changeDraft}
                                 onCommit={commitField}
@@ -178,18 +170,9 @@ export default function Profile() {
                         ))}
                     </div>
 
-                    {/* Action buttons khi đang sửa */}
-                    {editingCount > 0 && (
-                        <div className="flex justify-end items-center gap-3 mt-4 pt-3 border-t border-border">
-                            <button type="button" onClick={handleCancelAll} className={secondaryBtn}>
-                                Hủy
-                            </button>
-                            <button type="button" onClick={handleSave} disabled={saving} className={primaryBtn}>
-                                {saving && <i className="fa-solid fa-spinner fa-spin" />}
-                                Lưu thay đổi ({editingCount})
-                            </button>
-                        </div>
-                    )}
+                    <p className="text-xs text-muted mt-4 mb-0">
+                        Sửa thông tin rồi bấm ✓ để lưu, ✕ để hủy bỏ sửa đổi
+                    </p>
                 </section>
 
                 {/* Cột 2: Đổi mật khẩu */}

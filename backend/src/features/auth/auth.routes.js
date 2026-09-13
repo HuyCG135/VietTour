@@ -1,7 +1,7 @@
 import express from "express";
-import { register, login, getProfile, updateProfile, changePassword, logout, verifyTokenStatus, verifyEmail, resendVerification, forgotPassword, resetPassword } from "./auth.controller.js";
+import { register, login, getProfile, updateProfile, patchProfile, changePassword, logout, verifyTokenStatus, verifyEmail, resendVerification, forgotPassword, resetPassword } from "./auth.controller.js";
 import { verifyToken } from "../../middlewares/auth.js";
-import { validateRegister, validateLogin, validateProfile, validateChangePassword, validateForgotPassword, validateResetPassword, validateResendVerification } from "./auth.validate.js";
+import { validateRegister, validateLogin, validateProfile, validatePatchProfile, validateChangePassword, validateForgotPassword, validateResetPassword, validateResendVerification } from "./auth.validate.js";
 
 const router = express.Router();
 
@@ -11,6 +11,7 @@ router.post("/resend-verification", validateResendVerification, resendVerificati
 
 router.get("/profile", verifyToken, getProfile);
 router.put("/profile", verifyToken, validateProfile, updateProfile);
+router.patch("/profile", verifyToken, validatePatchProfile, patchProfile);
 router.get("/verify", verifyToken, verifyTokenStatus);
 router.get("/verify-email", verifyEmail);
 router.post("/change-password", verifyToken, validateChangePassword, changePassword);

@@ -41,10 +41,16 @@ class User {
     }
 
     static async update(id, userData) {
-        const { fullname, phone, address = null } = userData;
-        const result = await db("users")
-            .where("id", id)
-            .update({ fullname, phone, address, updated_at: db.fn.now() });
+        const allowed = ["fullname", "phone", "address"];
+        const updates = {};
+        for (const key of allowed) {
+            if (userData[key] !== undefined) {
+                updates[key] = userData[key];
+            }
+        }
+        if (Object.keys(updates).length === 0) return false;
+        updates.updated_at = db.fn.now();
+        const result = await db("users").where("id", id).update(updates);
         return result > 0;
     }
 

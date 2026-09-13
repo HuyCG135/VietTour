@@ -7,6 +7,7 @@ export default function EditableField({
     editing,
     draft,
     editable = true,
+    saving = false,
     icon,
     badge,
     onToggleEdit,
@@ -56,24 +57,31 @@ export default function EditableField({
                                             onToggleEdit(id);
                                         }
                                     }}
+                                    disabled={saving}
                                     aria-label={label}
-                                    className="w-full px-3 py-1.5 text-sm text-foreground bg-surface border border-primary rounded-lg outline-none focus:ring-2 focus:ring-primary/20 transition-all duration-150 shadow-xs"
+                                    className="w-full px-3 py-1.5 text-sm text-foreground bg-surface border border-primary rounded-lg outline-none focus:ring-2 focus:ring-primary/20 transition-all duration-150 shadow-xs disabled:opacity-60 disabled:cursor-not-allowed"
                                 />
                                 <button
                                     type="button"
                                     onClick={() => onCommit(id)}
-                                    title="Xác nhận"
+                                    title={saving ? "Đang lưu..." : "Xác nhận"}
                                     aria-label={`Lưu ${label}`}
-                                    className="w-8 h-8 shrink-0 flex items-center justify-center rounded-lg bg-primary text-white hover:bg-primary-dark transition-colors duration-150 cursor-pointer shadow-xs"
+                                    disabled={saving}
+                                    className="w-8 h-8 shrink-0 flex items-center justify-center rounded-lg bg-primary text-white hover:bg-primary-dark transition-colors duration-150 cursor-pointer shadow-xs disabled:opacity-60 disabled:cursor-not-allowed"
                                 >
-                                    <i className="fa-solid fa-check text-xs" />
+                                    {saving ? (
+                                        <i className="fa-solid fa-spinner fa-spin text-xs" />
+                                    ) : (
+                                        <i className="fa-solid fa-check text-xs" />
+                                    )}
                                 </button>
                                 <button
                                     type="button"
                                     onClick={() => onToggleEdit(id)}
                                     title="Hủy"
                                     aria-label={`Hủy sửa ${label}`}
-                                    className="w-8 h-8 shrink-0 flex items-center justify-center rounded-lg border border-border bg-surface text-muted hover:text-danger hover:bg-danger/10 transition-colors duration-150 cursor-pointer shadow-xs"
+                                    disabled={saving}
+                                    className="w-8 h-8 shrink-0 flex items-center justify-center rounded-lg border border-border bg-surface text-muted hover:text-danger hover:bg-danger/10 transition-colors duration-150 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed shadow-xs"
                                 >
                                     <i className="fa-solid fa-xmark text-xs" />
                                 </button>
