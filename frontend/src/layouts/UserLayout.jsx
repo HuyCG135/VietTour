@@ -5,7 +5,7 @@ export default function UserLayout({ children }) {
     return (
         <>
             <Header />
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
+            <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
                 {/* items-stretch đảm bảo cả 2 cột luôn kéo dài bằng chằn chặn nhau, mép dưới phẳng tuyệt đối */}
                 <div className="grid grid-cols-1 lg:grid-cols-[280px_minmax(0,1fr)] gap-6 items-stretch">
                     <aside id="user-sidebar-col" className="flex flex-col h-full">
