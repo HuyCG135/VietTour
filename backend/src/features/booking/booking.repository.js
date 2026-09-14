@@ -38,6 +38,28 @@ class Booking {
         return db("bookings").where("id", id).first();
     }
 
+    // Chi tiết booking cho user: kèm thông tin tour, ngày khởi hành, giá cấu thành
+    static async getDetailForUser(id) {
+        return db("bookings as b")
+            .leftJoin("tour_departures as d", "b.departure_id", "d.id")
+            .leftJoin("tours as t", "d.tour_id", "t.id")
+            .select(
+                "b.*",
+                "t.name as tour_name",
+                "t.duration",
+                "t.region",
+                "t.cover_image as cover_image",
+                "t.price_default",
+                "t.price_child",
+                "d.departure_date",
+                "d.departure_location",
+                "d.price_moving",
+                "d.price_moving_child",
+            )
+            .where("b.id", id)
+            .first();
+    }
+
     static async create(bookingData) {
         const data = {
             ...bookingData,

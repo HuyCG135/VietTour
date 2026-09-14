@@ -94,6 +94,20 @@ export const getMyBookingsService = async (userId) => {
     return Booking.getByUserId(userId);
 };
 
+export const getBookingDetailService = async (userId, role, bookingId) => {
+    const booking = await Booking.getDetailForUser(bookingId);
+    if (!booking) {
+        throw createHttpError(404, "Không tìm thấy booking");
+    }
+
+    if (String(booking.user_id) !== String(userId) && role !== "admin") {
+        throw createHttpError(403, "Bạn không có quyền xem booking này");
+    }
+
+    const passengers = await Booking.getPassengersByBookingId(bookingId);
+    return { ...booking, passengers };
+};
+
 export const getAllBookingsService = async () => {
     return Booking.getAll();
 };

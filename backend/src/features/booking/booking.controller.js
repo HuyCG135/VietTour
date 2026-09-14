@@ -1,6 +1,7 @@
 import {
     createBookingService,
     getMyBookingsService,
+    getBookingDetailService,
     getAllBookingsService,
     cancelBookingService,
     updateStatusService,
@@ -48,6 +49,19 @@ export const getMyBookings = async (req, res) => {
         });
     } catch (error) {
         handleError(res, error, "Lỗi khi lấy danh sách đặt tour");
+    }
+};
+
+export const getBookingDetail = async (req, res) => {
+    try {
+        const booking = await getBookingDetailService(req.user.id, req.user.role, req.params.id);
+
+        res.json({
+            success: true,
+            data: booking,
+        });
+    } catch (error) {
+        handleError(res, error, "Lỗi khi lấy chi tiết booking");
     }
 };
 
