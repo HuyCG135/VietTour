@@ -27,6 +27,7 @@ class Booking {
                 "t.price_default as price",
                 "t.duration",
                 "t.region",
+                "t.cover_image as cover_image",
                 "d.departure_date",
             )
             .where("b.user_id", userId)

@@ -1,4 +1,10 @@
 const API_URL = import.meta.env.VITE_API_URL || '/api';
+import { getToken } from '../../auth/auth.api.js';
+
+const authHeaders = (extra = {}) => ({
+    'Authorization': `Bearer ${getToken()}`,
+    ...extra,
+});
 
 export async function createBooking(data) {
     const res = await fetch(`${API_URL}/bookings`, {
@@ -10,6 +16,8 @@ export async function createBooking(data) {
 }
 
 export async function getMyBookings() {
-    const res = await fetch(`${API_URL}/bookings/my`);
+    const res = await fetch(`${API_URL}/bookings/my-bookings`, {
+        headers: authHeaders(),
+    });
     return res.json();
 }
