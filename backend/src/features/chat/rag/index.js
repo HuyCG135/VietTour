@@ -38,7 +38,7 @@ async function rebuild() {
     ready = true;
     retryCount = 0;
     lastError = null;
-    console.log(`✅ RAG sẵn sàng: ${chunks.length} chunks (nguồn: ${RAG_SOURCES.map((s) => s.name).join(", ")})`);
+    console.log(`RAG sẵn sàng: ${chunks.length} chunks (nguồn: ${RAG_SOURCES.map((s) => s.name).join(", ")})`);
 }
 
 function scheduleRetry(error) {
@@ -48,11 +48,11 @@ function scheduleRetry(error) {
 
     if (retryCount <= MAX_RETRIES) {
         console.error(
-            `❌ RAG chưa khởi tạo được (lần ${retryCount}/${MAX_RETRIES}): ${error.message} — thử lại sau ${RETRY_DELAY_MS / 1000}s`,
+            `RAG chưa khởi tạo được (lần ${retryCount}/${MAX_RETRIES}): ${error.message} — thử lại sau ${RETRY_DELAY_MS / 1000}s`,
         );
         setTimeout(tryRebuild, RETRY_DELAY_MS);
     } else {
-        console.error("❌ RAG không khởi tạo được sau nhiều lần thử. Kiểm tra Ollama (Docker) và MySQL.");
+        console.error("RAG không khởi tạo được sau nhiều lần thử. Kiểm tra Ollama (Docker) và MySQL.");
     }
 }
 
