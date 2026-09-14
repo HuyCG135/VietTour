@@ -13,6 +13,7 @@ import tourAdminRoutes from "./features/tour-admin/tour-admin.routes.js";
 import authRoutes from "./features/auth/auth.routes.js";
 import bookingRoutes from "./features/booking/booking.routes.js";
 import favoriteRoutes from "./features/favorite/favorite.routes.js";
+import reviewRoutes from "./features/review/review.routes.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -37,6 +38,7 @@ app.use("/api/admin/tours", tourAdminRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/bookings", bookingRoutes);
 app.use("/api/favorites", favoriteRoutes);
+app.use("/api/reviews", reviewRoutes);
 
 app.get("/api/test", (req, res) => {
     res.json({
