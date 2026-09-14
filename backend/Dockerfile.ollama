@@ -1,5 +1,5 @@
 FROM ollama/ollama:latest
 
-# Tự pull model Qwen2.5-3B (Q4_K_M) khi build image
+# Tự pull model Qwen2.5-3B (Q4_K_M) + nomic-embed-text khi build image
 # Chạy ollama serve nền rồi pull, xong thì stop server
-RUN ollama serve & sleep 3 && ollama pull qwen2.5:3b
+RUN ollama serve & sleep 3 && ollama pull qwen2.5:3b && ollama pull nomic-embed-text
