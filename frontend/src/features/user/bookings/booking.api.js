@@ -21,3 +21,18 @@ export async function getMyBookings() {
     });
     return res.json();
 }
+
+export async function getBookingDetail(id) {
+    const res = await fetch(`${API_URL}/bookings/${id}`, {
+        headers: authHeaders(),
+    });
+    return res.json();
+}
+
+export async function cancelBooking(id) {
+    const res = await fetch(`${API_URL}/bookings/${id}/cancel`, {
+        method: "PUT",
+        headers: authHeaders(),
+    });
+    return res.json();
+}

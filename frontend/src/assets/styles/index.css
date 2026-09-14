@@ -41,6 +41,35 @@ body {
     padding-top: 70px;
 }
 
+/* In hóa đơn: chỉ hiển thị vùng .print-only khi in */
+@media print {
+    @page {
+        margin: 10mm;
+    }
+
+    body * {
+        visibility: hidden !important;
+    }
+
+    .print-only,
+    .print-only * {
+        visibility: visible !important;
+    }
+
+    .print-only {
+        position: absolute !important;
+        inset: 0 !important;
+        width: 100% !important;
+        overflow: visible !important;
+    }
+
+    .print-only .no-print,
+    .no-print {
+        display: none !important;
+        visibility: hidden !important;
+    }
+}
+
 /* Search Group */
 .search-group {
     position: relative;

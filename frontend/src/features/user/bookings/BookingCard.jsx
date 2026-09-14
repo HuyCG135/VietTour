@@ -1,41 +1,8 @@
+import { Link } from "react-router-dom";
 import defaultTourImage from "../../../assets/images/image.png";
 import { formatVnd } from "../../booking/bookingPrices";
-
-const STATUS = {
-    pending: { label: "Đang chờ xác nhận", icon: "fa-solid fa-clock", cls: "bg-amber-500/10 text-amber-800" },
-    confirmed: { label: "Đã xác nhận", icon: "fa-solid fa-circle-check", cls: "bg-emerald-500/10 text-emerald-800" },
-    cancelled: { label: "Đã hủy", icon: "fa-solid fa-circle-xmark", cls: "bg-red-500/10 text-red-700" },
-};
-
-const PAYMENT = {
-    unpaid: { label: "Chưa thanh toán", icon: "fa-regular fa-credit-card", chip: "bg-amber-500/10 text-amber-800" },
-    paid: { label: "Đã thanh toán", icon: "fa-solid fa-circle-check", chip: "bg-emerald-500/10 text-emerald-800" },
-    refunded: { label: "Đã hoàn tiền", icon: "fa-solid fa-rotate-left", chip: "bg-sky-500/10 text-sky-800" },
-};
-
-function formatDate(value) {
-    if (!value) return "";
-    const [y, m, d] = String(value).slice(0, 10).split("-");
-    return `${d}/${m}/${y}`;
-}
-
-function formatDateTime(value) {
-    if (!value) return "";
-    const iso = String(value).includes("T") ? value : String(value).replace(" ", "T");
-    const d = new Date(iso);
-    if (Number.isNaN(d.getTime())) return formatDate(value);
-    const pad = (n) => String(n).padStart(2, "0");
-    return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
-}
-
-function formatPax(adults, children) {
-    const a = Number(adults) || 0;
-    const c = Number(children) || 0;
-    const parts = [];
-    if (a) parts.push(`${a} người lớn`);
-    if (c) parts.push(`${c} trẻ em`);
-    return parts.join(" · ") || "1 người lớn";
-}
+import { BOOKING_STATUS, BOOKING_PAYMENT, COMPLETED_STATUS } from "./bookingStatus";
+import { formatDate, formatDateTime, formatPax } from "./bookingFormat";
 
 function InfoRow({ icon, iconClass, label, children }) {
     return (
@@ -48,12 +15,12 @@ function InfoRow({ icon, iconClass, label, children }) {
 }
 
 export default function BookingCard({ booking: b }) {
-    const status = STATUS[b.status] || {
+    const status = BOOKING_STATUS[b.status] || {
         label: b.status,
         icon: "fa-solid fa-circle-info",
         cls: "bg-muted/10 text-muted",
     };
-    const payment = PAYMENT[b.payment_status] || {
+    const payment = BOOKING_PAYMENT[b.payment_status] || {
         label: b.payment_status,
         icon: "fa-solid fa-circle-info",
         chip: "bg-muted/10 text-muted",
@@ -64,9 +31,7 @@ export default function BookingCard({ booking: b }) {
     const todayStr = `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`;
     const isCompleted =
         b.status === "confirmed" && b.payment_status === "paid" && String(b.departure_date).slice(0, 10) < todayStr;
-    const statusTag = isCompleted
-        ? { label: "Đã hoàn thành", icon: "fa-solid fa-flag-checkered", cls: "bg-emerald-500/10 text-emerald-800" }
-        : status;
+    const statusTag = isCompleted ? COMPLETED_STATUS : status;
 
     return (
         <div className="space-y-2">
@@ -86,12 +51,15 @@ export default function BookingCard({ booking: b }) {
                 </div>
 
                 <div className="flex-1 min-w-0 flex flex-col gap-1.5">
-                    <h3 className="font-bold text-base sm:text-lg text-foreground leading-snug mb-1">
+                    <Link
+                        to={`/user/bookings/${b.id}`}
+                        className="font-bold text-base sm:text-lg text-foreground leading-snug mb-0 hover:text-primary transition-colors"
+                    >
                         {b.tour_name || "Tour không xác định"}
-                    </h3>
+                    </Link>
 
                     <InfoRow icon="fa-solid fa-ticket" label="Mã booking:">
-                        #BOOK{b.id}
+                        #MB{b.id}
                     </InfoRow>
                     <InfoRow icon="fa-solid fa-calendar-days" iconClass="text-primary" label="Khởi hành:">
                         {formatDate(b.departure_date)}
@@ -111,6 +79,14 @@ export default function BookingCard({ booking: b }) {
                             {b.note}
                         </p>
                     )}
+
+                    <Link
+                        to={`/user/bookings/${b.id}`}
+                        className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:text-primary-dark transition-colors mt-1"
+                    >
+                        Xem chi tiết
+                        <i className="fa-solid fa-arrow-right text-[10px]" />
+                    </Link>
                 </div>
 
                 <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-center gap-3 sm:gap-2 shrink-0 sm:min-w-[180px] sm:pt-1 sm:pl-5 sm:border-l border-border/60">
