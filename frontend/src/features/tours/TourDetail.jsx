@@ -1,132 +1,134 @@
-import { useEffect, useMemo, useState } from "react";
-import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useParams, Link } from "react-router-dom";
 import { getTourById } from "./tour.api";
-import defaultTourImage from "../../assets/images/image.png";
+import TourHeader from "./detail/TourHeader";
+import TourGallery from "./detail/TourGallery";
+import TourTabs from "./detail/TourTabs";
+import TourOverview from "./detail/TourOverview";
+import TourItinerary from "./detail/TourItinerary";
+import TourServices from "./detail/TourServices";
+import TourReviews from "./detail/TourReviews";
+import TourBookingCard from "./detail/TourBookingCard";
 
-function formatPrice(price) {
-    return new Intl.NumberFormat("vi-VN").format(price) + " VNĐ";
-}
-
-function useTourId() {
-    const params = useParams();
-    const location = useLocation();
-    return useMemo(() => {
-        const query = new URLSearchParams(location.search);
-        return params.id || query.get("id") || "";
-    }, [location.search, params.id]);
-}
-
-export default function TourDetail() {
-    const tourId = useTourId();
-    const navigate = useNavigate();
+const TourDetail = () => {
+    const { id } = useParams();
     const [tour, setTour] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
+    const [reloadKey, setReloadKey] = useState(0);
 
     useEffect(() => {
-        let ignore = false;
+        let cancelled = false;
 
-        const loadTour = async () => {
-            if (!tourId) {
-                setError("Thiếu mã tour.");
-                setLoading(false);
-                return;
-            }
+        const load = async () => {
+            setLoading(true);
+            setError("");
             try {
-                const response = await getTourById(tourId);
-                if (!ignore) {
-                    if (response?.success) {
-                        setTour(response.data || null);
-                        setError("");
-                    } else {
-                        setTour(null);
-                        setError(response?.message || "Không tìm thấy tour.");
-                    }
+                const res = await getTourById(id);
+                if (cancelled) return;
+                if (!res.success) {
+                    throw new Error(res.message || "Không tải được dữ liệu tour.");
                 }
-            } catch (fetchError) {
-                if (!ignore) {
-                    setTour(null);
-                    setError(fetchError?.message || "Lỗi tải chi tiết tour.");
-                }
+                setTour(res.data);
+            } catch (err) {
+                if (!cancelled) setError(err.message || "Đã xảy ra lỗi khi tải dữ liệu.");
             } finally {
-                if (!ignore) setLoading(false);
+                if (!cancelled) setLoading(false);
             }
         };
 
-        loadTour();
-        return () => { ignore = true; };
-    }, [tourId]);
+        load();
+
+        return () => {
+            cancelled = true;
+        };
+    }, [id, reloadKey]);
 
     if (loading) {
         return (
-            <div className="max-w-7xl mx-auto px-6 py-12">
-                <div className="flex justify-center items-center py-16">
-                    <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" role="status">
-                        <span className="sr-only">Đang tải...</span>
-                    </div>
+            <div className="flex flex-col items-center justify-center py-24 text-muted">
+                <i className="fa-solid fa-circle-notch fa-spin text-primary text-3xl" aria-hidden="true" />
+                <p className="mt-3 text-sm">Đang tải tour...</p>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="max-w-xl mx-auto text-center py-24">
+                <i className="fa-solid fa-triangle-exclamation text-3xl text-warning" aria-hidden="true" />
+                <p className="mt-3 font-semibold text-foreground">Không thể tải tour</p>
+                <p className="mt-1 text-sm text-muted">{error}</p>
+                <div className="mt-5 flex items-center justify-center gap-3">
+                    <button
+                        type="button"
+                        onClick={() => setReloadKey((key) => key + 1)}
+                        className="rounded-full bg-primary px-6 py-2.5 font-bold text-white transition-colors duration-150 hover:bg-primary-dark cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2"
+                    >
+                        Thử lại
+                    </button>
+                    <Link
+                        to="/tours"
+                        className="rounded-full border border-slate-200 px-6 py-2.5 font-bold text-foreground transition-colors duration-150 hover:bg-slate-50 no-underline"
+                    >
+                        Về danh sách tour
+                    </Link>
                 </div>
             </div>
         );
     }
 
-    if (error || !tour) {
+    if (!tour) {
         return (
-            <div className="max-w-7xl mx-auto px-6 py-12">
-                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                    <div>
-                        <h1 className="text-base font-semibold mb-1">Không tìm thấy tour</h1>
-                        <p className="mb-0 text-sm text-gray-600">{error || "Tour này không còn tồn tại."}</p>
-                    </div>
-                    <button type="button" className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-5 py-2 rounded-lg transition-colors cursor-pointer" onClick={() => navigate("/tours")}>
-                        Quay lại danh sách
-                    </button>
-                </div>
+            <div className="max-w-xl mx-auto text-center py-24">
+                <i className="fa-solid fa-route text-3xl text-muted" aria-hidden="true" />
+                <p className="mt-3 font-semibold text-foreground">Chưa có thông tin tour</p>
+                <Link
+                    to="/tours"
+                    className="mt-5 inline-block rounded-full border border-slate-200 px-6 py-2.5 font-bold text-foreground transition-colors duration-150 hover:bg-slate-50 no-underline"
+                >
+                    Về danh sách tour
+                </Link>
             </div>
         );
     }
 
     return (
-        <div className="max-w-7xl mx-auto px-6 py-6">
-            <Link to="/tours" className="no-underline text-sm text-gray-500 hover:text-gray-700 transition-colors">
-                <i className="fa-solid fa-arrow-left mr-2" />
-                Quay lại danh sách
-            </Link>
+        <div className="max-w-7xl mx-auto px-6 py-8">
+            <TourHeader tour={tour} />
 
-            <div className="flex flex-wrap gap-4 mt-3 items-start">
-                <div className="w-full lg:w-7/12">
-                    <div className="bg-white rounded-xl shadow-sm overflow-hidden border-0">
-                        <img src={tour.image || tour.cover_image || defaultTourImage} alt={tour.name} className="w-full max-w-full h-auto" style={{ height: 420, objectFit: "cover" }} />
-                    </div>
+            <div className="mt-5">
+                <TourGallery images={tour.images} name={tour.name} />
+            </div>
+
+            <div className="mt-4">
+                <TourTabs />
+            </div>
+
+            <div className="mt-8 grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+                <div className="lg:col-span-8 space-y-8">
+                    <TourOverview description={tour.description} />
+                    <TourItinerary itineraries={tour.itineraries} />
+                    <TourServices services={tour.services} />
+                    <TourReviews
+                        reviews={tour.reviews}
+                        avgRating={tour.avg_rating}
+                        reviewCount={tour.review_count}
+                    />
                 </div>
 
-                <div className="w-full lg:w-4/12">
-                    <div className="bg-white rounded-xl shadow-sm border-0 h-full">
-                        <div className="p-6">
-                            <div className="flex flex-wrap gap-2 mb-3">
-                                <span className="inline-block text-xs font-medium px-2.5 py-1 rounded-full bg-sky-500 text-white">{tour.location || tour.region}</span>
-                                <span className="inline-block text-xs font-medium px-2.5 py-1 rounded-full bg-blue-600 text-white">{tour.duration}</span>
-                            </div>
-
-                            <h1 className="text-xl font-bold mb-3">{tour.name}</h1>
-                            <p className="text-gray-500 mb-4">{tour.description}</p>
-
-                            <div className="mb-3">
-                                <div className="text-xs uppercase tracking-wide text-gray-500 mb-1">Giá tour</div>
-                                <div className="text-2xl text-red-600 font-bold mb-0">{formatPrice(tour.price || tour.price_default)}</div>
-                            </div>
-
-                            <div className="mb-6">
-                                <div className="text-xs uppercase tracking-wide text-gray-500 mb-1">Khu vực</div>
-                                <div className="font-semibold">{tour.region || tour.location || "-"}</div>
-                            </div>
-
-                            <button type="button" className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg transition-colors cursor-pointer" onClick={() => navigate("/tours")}>
-                                Đặt tour ngay
-                            </button>
-                        </div>
-                    </div>
-                </div>
+                <aside className="order-first lg:order-none lg:col-span-4 lg:sticky lg:top-24">
+                    <TourBookingCard
+                        tourId={tour.id}
+                        priceDefault={tour.price_default}
+                        priceChild={tour.price_child}
+                        hotline="1900 1234"
+                        departures={tour.departures}
+                    />
+                </aside>
             </div>
         </div>
     );
-}
+};
+
+export default TourDetail;

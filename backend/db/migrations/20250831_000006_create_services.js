@@ -4,6 +4,7 @@ export function up(knex) {
         t.string("name", 255).notNullable();
         t.string("slug", 255).unique();
         t.text("description");
+        t.string("icon", 100).nullable();
         t.tinyint("status").notNullable().defaultTo(1);
         t.timestamp("created_at").defaultTo(knex.fn.now());
         t.timestamp("updated_at").defaultTo(knex.fn.now());

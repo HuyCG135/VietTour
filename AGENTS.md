@@ -43,13 +43,64 @@ Seed structure (`backend/db/`):
 
 > ✅ **Repository dùng Knex query builder** (`src/config/knex.js`), khớp schema mới (`price_default`, `cover_image`, `departure_id`, `adults`/`children`, `contact_*`).
 >
-> ⚠️ **Còn lệch:** `validateBooking`/`validateTour` (`src/features/booking/booking.validate.js`, `src/features/tour/tour.validate.js`) và `booking.service.js` (`createBookingService`) vẫn dùng field cũ (`price`, `tour_id`, `number_of_people`). Sửa tiếp thì khớp về schema mới. Schema chuẩn là `db.sql` + migration.
+> ⚠️ **Còn lệch:** `validateTour` (`src/features/tour/tour.validate.js`) vẫn dùng field cũ (`price`). `bookings` đã khớp schema mới (`departure_id`, `adults`/`children`, `contact_*`, `payment_status`); bảng `passengers` thêm qua migration `20260912_000014_create_passengers.js` (PK `booking_id` → `bookings(id)` ON DELETE CASCADE, `gender` ENUM('Nam','Nữ','Khác'), `passenger_type` ENUM('adult','child'), `dob` nullable).
+> - VNPay: dùng package `vnpay@^2.5.0`; endpoints trong `booking.payment.controller.js` (`POST /create-payment-url`, `GET /vnpay-return` — route public, đặt trước route param). Env cần: `VNP_TMN_CODE`, `VNP_SECURE_SECRET`, `VNP_HOST`, `VNP_RETURN_URL` (xem `backend/.env`). Flow: **tạo booking `unpaid/pending` trước → tạo URL VNPay → callback xác nhận `paid/confirmed`**.
 - Env backend bắt buộc: `JWT_SECRET`, `DB_*`. Khác: `PORT`, `VERIFY_EMAIL_SECRET`, `RESET_PASS_SECRET`, `FRONTEND_URL`, `SMTP_*` (email không bắt buộc — nếu thiếu SMTP, link verify/reset chỉ log ra console).
 - Frontend: `VITE_API_URL` (mặc định `/api`).
-- **Không có** `.env.example` trong repo — nếu cần tạo từ `process.env.*` / `import.meta.env.*` trong code.
+- Backend `.env.example` có sẵn các biến bắt buộc + tùy chọn. Frontend `.env.example` có `VITE_API_URL`.
+
+## Local AI Chatbot (Ollama + Docker)
+
+Chatbot nội bộ chạy local, dùng Ollama trong Docker với GPU acceleration. Model: **Qwen2.5-3B Q4_K_M** (~2.2 GB VRAM) + **nomic-embed-text** (~274 MB, embedding).
+
+### Yêu cầu phần cứng (mỗi developer)
+
+- GPU NVIDIA có tối thiểu **4 GB VRAM** (RTX 2050 trở lên)
+- RAM tối thiểu **8 GB** (16 GB khuyến nghị)
+- Dung lượng ổ cứng trống **~5 GB** (model + Docker image)
+
+### Cài đặt lần đầu (bắt buộc)
+
+**1. NVIDIA Driver (Windows)**
+- Tải từ https://www.nvidia.com/drivers
+- Chọn GPU series → Windows → Game Ready hoặc Studio driver
+- Cài đặt Express → Restart máy
+- Verify: mở PowerShell → `nvidia-smi` → thấy tên GPU
+
+**2. Docker Desktop (Windows)**
+- Tải từ https://www.docker.com/products/docker-desktop/
+- Cài đặt → bật **WSL 2 backend** (mặc định)
+- Khởi động Docker Desktop → đợi icon docker xanh (running)
+- Verify: `docker --version`
+
+> ⚠️ **KHÔNG** cài CUDA Toolkit hay NVIDIA Linux driver bên trong WSL2 — Windows driver đã tự share GPU vào WSL2. Nếu cài đè sẽ phá vỡ GPU passthrough.
+
+### Chạy chatbot
+
+```bash
+# 1. Khởi động container Ollama (từ backend/) — build sẽ tự pull model ~1.9 GB vào image
+cd backend; docker compose up -d --build
+
+# 2. Test trong container (model đã có sẵn, không cần pull riêng)
+docker exec -it ollama ollama run qwen2.5:3b
+
+# 3. Test API từ host
+curl http://localhost:11434/api/generate -d "{\"model\":\"qwen2.5:3b\",\"prompt\":\"Xin chào\",\"stream\":false}"
+```
+
+> Model được bake vào image qua `backend/Dockerfile.ollama` (`RUN ollama serve & ... && ollama pull qwen2.5:3b && ollama pull nomic-embed-text`). Mỗi developer chỉ cần `docker compose up -d --build` 1 lần là có sẵn model.
+
+### Quy tắc
+
+- Model lưu trong Docker volume `ollama_data` — không commit vào git, không share giữa developer.
+- Khi build lại image (`--build`), model mới sẽ copy vào volume nếu volume trống; nếu volume đã có model thì dùng model trong volume.
+- Ollama API tại `http://localhost:11434` — không auth, chỉ dùng local/internal.
+- Nếu cần stop: `docker compose down` (volume giữ nguyên model).
+- Nếu muốn xóa model: `docker exec ollama ollama rm qwen2.5:3b`.
 
 ## Conventions
 
 - Code comment và message API/UI bằng **Tiếng Việt**. Giữ nguyên ngôn ngữ khi sửa.
 - Frontend route: `/admin/*` và `/user/*` là layout riêng (`AdminRoutes.jsx` / `UserRoutes.jsx`); routes public nằm trong `MainLayout`. Tour detail dùng `:id` (không phải slug).
+- Frontend theme (Tailwind v4): design tokens khai báo trong `frontend/src/assets/styles/index.css` dùng `@theme` — `--color-primary[-light|-dark|-50|-100]` (blue family, giá trị hex cố định), `--color-accent` (amber, điểm nhấn travel), `--color-background`, `--color-surface`, `--color-foreground` (text chính), `--color-muted` (text phụ), `--color-border`, `--color-success/-warning/-danger/-info`, `--font-sans` ("Lexend Deca"). Muốn đổi brand chỉ sửa ở `@theme`; code cũ đang dùng trực tiếp `blue-*`/`gray-*` (chưa refactor sang `primary-*`). Lưu ý: Tailwind v4 chỉ emit biến `--color-*` khi có utility sử dụng; `primary-light #3b82f6` tương phản 3.68:1 trên trắng nên **chỉ dùng cho ring/large text, không cho body text** (dùng `primary` hoặc `muted` thay thế).
 - Env vars không được viết trong git (`.gitignore` đã loại `.env*`).

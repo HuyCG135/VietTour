@@ -10,6 +10,8 @@ export function up(knex) {
         t.decimal("price_default", 12, 2).notNullable().defaultTo(0);
         t.decimal("price_child", 12, 2).notNullable().defaultTo(0);
         t.string("cover_image", 255).nullable();
+        t.index("region", "idx_tours_region");
+        t.index("price_default", "idx_tours_price_default");
         t.timestamp("created_at").defaultTo(knex.fn.now());
         t.timestamp("updated_at").defaultTo(knex.fn.now());
     });

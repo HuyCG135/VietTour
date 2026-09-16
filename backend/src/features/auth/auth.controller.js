@@ -117,6 +117,7 @@ export const login = async (req, res) => {
                     phone: user.phone,
                     email: user.email,
                     role: user.role,
+                    is_verified: user.is_verified,
                 },
                 token,
             },
@@ -149,6 +150,7 @@ export const getProfile = async (req, res) => {
                 fullname: user.fullname,
                 phone: user.phone,
                 email: user.email,
+                address: user.address || "",
                 role: user.role,
                 created_at: user.created_at,
             },
@@ -165,12 +167,13 @@ export const getProfile = async (req, res) => {
 
 export const updateProfile = async (req, res) => {
     try {
-        const { fullname, phone } = req.body;
+        const { fullname, phone, address } = req.body;
         const userId = req.user.id;
 
         const updated = await User.update(userId, {
             fullname: fullname || req.user.fullname,
             phone: phone || req.user.phone,
+            address: (address && address.trim()) || null,
         });
 
         if (!updated) {
@@ -190,11 +193,55 @@ export const updateProfile = async (req, res) => {
                 fullname: updatedUser.fullname,
                 phone: updatedUser.phone,
                 email: updatedUser.email,
+                address: updatedUser.address || "",
                 role: updatedUser.role,
             },
         });
     } catch (error) {
         console.error("Update profile error:", error);
+        res.status(500).json({
+            success: false,
+            message: "Lỗi khi cập nhật profile",
+            error: error.message,
+        });
+    }
+};
+
+export const patchProfile = async (req, res) => {
+    try {
+        const { fullname, phone, address } = req.body;
+        const userId = req.user.id;
+
+        const fields = {};
+        if (fullname !== undefined) fields.fullname = fullname.trim();
+        if (phone !== undefined) fields.phone = phone.trim();
+        if (address !== undefined) fields.address = address.trim() || null;
+
+        const updated = await User.update(userId, fields);
+
+        if (!updated) {
+            return res.status(404).json({
+                success: false,
+                message: "Không tìm thấy user",
+            });
+        }
+
+        const updatedUser = await User.findById(userId);
+
+        res.json({
+            success: true,
+            message: "Cập nhật profile thành công!",
+            data: {
+                id: updatedUser.id,
+                fullname: updatedUser.fullname,
+                phone: updatedUser.phone,
+                email: updatedUser.email,
+                address: updatedUser.address || "",
+                role: updatedUser.role,
+            },
+        });
+    } catch (error) {
+        console.error("Patch profile error:", error);
         res.status(500).json({
             success: false,
             message: "Lỗi khi cập nhật profile",
@@ -361,6 +408,49 @@ export const verifyEmail = async (req, res) => {
     } catch (error) {
         console.error("Verify email error:", error);
         res.redirect(`${process.env.FRONTEND_URL}/login?verified=false`);
+    }
+};
+
+export const resendVerification = async (req, res) => {
+    try {
+        const { email } = req.body;
+
+        const user = await User.findByEmail(email);
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: "Email không tồn tại trong hệ thống!",
+            });
+        }
+
+        if (user.is_verified) {
+            return res.status(400).json({
+                success: false,
+                message: "Email này đã được xác thực!",
+            });
+        }
+
+        const verifyToken = jwt.sign(
+            { userId: user.id },
+            process.env.VERIFY_EMAIL_SECRET,
+            { expiresIn: "2h" },
+        );
+
+        const verifyUrl = `${process.env.FRONTEND_URL}/verify-email?token=${verifyToken}`;
+
+        await sendVerificationEmail({ email, verifyUrl });
+
+        res.json({
+            success: true,
+            message: "Link xác thực đã được gửi lại đến email của bạn!",
+        });
+    } catch (error) {
+        console.error("Resend verification error:", error);
+        res.status(500).json({
+            success: false,
+            message: "Lỗi khi gửi lại email xác thực",
+            error: error.message,
+        });
     }
 };
 

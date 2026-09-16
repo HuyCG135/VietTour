@@ -1,11 +1,10 @@
 import {
+    listToursService,
     getAllToursService,
-    searchToursService,
+    getTourFiltersService,
     getToursByRegionService,
     getTourByIdService,
-    createTourService,
-    updateTourService,
-    deleteTourService,
+    getCalendarService,
 } from "./tour.service.js";
 
 const handleError = (res, error) => {
@@ -24,6 +23,25 @@ const handleError = (res, error) => {
 
 export const getAllTours = async (req, res) => {
     try {
+        const { q, region, min_price, max_price, duration, services, sort, page, limit, departure_date } = req.query;
+
+        if (q || region || min_price || max_price || duration || services || sort || page || limit || departure_date) {
+            const result = await listToursService({
+                q, region, min_price, max_price, duration, services, sort, page, limit, departure_date,
+            });
+
+            return res.json({
+                success: true,
+                data: result.rows,
+                pagination: {
+                    currentPage: result.page,
+                    totalPages: Math.ceil(result.total / result.limit),
+                    total: result.total,
+                    limit: result.limit,
+                },
+            });
+        }
+
         const tours = await getAllToursService();
 
         res.json({
@@ -35,15 +53,27 @@ export const getAllTours = async (req, res) => {
     }
 };
 
-export const searchTours = async (req, res) => {
+export const getTourFilters = async (req, res) => {
     try {
-        const keyword = String(req.query.q || "").trim();
-        const tours = await searchToursService(keyword);
+        const filters = await getTourFiltersService();
 
         res.json({
             success: true,
-            count: tours.length,
-            data: tours,
+            data: filters,
+        });
+    } catch (error) {
+        handleError(res, error);
+    }
+};
+
+export const getCalendar = async (req, res) => {
+    try {
+        const { from, to, q, region, min_price, max_price, duration, services } = req.query;
+        const data = await getCalendarService({ from, to, q, region, min_price, max_price, duration, services });
+
+        res.json({
+            success: true,
+            data,
         });
     } catch (error) {
         handleError(res, error);
@@ -72,47 +102,6 @@ export const getTourById = async (req, res) => {
         res.json({
             success: true,
             data: tour,
-        });
-    } catch (error) {
-        handleError(res, error);
-    }
-};
-
-export const createTour = async (req, res) => {
-    try {
-        const createdTour = await createTourService(req.body);
-
-        res.status(201).json({
-            success: true,
-            message: "Tao tour thanh cong",
-            data: createdTour,
-        });
-    } catch (error) {
-        handleError(res, error);
-    }
-};
-
-export const updateTour = async (req, res) => {
-    try {
-        const updatedTour = await updateTourService(req.params.id, req.body);
-
-        res.json({
-            success: true,
-            message: "Cap nhat tour thanh cong",
-            data: updatedTour,
-        });
-    } catch (error) {
-        handleError(res, error);
-    }
-};
-
-export const deleteTour = async (req, res) => {
-    try {
-        await deleteTourService(req.params.id);
-
-        res.json({
-            success: true,
-            message: "Xoa tour thanh cong",
         });
     } catch (error) {
         handleError(res, error);

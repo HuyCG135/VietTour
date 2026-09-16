@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 
-export default function useFetch(fn, deps = []) {
+export default function useFetch(fn) {
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
@@ -13,12 +13,11 @@ export default function useFetch(fn, deps = []) {
             setError("");
             try {
                 const response = await fn();
-                if (!ignore) {
-                    if (response?.success) {
-                        setData(response.data);
-                    } else {
-                        setError(response?.message || "Lỗi tải dữ liệu");
-                    }
+                if (ignore) return;
+                if (response?.success) {
+                    setData(response.data);
+                } else {
+                    setError(response?.message || "Lỗi tải dữ liệu");
                 }
             } catch (err) {
                 if (!ignore) setError(err?.message || "Lỗi kết nối");
@@ -29,7 +28,7 @@ export default function useFetch(fn, deps = []) {
 
         load();
         return () => { ignore = true; };
-    }, deps);
+    }, [fn]);
 
     return { data, loading, error };
 }

@@ -18,6 +18,15 @@ export async function register(data) {
      return res.json();
 }
 
+export async function resendVerification(email) {
+     const res = await fetch(`${API_URL}/auth/resend-verification`, {
+     method: 'POST',
+     headers: { 'Content-Type': 'application/json' },
+     body: JSON.stringify({ email }),
+     });
+     return res.json();
+}
+
 export function logout() {
      localStorage.removeItem('token');
      localStorage.removeItem('user');
@@ -30,4 +39,8 @@ export function getToken() {
 export function getUser() {
      const user = localStorage.getItem('user');
      return user ? JSON.parse(user) : null;
+}
+
+export function setUser(user) {
+     localStorage.setItem('user', JSON.stringify(user));
 }

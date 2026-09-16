@@ -2,6 +2,7 @@ export async function seed(knex) {
     // Order matters for FK
     await knex("wishlist").del();
     await knex("reviews").del();
+    await knex("passengers").del();
     await knex("bookings").del();
     await knex("tour_services").del();
     await knex("services").del();

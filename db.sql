@@ -13,6 +13,7 @@ CREATE TABLE users (
     phone VARCHAR(20) NOT NULL UNIQUE,
     email VARCHAR(255) NOT NULL UNIQUE,
     password VARCHAR(255) NOT NULL,
+    address VARCHAR(255),
 
     role ENUM('customer','admin') NOT NULL DEFAULT 'customer',
     status TINYINT(1) NOT NULL DEFAULT 1 CHECK (status IN (0,1)),
@@ -40,7 +41,10 @@ CREATE TABLE tours (
     cover_image VARCHAR(255) DEFAULT NULL, -- default là null
 
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+    INDEX idx_tours_region (region),
+    INDEX idx_tours_price_default (price_default)
 );
 
 -- 3. TOUR IMAGES
@@ -93,6 +97,7 @@ CREATE TABLE services (
     name VARCHAR(255) NOT NULL,
     slug VARCHAR(255) UNIQUE,
     description TEXT,
+    icon VARCHAR(100),
 
     status TINYINT(1) DEFAULT 1 CHECK (status IN (0,1)),
 
@@ -170,4 +175,20 @@ CREATE TABLE wishlist (
     FOREIGN KEY (tour_id) REFERENCES tours(id) ON DELETE CASCADE,
 
     UNIQUE KEY uk_wishlist (user_id, tour_id)
+);
+
+-- 11. PASSENGERS
+CREATE TABLE passengers (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    booking_id INT NOT NULL,
+
+    fullname VARCHAR(255) NOT NULL,
+    gender ENUM('Nam','Nữ','Khác') NOT NULL DEFAULT 'Khác',
+    dob DATE,
+    passenger_type ENUM('adult','child') NOT NULL DEFAULT 'adult',
+
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (booking_id) REFERENCES bookings(id) ON DELETE CASCADE
 );
