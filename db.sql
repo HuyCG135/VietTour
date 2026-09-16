@@ -22,28 +22,7 @@ CREATE TABLE users (
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
--- 2. OTPS
-CREATE TABLE otps (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-
-    user_id INT NULL,
-    email VARCHAR(255) NOT NULL,
-
-    otp VARCHAR(10) NOT NULL,
-    type ENUM('VERIFY_EMAIL', 'RESET_PASSWORD') NOT NULL,
-
-    expires_at DATETIME NOT NULL,
-    is_used TINYINT(1) NOT NULL DEFAULT 0 CHECK (is_used IN (0,1)),
-
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-
-    INDEX idx_email (email),
-    INDEX idx_user_type (user_id, type)
-);
-
--- 3. TOURS
+-- 2. TOURS
 CREATE TABLE tours (
     id INT AUTO_INCREMENT PRIMARY KEY,
 
@@ -64,7 +43,7 @@ CREATE TABLE tours (
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
--- 4. TOUR IMAGES
+-- 3. TOUR IMAGES
 CREATE TABLE tour_images (
     id INT AUTO_INCREMENT PRIMARY KEY,
     tour_id INT NOT NULL,
@@ -73,7 +52,7 @@ CREATE TABLE tour_images (
     FOREIGN KEY (tour_id) REFERENCES tours(id) ON DELETE CASCADE
 );
 
--- 5. TOUR ITINERARIES
+-- 4. TOUR ITINERARIES
 CREATE TABLE tour_itineraries (
     id INT AUTO_INCREMENT PRIMARY KEY,
     tour_id INT NOT NULL,
@@ -84,7 +63,7 @@ CREATE TABLE tour_itineraries (
     UNIQUE KEY uk_tour_day (tour_id, day_number)
 );
 
--- 6. TOUR DEPARTURES
+-- 5. TOUR DEPARTURES
 CREATE TABLE tour_departures (
     id INT AUTO_INCREMENT PRIMARY KEY,
 
@@ -107,7 +86,7 @@ CREATE TABLE tour_departures (
     UNIQUE KEY uk_tour_date (tour_id, departure_date)
 );
 
--- 7. SERVICES
+-- 6. SERVICES
 CREATE TABLE services (
     id INT AUTO_INCREMENT PRIMARY KEY,
 
@@ -121,7 +100,7 @@ CREATE TABLE services (
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
--- 8. TOUR - SERVICES (MANY TO MANY)
+-- 7. TOUR - SERVICES (MANY TO MANY)
 CREATE TABLE tour_services (
     id INT AUTO_INCREMENT PRIMARY KEY,
     tour_id INT NOT NULL,
@@ -133,7 +112,7 @@ CREATE TABLE tour_services (
     UNIQUE KEY uk_tour_service (tour_id, service_id)
 );
 
--- 9. BOOKINGS
+-- 8. BOOKINGS
 CREATE TABLE bookings (
     id INT AUTO_INCREMENT PRIMARY KEY,
 
@@ -160,7 +139,7 @@ CREATE TABLE bookings (
     FOREIGN KEY (departure_id) REFERENCES tour_departures(id) ON DELETE RESTRICT
 );
 
--- 10. REVIEWS
+-- 9. REVIEWS
 CREATE TABLE reviews (
     id INT AUTO_INCREMENT PRIMARY KEY,
 
@@ -178,7 +157,7 @@ CREATE TABLE reviews (
     UNIQUE KEY uk_user_tour_review (user_id, tour_id)
 );
 
--- 11. WISHLIST
+-- 10. WISHLIST
 CREATE TABLE wishlist (
     id INT AUTO_INCREMENT PRIMARY KEY,
 

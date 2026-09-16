@@ -9,6 +9,5 @@ export async function seed(knex) {
     await knex("tour_itineraries").del();
     await knex("tour_images").del();
     await knex("tours").del();
-    await knex("otps").del();
     await knex("users").del();
 }
