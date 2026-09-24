@@ -15,7 +15,7 @@ Frontend (Vite):
 
 ## Architecture
 
-- Backend feature-based: `backend/src/features/<name>/{*.routes.js, *.controller.js, *.service.js, *.repository.js, *.validate.js}`; middleware dùng chung ở `backend/src/middlewares/`, mail ở `shared/mailService.js`. Controller chỉ lo HTTP (nhận req → gọi service → trả res); **service** chứa nghiệp vụ; **repository** là data access thuần (Knex/raw SQL).
+- Backend feature-based: `backend/src/features/<name>/{*.routes.js, *.controller.js, *.service.js, *.repository.js, *.validate.js}`; middleware dùng chung ở `backend/src/middlewares/`, mail ở `shared/mailService.js`. Controller chỉ lo HTTP (nhận req → gọi service → trả res); **service** chứa nghiệp vụ; **repository** là data access thuần (Knex/raw SQL). Feature dành cho admin đặt trong `backend/src/features/admin/<name>/` (vd: `admin/tours/`) — đồng bộ với frontend `frontend/src/features/admin/<name>/`.
 - `backend/src/app.js` phục vụ luôn `frontend/dist` nếu đã build (kèm SPA fallback cho route không phải `/api`); nếu chưa build, `/` trả 503. => Trong dev, chạy frontend riêng qua Vite, không dựa vào backend serve.
 - Routes mount tại `/api/auth`, `/api/tours`, `/api/bookings` (rate-limiter chung 100 req/15min áp lên `/api`).
 - API response wrap: `{ success: boolean, data?, message? }` — frontend `useFetch.js` đọc `response.success`/`response.data`. Giữ format này khi thêm endpoint.
@@ -43,7 +43,7 @@ Seed structure (`backend/db/`):
 
 > ✅ **Repository dùng Knex query builder** (`src/config/knex.js`), khớp schema mới (`price_default`, `cover_image`, `departure_id`, `adults`/`children`, `contact_*`).
 >
-> ⚠️ **Còn lệch:** `validateTour` (`src/features/tour/tour.validate.js`) vẫn dùng field cũ (`price`). `bookings` đã khớp schema mới (`departure_id`, `adults`/`children`, `contact_*`, `payment_status`); bảng `passengers` thêm qua migration `20260912_000014_create_passengers.js` (PK `booking_id` → `bookings(id)` ON DELETE CASCADE, `gender` ENUM('Nam','Nữ','Khác'), `passenger_type` ENUM('adult','child'), `dob` nullable).
+> - `bookings` đã khớp schema mới (`departure_id`, `adults`/`children`, `contact_*`, `payment_status`); bảng `passengers` thêm qua migration `20260912_000014_create_passengers.js` (PK `booking_id` → `bookings(id)` ON DELETE CASCADE, `gender` ENUM('Nam','Nữ','Khác'), `passenger_type` ENUM('adult','child'), `dob` nullable).
 > - VNPay: dùng package `vnpay@^2.5.0`; endpoints trong `booking.payment.controller.js` (`POST /create-payment-url`, `GET /vnpay-return` — route public, đặt trước route param). Env cần: `VNP_TMN_CODE`, `VNP_SECURE_SECRET`, `VNP_HOST`, `VNP_RETURN_URL` (xem `backend/.env`). Flow: **tạo booking `unpaid/pending` trước → tạo URL VNPay → callback xác nhận `paid/confirmed`**.
 - Env backend bắt buộc: `JWT_SECRET`, `DB_*`. Khác: `PORT`, `VERIFY_EMAIL_SECRET`, `RESET_PASS_SECRET`, `FRONTEND_URL`, `SMTP_*` (email không bắt buộc — nếu thiếu SMTP, link verify/reset chỉ log ra console).
 - Frontend: `VITE_API_URL` (mặc định `/api`).

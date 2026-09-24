@@ -56,3 +56,6 @@ Thumbs.db
 .opencode/*
 .codegraph/
 opencode.json
+
+# Draw.io files
+*.drawio

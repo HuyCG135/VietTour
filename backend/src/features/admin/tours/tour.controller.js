@@ -1,10 +1,11 @@
 import {
-    getAllToursAdminService,
+    listToursAdminService,
+    getTourFiltersAdminService,
     getTourByIdAdminService,
     createTourService,
     updateTourService,
     deleteTourService,
-} from "./tour-admin.service.js";
+} from "./tour.service.js";
 
 const handleError = (res, error) => {
     if (error.status && error.status < 500) {
@@ -22,11 +23,33 @@ const handleError = (res, error) => {
 
 export const getAllTours = async (req, res) => {
     try {
-        const tours = await getAllToursAdminService();
+        const { q, region, min_price, max_price, sort, page, limit } = req.query;
+        const result = await listToursAdminService({
+            q, region, min_price, max_price, sort, page, limit,
+        });
 
         res.json({
             success: true,
-            data: tours,
+            data: result.rows,
+            pagination: {
+                currentPage: result.page,
+                totalPages: Math.ceil(result.total / result.limit),
+                total: result.total,
+                limit: result.limit,
+            },
+        });
+    } catch (error) {
+        handleError(res, error);
+    }
+};
+
+export const getTourFilters = async (req, res) => {
+    try {
+        const filters = await getTourFiltersAdminService();
+
+        res.json({
+            success: true,
+            data: filters,
         });
     } catch (error) {
         handleError(res, error);
@@ -52,7 +75,7 @@ export const createTour = async (req, res) => {
 
         res.status(201).json({
             success: true,
-            message: "Tao tour thanh cong",
+            message: "Tạo tour thành công",
             data: createdTour,
         });
     } catch (error) {
@@ -66,7 +89,7 @@ export const updateTour = async (req, res) => {
 
         res.json({
             success: true,
-            message: "Cap nhat tour thanh cong",
+            message: "Cập nhật tour thành công",
             data: updatedTour,
         });
     } catch (error) {
@@ -80,7 +103,7 @@ export const deleteTour = async (req, res) => {
 
         res.json({
             success: true,
-            message: "Xoa tour thanh cong",
+            message: "Xóa tour thành công",
         });
     } catch (error) {
         handleError(res, error);
