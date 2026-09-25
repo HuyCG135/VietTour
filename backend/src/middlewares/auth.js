@@ -99,6 +99,42 @@ export const isAdmin = (req, res, next) => {
     next();
 };
 
+export const isTourStaff = (req, res, next) => {
+    if (!req.user || !req.user.id) {
+        return res.status(401).json({
+            success: false,
+            message: "Vui lòng đăng nhập lại!",
+        });
+    }
+
+    if (req.user.role !== "tour_staff") {
+        return res.status(403).json({
+            success: false,
+            message: "Chỉ nhân viên mới được phép!",
+        });
+    }
+
+    next();
+};
+
+export const isBookingStaff = (req, res, next) => {
+    if (!req.user || !req.user.id) {
+        return res.status(401).json({
+            success: false,
+            message: "Vui lòng đăng nhập lại!",
+        });
+    }
+
+    if (req.user.role !== "booking_staff") {
+        return res.status(403).json({
+            success: false,
+            message: "Chỉ nhân viên đặt chỗ mới được phép!",
+        });
+    }
+
+    next();
+};
+
 export const isUser = (req, res, next) => {
     if (!req.user || !req.user.id) {
         return res.status(401).json({

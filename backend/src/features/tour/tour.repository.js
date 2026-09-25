@@ -108,7 +108,10 @@ class Tour {
         const [priceRange] = await db("tours")
             .min("price_default as min")
             .max("price_default as max");
-        const services = await db("services").select("id", "name", "icon").orderBy("id", "asc");
+        const services = await db("services")
+            .select("id", "name", "icon")
+            .where("status", 1)
+            .orderBy("id", "asc");
 
         return {
             regions: regions.filter(Boolean).sort((a, b) => a.localeCompare(b, "vi")),
@@ -158,6 +161,7 @@ class Tour {
             db("services as s")
                 .innerJoin("tour_services as ts", "ts.service_id", "s.id")
                 .select("s.id", "s.name", "s.icon")
+                .where("s.status", 1)
                 .where("ts.tour_id", id)
                 .orderBy("s.id", "asc"),
             db("reviews as r")
