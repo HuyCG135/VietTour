@@ -5,6 +5,7 @@ import {
     createTourService,
     updateTourService,
     deleteTourService,
+    uploadCoverImageService,
 } from "./tour.service.js";
 
 const handleError = (res, error) => {
@@ -104,6 +105,20 @@ export const deleteTour = async (req, res) => {
         res.json({
             success: true,
             message: "Xóa tour thành công",
+        });
+    } catch (error) {
+        handleError(res, error);
+    }
+};
+
+export const uploadTourCoverImage = async (req, res) => {
+    try {
+        const result = await uploadCoverImageService(req.file);
+
+        res.status(201).json({
+            success: true,
+            message: "Tải ảnh bìa lên thành công",
+            data: result,
         });
     } catch (error) {
         handleError(res, error);

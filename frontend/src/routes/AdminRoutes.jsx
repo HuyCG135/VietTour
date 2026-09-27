@@ -9,6 +9,7 @@ import ServiceList from "../features/admin/services/List";
 import ServiceForm from "../features/admin/services/Form";
 import TourServiceList from "../features/admin/tour-services/List";
 import TourImageList from "../features/admin/tour-images/List";
+import TourImageForm from "../features/admin/tour-images/Form";
 import UserList from "../features/admin/users/List";
 import Statistics from "../features/admin/statistics/List";
 
@@ -28,6 +29,7 @@ export default function AdminRoutes() {
             <Route path="services/:id/edit" element={<ServiceForm />} />
             <Route path="tour-services" element={<TourServiceList />} />
             <Route path="tour-images" element={<TourImageList />} />
+            <Route path="tour-images/:tourId/edit" element={<TourImageForm />} />
             <Route path="users" element={<UserList />} />
             <Route path="statistics" element={<Statistics />} />
         </Routes>

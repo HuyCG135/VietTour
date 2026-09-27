@@ -6,7 +6,7 @@ export function up(knex) {
         t.string("email", 255).notNullable().unique();
         t.string("password", 255).notNullable();
         t.string("address", 255).nullable();
-        t.enu("role", ["customer", "admin"]).notNullable().defaultTo("customer");
+        t.enu("role", ["customer", "admin", "tour-staff", "booking-staff"]).notNullable().defaultTo("customer");
         t.tinyint("status").notNullable().defaultTo(1);
         t.tinyint("is_verified").notNullable().defaultTo(0);
         t.timestamp("created_at").defaultTo(knex.fn.now());

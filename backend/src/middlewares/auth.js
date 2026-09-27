@@ -4,6 +4,22 @@ if (!process.env.JWT_SECRET) {
     throw new Error("JWT_SECRET chưa được cấu hình trong biến môi trường");
 }
 
+// ================= ROLES =================
+// Giá trị phải khớp enum role trong migration 20250831_000001_create_users.js
+export const ROLE = {
+    CUSTOMER: "customer",
+    ADMIN: "admin",
+    TOUR_STAFF: "tour-staff",
+    BOOKING_STAFF: "booking-staff",
+};
+
+// ================= NHÓM QUYỀN =================
+// admin nằm trong mọi nhóm => luôn có full quyền
+// - Nhóm quản lý tour: tour, lịch trình, ảnh, điểm khởi hành, dịch vụ, dịch vụ tour
+export const TOUR_MANAGEMENT = [ROLE.ADMIN, ROLE.TOUR_STAFF];
+// - Nhóm quản lý booking: booking, thống kê
+export const BOOKING_MANAGEMENT = [ROLE.ADMIN, ROLE.BOOKING_STAFF];
+
 // ================= VERIFY TOKEN =================
 export const verifyToken = (req, res, next) => {
     try {
@@ -81,60 +97,36 @@ export const requireVerified = (req, res, next) => {
 };
 
 // ================= ROLE CHECK =================
-export const isAdmin = (req, res, next) => {
-    if (!req.user || !req.user.id) {
-        return res.status(401).json({
-            success: false,
-            message: "Vui lòng đăng nhập lại!",
-        });
-    }
+// Middleware phân quyền theo danh sách role.
+// Dùng trực tiếp: verifyToken, authorize(ROLE.ADMIN, ROLE.TOUR_STAFF)
+export const authorize = (...roles) => {
+    return (req, res, next) => {
+        if (!req.user || !req.user.id) {
+            return res.status(401).json({
+                success: false,
+                message: "Vui lòng đăng nhập lại!",
+            });
+        }
 
-    if (req.user.role !== "admin") {
-        return res.status(403).json({
-            success: false,
-            message: "Chỉ admin mới được phép!",
-        });
-    }
+        if (!roles.includes(req.user.role)) {
+            return res.status(403).json({
+                success: false,
+                message: "Bạn không có quyền thực hiện chức năng này!",
+            });
+        }
 
-    next();
+        next();
+    };
 };
 
-export const isTourStaff = (req, res, next) => {
-    if (!req.user || !req.user.id) {
-        return res.status(401).json({
-            success: false,
-            message: "Vui lòng đăng nhập lại!",
-        });
-    }
+// Chỉ admin (quản lý user, cấu hình hệ thống)
+export const isAdmin = authorize(ROLE.ADMIN);
+// Nhóm quản lý tour (admin + nhân viên tour)
+export const isTourStaff = authorize(...TOUR_MANAGEMENT);
+// Nhóm quản lý booking (admin + nhân viên đặt tour)
+export const isBookingStaff = authorize(...BOOKING_MANAGEMENT);
 
-    if (req.user.role !== "tour_staff") {
-        return res.status(403).json({
-            success: false,
-            message: "Chỉ nhân viên mới được phép!",
-        });
-    }
-
-    next();
-};
-
-export const isBookingStaff = (req, res, next) => {
-    if (!req.user || !req.user.id) {
-        return res.status(401).json({
-            success: false,
-            message: "Vui lòng đăng nhập lại!",
-        });
-    }
-
-    if (req.user.role !== "booking_staff") {
-        return res.status(403).json({
-            success: false,
-            message: "Chỉ nhân viên đặt chỗ mới được phép!",
-        });
-    }
-
-    next();
-};
-
+// Bất kỳ user đã đăng nhập
 export const isUser = (req, res, next) => {
     if (!req.user || !req.user.id) {
         return res.status(401).json({
@@ -167,7 +159,7 @@ export const isOwner = (paramName = "userId") => {
             }
 
             // Admin truy cập mọi thứ
-            if (req.user.role === "admin") {
+            if (req.user.role === ROLE.ADMIN) {
                 return next();
             }
 

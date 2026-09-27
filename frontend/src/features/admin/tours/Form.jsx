@@ -1,8 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { getTourById, createTour, updateTour } from "./tours.api";
+import { getTourById, createTour, updateTour, uploadCoverImage } from "./tours.api";
 
 const REGIONS = ["Miền Bắc", "Miền Trung", "Miền Nam"];
+
+const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp", "image/gif", "image/avif"];
+const MAX_COVER_SIZE = 5 * 1024 * 1024;
 
 const slugify = (value) =>
     value
@@ -36,8 +39,10 @@ export default function TourForm() {
     });
     const [loading, setLoading] = useState(isEdit);
     const [saving, setSaving] = useState(false);
+    const [uploadingCover, setUploadingCover] = useState(false);
     const [error, setError] = useState("");
     const [success, setSuccess] = useState("");
+    const coverInputRef = useRef(null);
 
     useEffect(() => {
         if (!isEdit) return;
@@ -71,6 +76,38 @@ export default function TourForm() {
 
     const handleAutoSlug = () => {
         setForm((prev) => ({ ...prev, slug: slugify(prev.name) }));
+    };
+
+    const handleUploadCover = (e) => {
+        const file = e.target.files?.[0];
+        // Reset để chọn lại cùng file sau đó vẫn fire change event
+        e.target.value = "";
+        if (!file) return;
+
+        if (!ACCEPTED_IMAGE_TYPES.includes(file.type)) {
+            setError("Ảnh bìa phải là file JPG, PNG, WEBP, GIF hoặc AVIF");
+            return;
+        }
+        if (file.size > MAX_COVER_SIZE) {
+            setError(`Ảnh bìa vượt quá ${MAX_COVER_SIZE / 1024 / 1024} MB`);
+            return;
+        }
+
+        setError("");
+        setSuccess("");
+        setUploadingCover(true);
+
+        uploadCoverImage(file)
+            .then((data) => {
+                if (!data.success) {
+                    setError(data.message || "Không thể tải ảnh bìa lên");
+                    return;
+                }
+                setForm((prev) => ({ ...prev, cover_image: data.data.cover_image }));
+                setSuccess("Tải ảnh bìa lên thành công, nhớ bấm Lưu để áp dụng");
+            })
+            .catch(() => setError("Không thể kết nối đến máy chủ"))
+            .finally(() => setUploadingCover(false));
     };
 
     const handleSubmit = (e) => {
@@ -245,12 +282,35 @@ export default function TourForm() {
                             />
                         </div>
                         <div className="md:col-span-2">
-                            <label className={labelClass}>Ảnh bìa (URL)</label>
+                            <label className={labelClass}>Ảnh bìa</label>
+                            <div className="flex gap-2">
+                                <input
+                                    className={inputClass}
+                                    value={form.cover_image}
+                                    onChange={updateField("cover_image")}
+                                    placeholder="https://.../cover.jpg"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => coverInputRef.current?.click()}
+                                    disabled={uploadingCover}
+                                    className="shrink-0 border border-blue-600 text-blue-600 hover:bg-blue-50 px-3 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer disabled:opacity-50 inline-flex items-center gap-2"
+                                    title="Tải ảnh từ thiết bị lên Cloudinary"
+                                >
+                                    {uploadingCover ? (
+                                        <i className="fa-solid fa-spinner fa-spin" />
+                                    ) : (
+                                        <i className="fa-solid fa-cloud-arrow-up" />
+                                    )}
+                                    {uploadingCover ? "Đang tải..." : "Tải ảnh"}
+                                </button>
+                            </div>
                             <input
-                                className={inputClass}
-                                value={form.cover_image}
-                                onChange={updateField("cover_image")}
-                                placeholder="https://.../cover.jpg"
+                                ref={coverInputRef}
+                                type="file"
+                                accept="image/*"
+                                className="hidden"
+                                onChange={handleUploadCover}
                             />
                             {form.cover_image && (
                                 <img
@@ -259,6 +319,9 @@ export default function TourForm() {
                                     className="mt-2 h-32 object-cover rounded-lg border border-gray-200"
                                 />
                             )}
+                            <p className="text-xs text-gray-400 mt-1.5">
+                                Ảnh sẽ được tải lên Cloudinary. Bấm &quot;Lưu&quot; để lưu đường dẫn vào tour.
+                            </p>
                         </div>
                         <div className="md:col-span-2">
                             <label className={labelClass}>Mô tả</label>

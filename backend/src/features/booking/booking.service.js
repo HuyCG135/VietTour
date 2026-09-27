@@ -1,6 +1,7 @@
 import Booking from "./booking.repository.js";
 import Tour from "../tour/tour.repository.js";
 import { ProductCode, VnpLocale, dateFormat } from "vnpay";
+import { ROLE, BOOKING_MANAGEMENT } from "../../middlewares/auth.js";
 
 const createHttpError = (status, message) => {
     const err = new Error(message);
@@ -9,7 +10,7 @@ const createHttpError = (status, message) => {
 };
 
 export const createBookingService = async (userId, role, payload) => {
-    if (role !== "customer" && role !== "admin") {
+    if (role !== ROLE.CUSTOMER && role !== ROLE.ADMIN) {
         throw createHttpError(403, "Chỉ tài khoản khách hàng mới có thể đặt tour");
     }
 
@@ -100,7 +101,7 @@ export const getBookingDetailService = async (userId, role, bookingId) => {
         throw createHttpError(404, "Không tìm thấy booking");
     }
 
-    if (String(booking.user_id) !== String(userId) && role !== "admin") {
+    if (String(booking.user_id) !== String(userId) && !BOOKING_MANAGEMENT.includes(role)) {
         throw createHttpError(403, "Bạn không có quyền xem booking này");
     }
 
@@ -118,7 +119,7 @@ export const cancelBookingService = async (userId, role, bookingId) => {
         throw createHttpError(404, "Không tìm thấy booking");
     }
 
-    if (booking.user_id !== userId && role !== "admin") {
+    if (booking.user_id !== userId && !BOOKING_MANAGEMENT.includes(role)) {
         throw createHttpError(403, "Bạn không có quyền hủy booking này");
     }
 
@@ -166,7 +167,7 @@ export const createPaymentUrlService = async (req, bookingId, vnpay) => {
     }
 
     // Kiểm tra quyền sở hữu
-    if (String(booking.user_id) !== String(req.user.id) && req.user.role !== "admin") {
+    if (String(booking.user_id) !== String(req.user.id) && !BOOKING_MANAGEMENT.includes(req.user.role)) {
         throw createHttpError(403, "Bạn không có quyền thanh toán booking này");
     }
 
