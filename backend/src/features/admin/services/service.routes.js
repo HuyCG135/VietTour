@@ -1,4 +1,4 @@
-import express from "express";
+﻿import express from "express";
 import {
     getAllServices,
     getServiceById,
@@ -6,15 +6,15 @@ import {
     updateService,
     deleteService,
 } from "./service.controller.js";
-import { verifyToken, isAdmin } from "../../../middlewares/auth.js";
+import { verifyToken, isTourStaff } from "../../../middlewares/auth.js";
 import { validateService } from "./service.validate.js";
 
 const router = express.Router();
 
-router.get("/", verifyToken, isAdmin, getAllServices);
-router.get("/:id", verifyToken, isAdmin, getServiceById);
-router.post("/", verifyToken, isAdmin, validateService, createService);
-router.put("/:id", verifyToken, isAdmin, validateService, updateService);
-router.delete("/:id", verifyToken, isAdmin, deleteService);
+router.get("/", verifyToken, isTourStaff, getAllServices);
+router.get("/:id", verifyToken, isTourStaff, getServiceById);
+router.post("/", verifyToken, isTourStaff, validateService, createService);
+router.put("/:id", verifyToken, isTourStaff, validateService, updateService);
+router.delete("/:id", verifyToken, isTourStaff, deleteService);
 
 export default router;
