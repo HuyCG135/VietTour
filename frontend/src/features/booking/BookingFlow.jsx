@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
+import { createBooking, createPaymentUrl } from "../user/bookings/booking.api.js";
 import BookingSteps from "./BookingSteps.jsx";
 import ContactInfoForm from "./ContactInfoForm.jsx";
 import BookingDetailsForm from "./BookingDetailsForm.jsx";
@@ -19,20 +20,57 @@ export default function BookingFlow({ user, tour }) {
     const contactPrefill = useMemo(() => getContactPrefill(user), [user]);
     const canBook = user?.role === "customer";
     const [success, setSuccess] = useState(null);
+    const [submitting, setSubmitting] = useState(false);
+    const [submitError, setSubmitError] = useState("");
     const successTitleRef = useRef(null);
 
     useEffect(() => {
         if (success) successTitleRef.current?.focus();
     }, [success]);
 
-    const form = useBookingForm(tour, departures, contactPrefill, (payload) => {
-        const selectedDeparture = departures.find((d) => d.id === payload.departure_id) || null;
-        setSuccess({
-            code: `#TOUR${String(tour.id).padStart(3, "0")}`,
-            pax: payload.adults + payload.children,
-            total: getTotalPrice(tour, selectedDeparture, payload.adults, payload.children),
-            contact_name: payload.contact_name,
-        });
+    const goPay = async (bookingId) => {
+        setSubmitting(true);
+        setSubmitError("");
+        try {
+            const pay = await createPaymentUrl(bookingId);
+            if (!pay?.success) {
+                throw new Error(pay?.message || "Không tạo được liên kết thanh toán");
+            }
+            window.location.href = pay.vnpayUrl;
+        } catch (err) {
+            setSubmitError(err.message || "Đã xảy ra lỗi khi tạo liên kết thanh toán");
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
+    const form = useBookingForm(tour, departures, contactPrefill, async (payload) => {
+        setSubmitting(true);
+        setSubmitError("");
+        try {
+            const created = await createBooking(payload);
+            if (!created?.success) {
+                throw new Error(created?.message || "Không tạo được đơn đặt tour. Vui lòng thử lại.");
+            }
+            const bookingId = created.data?.id;
+            setSuccess({
+                code: `#MB${bookingId}`,
+                pax: payload.adults + payload.children,
+                total: getTotalPrice(
+                    tour,
+                    departures.find((d) => d.id === payload.departure_id) || null,
+                    payload.adults,
+                    payload.children,
+                ),
+                contact_name: payload.contact_name,
+                bookingId,
+            });
+            await goPay(bookingId);
+        } catch (err) {
+            setSubmitError(err.message || "Đã xảy ra lỗi khi đặt tour. Vui lòng thử lại.");
+        } finally {
+            setSubmitting(false);
+        }
     });
 
     const {
@@ -80,19 +118,51 @@ export default function BookingFlow({ user, tour }) {
                             Bước tiếp theo: hoàn tất thanh toán để xác nhận chỗ của {success.contact_name}.
                         </p>
                         <p className="mt-4 text-2xl font-extrabold text-primary">{formatVnd(success.total)}</p>
+
+                        {submitError && (
+                            <div
+                                role="alert"
+                                className="mt-5 flex items-start gap-2 rounded-xl border border-danger/30 bg-danger/10 px-4 py-3 text-left text-sm text-danger"
+                            >
+                                <i className="fa-regular fa-circle-exclamation mt-0.5" />
+                                <span>
+                                    Đơn đã ghi nhận nhưng chưa chuyển được đến cổng thanh toán: {submitError}. Bạn có thể
+                                    thanh toán lại ngay bên dưới.
+                                </span>
+                            </div>
+                        )}
+
                         <div className="mt-7 flex flex-col sm:flex-row items-center justify-center gap-3">
+                            <button
+                                type="button"
+                                onClick={() => goPay(success.bookingId)}
+                                disabled={submitting}
+                                className="inline-flex items-center gap-2 rounded-xl bg-primary px-6 py-3 font-bold text-white transition-colors duration-150 hover:bg-primary-dark cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
+                            >
+                                {submitting ? (
+                                    <>
+                                        <i className="fa-solid fa-circle-notch fa-spin" />
+                                        Đang tạo liên kết thanh toán...
+                                    </>
+                                ) : (
+                                    <>
+                                        Thanh toán ngay
+                                        <i className="fa-solid fa-arrow-right text-sm" />
+                                    </>
+                                )}
+                            </button>
+                            <Link
+                                to="/user/bookings"
+                                className="inline-flex items-center gap-2 rounded-xl border border-slate-300 px-6 py-3 font-bold text-foreground transition-colors duration-150 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 no-underline"
+                            >
+                                Lịch sử đặt tour
+                            </Link>
                             <Link
                                 to="/tours"
-                                className="inline-flex items-center gap-2 rounded-xl bg-primary px-6 py-3 font-bold text-white transition-colors duration-150 hover:bg-primary-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2"
+                                className="inline-flex items-center gap-2 rounded-xl border border-slate-300 px-6 py-3 font-bold text-foreground transition-colors duration-150 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 no-underline"
                             >
                                 Xem các tour khác
                                 <i className="fa-solid fa-arrow-right text-sm" />
-                            </Link>
-                            <Link
-                                to={`/tours/${tour.id}`}
-                                className="inline-flex items-center gap-2 rounded-xl border border-slate-300 px-6 py-3 font-bold text-foreground transition-colors duration-150 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2"
-                            >
-                                Về trang tour
                             </Link>
                         </div>
                     </div>
@@ -132,6 +202,16 @@ export default function BookingFlow({ user, tour }) {
 
                 {showForm && (
                     <form onSubmit={handleSubmit} noValidate className="mt-8 grid grid-cols-1 lg:grid-cols-12 gap-8">
+                        {submitError && (
+                            <div
+                                role="alert"
+                                className="lg:col-span-12 flex items-start gap-2 rounded-xl border border-danger/30 bg-danger/10 px-4 py-3 text-sm text-danger"
+                            >
+                                <i className="fa-regular fa-circle-exclamation mt-0.5" />
+                                <span>{submitError}</span>
+                            </div>
+                        )}
+
                         <div className="lg:col-span-7 space-y-5">
                             <ContactInfoForm
                                 contact={contact}
@@ -171,6 +251,7 @@ export default function BookingFlow({ user, tour }) {
                                 total={total}
                                 unitPrices={unitPrices}
                                 canBook={canBook}
+                                submitting={submitting}
                             />
                         </div>
 
@@ -186,11 +267,20 @@ export default function BookingFlow({ user, tour }) {
                                 </div>
                                 <button
                                     type="submit"
-                                    disabled={!canBook}
+                                    disabled={!canBook || submitting}
                                     className="inline-flex shrink-0 items-center gap-2 rounded-xl bg-primary px-5 py-3 font-bold text-white transition-colors duration-150 hover:bg-primary-dark cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-primary"
                                 >
-                                    Đặt chỗ ({paxCount} hành khách)
-                                    <i className="fa-solid fa-circle-check text-sm" />
+                                    {submitting ? (
+                                        <>
+                                            <i className="fa-solid fa-circle-notch fa-spin" />
+                                            Đang đặt chỗ...
+                                        </>
+                                    ) : (
+                                        <>
+                                            Đặt chỗ ({paxCount} hành khách)
+                                            <i className="fa-solid fa-circle-check text-sm" />
+                                        </>
+                                    )}
                                 </button>
                             </div>
                         </div>

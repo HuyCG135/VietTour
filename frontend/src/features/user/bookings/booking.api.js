@@ -9,8 +9,17 @@ const authHeaders = (extra = {}) => ({
 export async function createBooking(data) {
     const res = await fetch(`${API_URL}/bookings`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: authHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify(data),
+    });
+    return res.json();
+}
+
+export async function createPaymentUrl(bookingId) {
+    const res = await fetch(`${API_URL}/bookings/create-payment-url`, {
+        method: 'POST',
+        headers: authHeaders({ 'Content-Type': 'application/json' }),
+        body: JSON.stringify({ booking_id: bookingId }),
     });
     return res.json();
 }

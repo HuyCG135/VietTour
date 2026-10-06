@@ -9,6 +9,7 @@ export default function BookingSummaryCard({
     total,
     unitPrices,
     canBook,
+    submitting,
 }) {
     const formattedId = `#TOUR${String(tour.id).padStart(3, "0")}`;
 
@@ -65,11 +66,20 @@ export default function BookingSummaryCard({
 
             <button
                 type="submit"
-                disabled={!canBook}
+                disabled={!canBook || submitting}
                 className="mt-5 hidden lg:flex w-full items-center justify-center gap-2 rounded-2xl bg-primary px-4 py-4 text-base font-bold text-white transition-colors duration-150 hover:bg-primary-dark active:bg-primary-dark cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-primary disabled:active:bg-primary"
             >
-                Đặt chỗ ({paxCount} hành khách)
-                <i className="fa-solid fa-circle-check text-sm" />
+                {submitting ? (
+                    <>
+                        <i className="fa-solid fa-circle-notch fa-spin" />
+                        Đang đặt chỗ...
+                    </>
+                ) : (
+                    <>
+                        Đặt chỗ ({paxCount} hành khách)
+                        <i className="fa-solid fa-circle-check text-sm" />
+                    </>
+                )}
             </button>
 
             <p className="mt-4 flex items-center justify-center gap-1.5 text-xs text-muted text-center">
