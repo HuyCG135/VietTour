@@ -86,6 +86,8 @@ class Booking {
         contact_name,
         contact_phone,
         contact_email,
+        contact_dob,
+        contact_gender,
         note,
         passengers,
     }) {
@@ -101,6 +103,8 @@ class Booking {
                 contact_name,
                 contact_phone,
                 contact_email,
+                contact_dob: contact_dob || null,
+                contact_gender: contact_gender || null,
                 note: note || null,
                 created_at: new Date(),
                 updated_at: new Date(),

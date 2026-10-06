@@ -34,7 +34,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(requestLogger);
 
 // Rate limiter (100 requests per 15 minutes)
-app.use("/api", rateLimiter(100, 15 * 60 * 1000));
+app.use("/api", rateLimiter(400, 15 * 60 * 1000));
 
 const frontendDistPath = join(__dirname, "../frontend/dist");
 

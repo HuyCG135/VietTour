@@ -21,6 +21,8 @@ export const createBookingService = async (userId, role, payload) => {
         contact_name,
         contact_phone,
         contact_email,
+        contact_dob,
+        contact_gender,
         note,
         passengers,
     } = payload;
@@ -74,6 +76,8 @@ export const createBookingService = async (userId, role, payload) => {
         contact_name: contact_name.trim(),
         contact_phone: contact_phone.trim(),
         contact_email: contact_email.trim(),
+        contact_dob: contact_dob || null,
+        contact_gender: contact_gender || null,
         note,
         passengers,
     });
