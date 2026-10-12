@@ -45,3 +45,17 @@ export async function cancelBooking(id) {
     });
     return res.json();
 }
+
+export async function getPaymentSummary(bookingId, token) {
+    const res = await fetch(`${API_URL}/bookings/payment-summary/${bookingId}?token=${encodeURIComponent(token)}`);
+    return res.json();
+}
+
+export async function payLater(bookingId, token) {
+    const res = await fetch(`${API_URL}/bookings/pay-later`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ booking_id: bookingId, token }),
+    });
+    return res.json();
+}

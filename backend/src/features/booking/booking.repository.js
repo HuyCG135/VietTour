@@ -142,6 +142,7 @@ class Booking {
             .select(
                 "b.*",
                 "d.departure_date",
+                "d.departure_location",
                 "d.price_moving",
                 "d.price_moving_child",
                 "t.name as tour_name",

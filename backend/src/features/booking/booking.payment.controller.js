@@ -1,5 +1,10 @@
 import { VNPay, ignoreLogger, ProductCode, VnpLocale, dateFormat } from "vnpay";
-import { createPaymentUrlService, confirmPaymentService } from "./booking.service.js";
+import {
+    createPaymentUrlService,
+    confirmPaymentService,
+    getPaymentSummaryService,
+    payLaterService,
+} from "./booking.service.js";
 
 const handleError = (res, error, fallbackMessage) => {
     if (error.status && error.status < 500) {
@@ -49,6 +54,31 @@ export const createVNPayUrl = async (req, res) => {
             vnpayUrl,
             bookingId: booking_id,
         });
+    } catch (error) {
+        handleError(res, error, "Không thể tạo liên kết thanh toán");
+    }
+};
+
+// Xem tóm tắt đơn để thanh toán từ link email (route public, không cần đăng nhập)
+export const getPaymentSummary = async (req, res) => {
+    try {
+        const { booking_id } = req.params;
+        const { token } = req.query;
+        const data = await getPaymentSummaryService(booking_id, token);
+
+        res.json({ success: true, data });
+    } catch (error) {
+        handleError(res, error, "Không thể tải thông tin thanh toán");
+    }
+};
+
+// Tạo liên kết thanh toán từ link email (route public, dựa trên token)
+export const payLater = async (req, res) => {
+    try {
+        const { booking_id, token } = req.body;
+        const vnpayUrl = await payLaterService(booking_id, token, getVNPayInstance(), req);
+
+        res.json({ success: true, vnpayUrl, bookingId: booking_id });
     } catch (error) {
         handleError(res, error, "Không thể tạo liên kết thanh toán");
     }

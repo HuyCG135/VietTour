@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import Loading from "../../../../components/Loading";
 import { useToast } from "../../../../context/ToastContext";
-import { getBookingDetail, cancelBooking } from "../booking.api";
+import { getBookingDetail, cancelBooking, createPaymentUrl } from "../booking.api";
 import BookingHeader from "./BookingHeader";
 import TourInfoSection from "./TourInfoSection";
 import ContactSection from "./ContactSection";
@@ -22,6 +22,7 @@ export default function BookingDetail() {
     const [invoiceOpen, setInvoiceOpen] = useState(false);
     const [cancelOpen, setCancelOpen] = useState(false);
     const [cancelling, setCancelling] = useState(false);
+    const [paying, setPaying] = useState(false);
 
     useEffect(() => {
         const load = async () => {
@@ -54,6 +55,21 @@ export default function BookingDetail() {
         window.addEventListener("keydown", onKey);
         return () => window.removeEventListener("keydown", onKey);
     }, [invoiceOpen, cancelOpen]);
+
+    const handlePay = async () => {
+        setPaying(true);
+        try {
+            const res = await createPaymentUrl(id);
+            if (res.success && res.vnpayUrl) {
+                window.location.href = res.vnpayUrl;
+                return;
+            }
+            toast.danger(res?.message || "Không tạo được liên kết thanh toán");
+        } catch {
+            toast.danger("Lỗi kết nối đến server");
+        }
+        setPaying(false);
+    };
 
     const confirmCancel = async () => {
         setCancelling(true);
@@ -128,6 +144,8 @@ export default function BookingDetail() {
                         isCompleted={isCompleted}
                         onOpenInvoice={() => setInvoiceOpen(true)}
                         onOpenCancel={() => setCancelOpen(true)}
+                        onOpenPay={handlePay}
+                        paying={paying}
                     />
 
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
