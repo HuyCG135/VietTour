@@ -17,7 +17,7 @@ export const getAge = (dob) => {
     return age;
 };
 
-export const getPassengerType = (index, adults) => (index <= adults ? "adult" : "child");
+export const getPassengerType = (index, adults) => (index < adults ? "adult" : "child");
 
 export const validateBookingForm = (state, tour, departure) => {
     const { contact, departureId, adults, children, passengers } = state;

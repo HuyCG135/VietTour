@@ -1,6 +1,9 @@
 import Booking from "./booking.repository.js";
 import Tour from "../tour/tour.repository.js";
+import jwt from "jsonwebtoken";
 import { ProductCode, VnpLocale, dateFormat } from "vnpay";
+import { sendBookingPaymentEmail } from "../../shared/mailService.js";
+import { ROLE, BOOKING_MANAGEMENT } from "../../middlewares/auth.js";
 
 const createHttpError = (status, message) => {
     const err = new Error(message);
@@ -9,7 +12,7 @@ const createHttpError = (status, message) => {
 };
 
 export const createBookingService = async (userId, role, payload) => {
-    if (role !== "customer" && role !== "admin") {
+    if (role !== ROLE.CUSTOMER && role !== ROLE.ADMIN) {
         throw createHttpError(403, "Chỉ tài khoản khách hàng mới có thể đặt tour");
     }
 
@@ -20,6 +23,8 @@ export const createBookingService = async (userId, role, payload) => {
         contact_name,
         contact_phone,
         contact_email,
+        contact_dob,
+        contact_gender,
         note,
         passengers,
     } = payload;
@@ -29,7 +34,11 @@ export const createBookingService = async (userId, role, payload) => {
         throw createHttpError(404, "Không tìm thấy lịch khởi hành");
     }
 
-    if (departure.status === "closed" || departure.status === "full") {
+    if (
+        departure.status === "closed" ||
+        departure.status === "full" ||
+        Number(departure.seats_available) <= 0
+    ) {
         throw createHttpError(400, "Lịch khởi hành này hiện không nhận đặt chỗ");
     }
 
@@ -73,9 +82,31 @@ export const createBookingService = async (userId, role, payload) => {
         contact_name: contact_name.trim(),
         contact_phone: contact_phone.trim(),
         contact_email: contact_email.trim(),
+        contact_dob: contact_dob || null,
+        contact_gender: contact_gender || null,
         note,
         passengers,
     });
+
+    // Gửi email kèm link thanh toán (thanh toán ngay hoặc thanh toán sau từ email).
+    // Gửi bất đồng bộ (fire-and-forget) để không làm chậm việc tạo đơn; lỗi gửi KHÔNG fail đơn.
+    try {
+        const token = jwt.sign(
+            { bookingId, purpose: "booking_payment" },
+            process.env.JWT_SECRET,
+            { expiresIn: "7d" },
+        );
+        const baseUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+        const paymentUrl = `${baseUrl}/payment/${bookingId}?token=${token}`;
+        sendBookingPaymentEmail({
+            email: contact_email.trim(),
+            bookingId,
+            amount: total_price,
+            paymentUrl,
+        }).catch((err) => console.error("Gửi email thanh toán thất bại (không ảnh hưởng đơn đặt tour):", err.message));
+    } catch (err) {
+        console.error("Không tạo được link thanh toán (không ảnh hưởng đơn đặt tour):", err.message);
+    }
 
     return {
         id: bookingId,
@@ -100,7 +131,7 @@ export const getBookingDetailService = async (userId, role, bookingId) => {
         throw createHttpError(404, "Không tìm thấy booking");
     }
 
-    if (String(booking.user_id) !== String(userId) && role !== "admin") {
+    if (String(booking.user_id) !== String(userId) && !BOOKING_MANAGEMENT.includes(role)) {
         throw createHttpError(403, "Bạn không có quyền xem booking này");
     }
 
@@ -118,7 +149,7 @@ export const cancelBookingService = async (userId, role, bookingId) => {
         throw createHttpError(404, "Không tìm thấy booking");
     }
 
-    if (booking.user_id !== userId && role !== "admin") {
+    if (booking.user_id !== userId && !BOOKING_MANAGEMENT.includes(role)) {
         throw createHttpError(403, "Bạn không có quyền hủy booking này");
     }
 
@@ -154,26 +185,8 @@ export const deleteBookingService = async (bookingId) => {
 
 // ================= VNPay =================
 
-// Tạo URL thanh toán cho booking đã tồn tại (đã tạo trước với payment_status = unpaid)
-export const createPaymentUrlService = async (req, bookingId, vnpay) => {
-    if (!bookingId || isNaN(bookingId)) {
-        throw createHttpError(400, "Thiếu booking_id");
-    }
-
-    const booking = await Booking.getByIdWithDeparture(bookingId);
-    if (!booking) {
-        throw createHttpError(404, "Không tìm thấy booking");
-    }
-
-    // Kiểm tra quyền sở hữu
-    if (String(booking.user_id) !== String(req.user.id) && req.user.role !== "admin") {
-        throw createHttpError(403, "Bạn không có quyền thanh toán booking này");
-    }
-
-    if (booking.payment_status === "paid") {
-        throw createHttpError(400, "Booking này đã được thanh toán");
-    }
-
+// Dựng URL thanh toán VNPay (dùng chung cho thanh toán ngay & thanh toán từ email)
+const buildVnpayUrl = async (booking, ipAddr, vnpay) => {
     const { VNP_RETURN_URL } = process.env;
     if (!VNP_RETURN_URL) {
         throw createHttpError(500, "Thiếu VNP_RETURN_URL trong cấu hình");
@@ -189,12 +202,6 @@ export const createPaymentUrlService = async (req, bookingId, vnpay) => {
     const expireDate = new Date();
     expireDate.setMinutes(expireDate.getMinutes() + 30);
 
-    const ipAddr =
-        req.headers?.["x-forwarded-for"] ||
-        req.socket?.remoteAddress ||
-        req.ip ||
-        "127.0.0.1";
-
     const vnpayResponse = await vnpay.buildPaymentUrl({
         vnp_Amount: Number(booking.total_price),
         vnp_IpAddr: ipAddr,
@@ -208,6 +215,102 @@ export const createPaymentUrlService = async (req, bookingId, vnpay) => {
     });
 
     return typeof vnpayResponse === "string" ? vnpayResponse : vnpayResponse.url || vnpayResponse.paymentUrl;
+};
+
+const getClientIp = (req) =>
+    req.headers?.["x-forwarded-for"] ||
+    req.socket?.remoteAddress ||
+    req.ip ||
+    "127.0.0.1";
+
+// Kiểm tra token ký riêng cho phép thanh toán 1 booking cụ thể (link trong email)
+const verifyPaymentToken = (bookingId, token) => {
+    if (!token) {
+        throw createHttpError(401, "Thiếu token thanh toán");
+    }
+    let decoded;
+    try {
+        decoded = jwt.verify(token, process.env.JWT_SECRET);
+    } catch {
+        throw createHttpError(401, "Token thanh toán không hợp lệ hoặc đã hết hạn");
+    }
+    if (decoded.purpose !== "booking_payment" || String(decoded.bookingId) !== String(bookingId)) {
+        throw createHttpError(403, "Token thanh toán không khớp đơn này");
+    }
+    return decoded;
+};
+
+// Tạo URL thanh toán cho booking đã tồn tại (đã tạo trước với payment_status = unpaid)
+// Luồng: thanh toán ngay khi đang đăng nhập
+export const createPaymentUrlService = async (req, bookingId, vnpay) => {
+    if (!bookingId || isNaN(bookingId)) {
+        throw createHttpError(400, "Thiếu booking_id");
+    }
+
+    const booking = await Booking.getByIdWithDeparture(bookingId);
+    if (!booking) {
+        throw createHttpError(404, "Không tìm thấy booking");
+    }
+
+    // Kiểm tra quyền sở hữu
+    if (String(booking.user_id) !== String(req.user.id) && !BOOKING_MANAGEMENT.includes(req.user.role)) {
+        throw createHttpError(403, "Bạn không có quyền thanh toán booking này");
+    }
+
+    if (booking.payment_status === "paid") {
+        throw createHttpError(400, "Booking này đã được thanh toán");
+    }
+
+    return buildVnpayUrl(booking, getClientIp(req), vnpay);
+};
+
+// Thông tin tóm tắt đơn cho trang thanh toán public (từ link email)
+export const getPaymentSummaryService = async (bookingId, token) => {
+    if (!bookingId || isNaN(bookingId)) {
+        throw createHttpError(400, "Thiếu booking_id");
+    }
+    verifyPaymentToken(bookingId, token);
+
+    const booking = await Booking.getByIdWithDeparture(bookingId);
+    if (!booking) {
+        throw createHttpError(404, "Không tìm thấy booking");
+    }
+
+    return {
+        id: booking.id,
+        tour_name: booking.tour_name,
+        departure_date: booking.departure_date,
+        departure_location: booking.departure_location,
+        adults: booking.adults,
+        children: booking.children,
+        total_price: booking.total_price,
+        contact_name: booking.contact_name,
+        payment_status: booking.payment_status,
+        status: booking.status,
+    };
+};
+
+// Tạo URL thanh toán từ link email (không cần đăng nhập, dựa trên token ký riêng)
+export const payLaterService = async (bookingId, token, vnpay, req) => {
+    if (!bookingId || isNaN(bookingId)) {
+        throw createHttpError(400, "Thiếu booking_id");
+    }
+    verifyPaymentToken(bookingId, token);
+
+    const booking = await Booking.getByIdWithDeparture(bookingId);
+    if (!booking) {
+        throw createHttpError(404, "Không tìm thấy booking");
+    }
+
+    if (booking.payment_status === "paid") {
+        throw createHttpError(400, "Đơn này đã được thanh toán");
+    }
+
+    if (booking.status === "cancelled") {
+        throw createHttpError(400, "Đơn này đã bị hủy, không thể thanh toán");
+    }
+
+    return buildVnpayUrl(booking, getClientIp(req), vnpay);
 };
 
 // Xác nhận thanh toán thành công: payment_status -> paid, status -> confirmed

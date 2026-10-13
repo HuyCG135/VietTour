@@ -12,6 +12,8 @@ import VerifyEmail from "../features/auth/VerifyEmail";
 import CheckEmail from "../features/auth/CheckEmail";
 import About from "../pages/About";
 import Contact from "../pages/Contact";
+import PaymentResult from "../pages/PaymentResult";
+import PaymentPage from "../pages/PaymentPage";
 
 import AdminLayout from "../layouts/AdminLayout";
 import AdminRoutes from "./AdminRoutes";
@@ -37,6 +39,8 @@ export default function AppRoutes() {
                     <Route path="/booking/:tourId" element={<BookingPage />} />
                     <Route path="/about" element={<About />} />
                     <Route path="/contact" element={<Contact />} />
+                    <Route path="/payment-result" element={<PaymentResult />} />
+                    <Route path="/payment/:bookingId" element={<PaymentPage />} />
                     <Route path="/register-success" element={<CheckEmail />} />
 
                     <Route path="*" element={<NotFound />} />

@@ -64,3 +64,17 @@ export async function deleteTour(id) {
     });
     return res.json();
 }
+
+/** Tải ảnh bìa lên Cloudinary, trả về URL để lưu vào tours.cover_image */
+export async function uploadCoverImage(file) {
+    const formData = new FormData();
+    formData.append('cover', file);
+
+    // Không set Content-Type để trình duyệt tự thêm boundary
+    const res = await fetch(`${ADMIN_TOURS_URL}/cover-image`, {
+        method: 'POST',
+        headers: authHeaders(),
+        body: formData,
+    });
+    return res.json();
+}

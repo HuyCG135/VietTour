@@ -3,7 +3,7 @@ const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const MAX_PASSENGERS = 50;
 
 export const validateBooking = (req, res, next) => {
-    const { departure_id, adults, children = 0, contact_name, contact_phone, contact_email, passengers } = req.body;
+    const { departure_id, adults, children = 0, contact_name, contact_phone, contact_email, contact_dob, contact_gender, passengers } = req.body;
     const errors = [];
 
     if (!departure_id || isNaN(departure_id)) {
@@ -37,6 +37,14 @@ export const validateBooking = (req, res, next) => {
 
     if (!contact_email || !EMAIL_REGEX.test(String(contact_email).trim())) {
         errors.push("Email liên hệ không hợp lệ");
+    }
+
+    if (contact_dob && Number.isNaN(Date.parse(`${contact_dob}T00:00:00`))) {
+        errors.push("Ngày sinh người liên hệ không hợp lệ");
+    }
+
+    if (contact_gender && !["Nam", "Nữ", "Khác"].includes(contact_gender)) {
+        errors.push("Giới tính người liên hệ không hợp lệ");
     }
 
     if (passengers !== undefined && Array.isArray(passengers) && passengers.length > 0) {

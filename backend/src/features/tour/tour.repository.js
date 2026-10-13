@@ -45,7 +45,8 @@ class Tour {
                 "tours.id",
                 db("tour_departures").select("tour_id")
                     .where("departure_date", departure_date)
-                    .andWhere("status", "open"),
+                    .andWhere("status", "!=", "closed")
+                    .andWhere("seats_available", ">", 0),
             );
         }
 
@@ -84,7 +85,8 @@ class Tour {
 
         const rows = await filtered
             .join("tour_departures", "tours.id", "tour_departures.tour_id")
-            .where("tour_departures.status", "open")
+            .where("tour_departures.status", "!=", "closed")
+            .where("tour_departures.seats_available", ">", 0)
             .whereBetween("tour_departures.departure_date", [from, to])
             .groupBy("tour_departures.departure_date")
             .orderBy("tour_departures.departure_date", "asc")
@@ -155,7 +157,8 @@ class Tour {
                 .orderBy("day_number", "asc"),
             db("tour_departures")
                 .where("tour_id", id)
-                .andWhere("status", "open")
+                .andWhere("status", "!=", "closed")
+                .andWhere("seats_available", ">", 0)
                 .andWhere("departure_date", ">=", toLocalDate(new Date()))
                 .orderBy("departure_date", "asc"),
             db("services as s")
