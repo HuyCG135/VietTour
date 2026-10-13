@@ -65,7 +65,8 @@ export default function BookingFlow({ user, tour }) {
                 contact_name: payload.contact_name,
                 bookingId,
             });
-            await goPay(bookingId);
+            // KHÔNG tự chuyển sang thanh toán — hiện màn hình ghi nhận đơn, để người dùng tự chọn
+            // "Thanh toán ngay" hoặc thanh toán sau.
         } catch (err) {
             setSubmitError(err.message || "Đã xảy ra lỗi khi đặt tour. Vui lòng thử lại.");
         } finally {
@@ -96,13 +97,13 @@ export default function BookingFlow({ user, tour }) {
 
     return (
         <div className="pb-32 lg:pb-16">
-            <BookingSteps tourName={tour.name} />
+            <BookingSteps tourName={tour.name} currentStep={success ? 2 : 1} />
             <main className="max-w-7xl mx-auto px-6">
                 {canBook && success && (
                     <div
                         role="status"
                         aria-live="polite"
-                        className="max-w-2xl mx-auto -mt-10 rounded-3xl border border-success/30 bg-surface p-8 sm:p-10 shadow-[0_2px_10px_rgba(30,41,59,0.05)] text-center"
+                        className="max-w-2xl mx-auto mt-8 rounded-3xl border border-success/30 bg-surface p-8 sm:p-10 shadow-[0_2px_10px_rgba(30,41,59,0.05)] text-center"
                     >
                         <span className="mx-auto flex w-16 h-16 items-center justify-center rounded-full bg-success/10 text-success text-2xl">
                             <i className="fa-solid fa-circle-check" />

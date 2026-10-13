@@ -39,7 +39,7 @@ app.use(requestLogger);
 // Rate limiter (100 requests per 15 minutes)
 app.use("/api", rateLimiter(400, 15 * 60 * 1000));
 
-const frontendDistPath = join(__dirname, "../frontend/dist");
+const frontendDistPath = join(__dirname, "../../frontend/dist");
 
 app.use("/api/tours", tourRoutes);
 app.use("/api/admin/tours", tourAdminRoutes);
