@@ -51,3 +51,13 @@ uploads/
 # OS artifacts
 .DS_Store
 Thumbs.db
+
+# Opencode Tools
+.opencode/*
+.codegraph/
+opencode.json
+
+# Draw.io files
+*.drawio
+# Antigravity
+.agents

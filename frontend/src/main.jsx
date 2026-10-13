@@ -2,6 +2,7 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import "./assets/styles/index.css";
 import App from "./App.jsx";
+import ToastProvider from "./components/ToastProvider.jsx";
 import logoIcon from "./assets/images/icon.svg";
 
 const favicon = document.querySelector("link[rel='icon']") || document.createElement("link");
@@ -14,6 +15,8 @@ if (!favicon.parentNode) {
 
 createRoot(document.getElementById("root")).render(
     <StrictMode>
-        <App />
+        <ToastProvider>
+            <App />
+        </ToastProvider>
     </StrictMode>,
 );

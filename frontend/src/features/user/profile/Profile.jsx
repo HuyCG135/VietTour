@@ -1,55 +1,201 @@
-import { useState } from "react";
-import { getUser } from "../../auth/auth.api";
-import defaultAvatar from "../../../assets/images/image.png";
+import { useState, useEffect } from "react";
+import EditableField from "./EditableField";
+import ChangePasswordForm from "./ChangePasswordForm";
+import UserPageHeader from "../../../components/UserPageHeader";
+import { getProfile, patchProfile } from "../user.api";
+import { getUser, setUser } from "../../auth/auth.api.js";
+import { useToast } from "../../../context/ToastContext";
+
+const FIELDS = [
+    { id: "fullname", label: "Họ và tên", icon: "fa-regular fa-user" },
+    { id: "email", label: "Email", icon: "fa-regular fa-envelope", editable: false, badge: "Cố định" },
+    { id: "phone", label: "Số điện thoại", icon: "fa-solid fa-phone" },
+    { id: "address", label: "Địa chỉ", icon: "fa-solid fa-location-dot" },
+];
 
 export default function Profile() {
-    const user = getUser();
-    const [form, setForm] = useState({
-        fullname: user?.fullname || "",
-        email: user?.email || "",
-        phone: user?.phone || "",
+    const toast = useToast();
+    const [values, setValues] = useState(() => {
+        const user = getUser();
+        return {
+            fullname: user?.fullname || "",
+            email: user?.email || "",
+            phone: user?.phone || "",
+            address: user?.address || "",
+        };
     });
-    const [message, setMessage] = useState({ text: "", type: "" });
+    const [editing, setEditing] = useState({});
+    const [drafts, setDrafts] = useState({});
+    const [savingId, setSavingId] = useState(null);
+    const [loadError, setLoadError] = useState("");
 
-    const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
+    useEffect(() => {
+        let mounted = true;
+        (async () => {
+            try {
+                const res = await getProfile();
+                if (!mounted) return;
+                if (res.success && res.data) {
+                    setValues({
+                        fullname: res.data.fullname || "",
+                        email: res.data.email || "",
+                        phone: res.data.phone || "",
+                        address: res.data.address || "",
+                    });
+                } else {
+                    setLoadError(res.message || "Không thể tải thông tin cá nhân");
+                }
+            } catch {
+                if (mounted) setLoadError("Lỗi khi tải thông tin cá nhân");
+            }
+        })();
+        return () => {
+            mounted = false;
+        };
+    }, []);
 
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        // TODO: call API update profile
-        setMessage({ text: "Cập nhật thành công!", type: "success" });
+    const toggleEdit = (id) => {
+        if (savingId) return;
+        if (editing[id]) {
+            setEditing((prev) => {
+                const next = { ...prev };
+                delete next[id];
+                return next;
+            });
+            setDrafts((prev) => {
+                const next = { ...prev };
+                delete next[id];
+                return next;
+            });
+        } else {
+            setEditing((prev) => ({ ...prev, [id]: true }));
+            setDrafts((prev) => ({ ...prev, [id]: values[id] || "" }));
+        }
+    };
+
+    const changeDraft = (id, draft) => {
+        if (savingId) return;
+        setDrafts((prev) => ({ ...prev, [id]: draft }));
+    };
+
+    const commitField = async (id) => {
+        if (savingId) return;
+        const value = (drafts[id] ?? "").trim();
+        setSavingId(id);
+        try {
+            const res = await patchProfile({ [id]: value });
+            if (res.success) {
+                const saved = res.data || {};
+                const user = getUser() || {};
+                setUser({ ...user, ...saved });
+                setValues((prev) => ({
+                    ...prev,
+                    fullname: saved.fullname ?? prev.fullname,
+                    phone: saved.phone ?? prev.phone,
+                    address: saved.address ?? prev.address,
+                }));
+                setEditing((prev) => {
+                    const next = { ...prev };
+                    delete next[id];
+                    return next;
+                });
+                setDrafts((prev) => {
+                    const next = { ...prev };
+                    delete next[id];
+                    return next;
+                });
+                toast.success(res.message || "Đã lưu thông tin!");
+            } else {
+                const errorsText = Array.isArray(res.errors) ? res.errors.join("; ") : "";
+                toast.danger(errorsText || res.message || "Không thể cập nhật");
+            }
+        } catch {
+            toast.danger("Lỗi kết nối, vui lòng thử lại");
+        } finally {
+            setSavingId(null);
+        }
     };
 
     return (
-        <div className="max-w-7xl mx-auto px-6 py-6">
-            <h2 className="font-bold text-xl mb-4">Thông tin cá nhân</h2>
+        <div className="space-y-6">
+            <UserPageHeader
+                title="Hồ sơ & Bảo mật"
+                subtitle="Quản lý thông tin liên hệ và thiết lập mật khẩu bảo vệ tài khoản"
+            />
 
-            <div className="flex flex-wrap">
-                <div className="w-full md:w-1/3 text-center mb-6">
-                    <img src={defaultAvatar} alt="Avatar" className="rounded-full mx-auto mb-3" style={{ width: 120, height: 120, objectFit: "cover" }} />
-                    <p className="font-bold mb-0">{user?.fullname || "Người dùng"}</p>
-                    <p className="text-gray-500 text-sm">{user?.email}</p>
-                </div>
+            {/* Grid 2 cột: Cột trái Thông tin cá nhân, Cột phải Đổi mật khẩu */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+                {/* Cột 1: Thông tin cá nhân */}
+                <section aria-labelledby="profile-title" className="lg:col-span-7">
+                    <header className="flex items-center gap-3 mb-5">
+                        <span className="w-9 h-9 shrink-0 rounded-xl bg-primary-100 text-primary flex items-center justify-center text-sm shadow-xs">
+                            <i className="fa-regular fa-circle-user" />
+                        </span>
+                        <div>
+                            <h3 id="profile-title" className="text-base font-bold text-foreground leading-tight mb-0.5">
+                                Thông tin cá nhân
+                            </h3>
+                            <p className="text-xs text-muted mb-0">
+                                Xem và cập nhật thông tin liên hệ của quý khách
+                            </p>
+                        </div>
+                    </header>
 
-                <div className="w-full md:w-2/3">
-                    <div className="bg-white rounded-xl shadow-sm p-6">
-                        {message.text && <div className={`px-4 py-3 rounded-lg text-sm mb-4 ${message.type === "danger" ? "bg-red-50 text-red-700 border border-red-200" : "bg-green-50 text-green-700 border border-green-200"}`}>{message.text}</div>}
-                        <form onSubmit={handleSubmit}>
-                            <div className="mb-3">
-                                <label className="block text-sm font-medium mb-1">Họ và tên</label>
-                                <input name="fullname" type="text" className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" value={form.fullname} onChange={handleChange} />
-                            </div>
-                            <div className="mb-3">
-                                <label className="block text-sm font-medium mb-1">Email</label>
-                                <input name="email" type="email" className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" value={form.email} onChange={handleChange} />
-                            </div>
-                            <div className="mb-3">
-                                <label className="block text-sm font-medium mb-1">Số điện thoại</label>
-                                <input name="phone" type="tel" className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" value={form.phone} onChange={handleChange} />
-                            </div>
-                            <button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-6 py-2.5 rounded-lg transition-colors cursor-pointer">Lưu thay đổi</button>
-                        </form>
+                    {/* Alert tải profile lỗi */}
+                    {loadError && (
+                        <div role="alert" className="flex items-center gap-2 rounded-xl border border-danger/30 bg-danger/10 text-danger px-4 py-3 text-sm mb-4">
+                            <i className="fa-solid fa-circle-exclamation" />
+                            <span>{loadError}</span>
+                        </div>
+                    )}
+
+                    {/* Danh sách trường thông tin */}
+                    <div className="space-y-2.5">
+                        {FIELDS.map((field) => (
+                            <EditableField
+                                key={field.id}
+                                id={field.id}
+                                label={field.label}
+                                icon={field.icon}
+                                badge={field.badge}
+                                value={values[field.id]}
+                                editing={!!editing[field.id]}
+                                draft={drafts[field.id]}
+                                editable={field.editable !== false}
+                                saving={savingId === field.id}
+                                onToggleEdit={toggleEdit}
+                                onDraftChange={changeDraft}
+                                onCommit={commitField}
+                            />
+                        ))}
                     </div>
-                </div>
+
+                    <p className="text-xs text-muted mt-4 mb-0">
+                        Sửa thông tin rồi bấm ✓ để lưu, ✕ để hủy bỏ sửa đổi
+                    </p>
+                </section>
+
+                {/* Cột 2: Đổi mật khẩu */}
+                <section
+                    aria-labelledby="password-title"
+                    className="lg:col-span-5 border-t lg:border-t-0 lg:border-l border-border pt-6 lg:pt-0 lg:pl-8"
+                >
+                    <header className="flex items-center gap-3 mb-5">
+                        <span className="w-9 h-9 shrink-0 rounded-xl bg-accent/20 text-accent flex items-center justify-center text-sm shadow-xs">
+                            <i className="fa-solid fa-key" />
+                        </span>
+                        <div>
+                            <h3 id="password-title" className="text-base font-bold text-foreground leading-tight mb-0.5">
+                                Đổi mật khẩu
+                            </h3>
+                            <p className="text-xs text-muted mb-0">
+                                Cập nhật mật khẩu để bảo vệ tài khoản
+                            </p>
+                        </div>
+                    </header>
+
+                    <ChangePasswordForm />
+                </section>
             </div>
         </div>
     );

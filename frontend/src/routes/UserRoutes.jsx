@@ -2,6 +2,8 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import Profile from "../features/user/profile/Profile";
 import Favorite from "../features/user/favorites/Favorite";
 import BookingHistory from "../features/user/bookings/BookingHistory";
+import BookingDetail from "../features/user/bookings/BookingDetail";
+import Reviews from "../features/user/reviews";
 
 export default function UserRoutes() {
     return (
@@ -10,6 +12,8 @@ export default function UserRoutes() {
             <Route path="profile" element={<Profile />} />
             <Route path="favorite" element={<Favorite />} />
             <Route path="bookings" element={<BookingHistory />} />
+            <Route path="bookings/:id" element={<BookingDetail />} />
+            <Route path="reviews" element={<Reviews />} />
         </Routes>
     );
 }
