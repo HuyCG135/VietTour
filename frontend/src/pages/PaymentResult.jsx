@@ -1,12 +1,23 @@
-import { useSearchParams } from "react-router-dom";
+import { useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Link } from "react-router-dom";
 
 export default function PaymentResult() {
     const [params] = useSearchParams();
+    const navigate = useNavigate();
     const status = params.get("status");
     const message = params.get("message");
     const bookingId = params.get("bookingId");
     const isSuccess = status === "success";
+
+    // Thành công -> tự chuyển về chi tiết đơn sau 1.5s (vẫn còn nút để bấm ngay)
+    useEffect(() => {
+        if (!isSuccess || !bookingId) return;
+        const timer = setTimeout(() => {
+            navigate(`/user/bookings/${bookingId}`);
+        }, 1500);
+        return () => clearTimeout(timer);
+    }, [isSuccess, bookingId, navigate]);
 
     return (
         <div className="max-w-2xl mx-auto px-6 py-20">

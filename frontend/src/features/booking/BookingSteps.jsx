@@ -6,7 +6,8 @@ const STEPS = [
     { number: "03", title: "Thanh toán VNPay" },
 ];
 
-export default function BookingSteps({ tourName }) {
+export default function BookingSteps({ tourName, currentStep = 1 }) {
+    // currentStep: 1 = Thông tin & Đặt chỗ, 2 = Ghi nhận đơn, 3 = Thanh toán VNPay
     return (
         <header className="relative bg-surface border-b border-border">
             <div className="mx-auto max-w-7xl px-6 pt-8 pb-6 sm:pb-8">
@@ -45,8 +46,8 @@ export default function BookingSteps({ tourName }) {
                             <span
                                 key={step.number}
                                 className={`h-1.5 rounded-full transition-colors duration-300 ${
-                                    index === 0 ? "flex-[1.15] bg-primary" : "flex-1 bg-border"
-                                }`}
+                                    index === 0 ? "flex-[1.15]" : "flex-1"
+                                } ${index < currentStep ? "bg-primary" : "bg-border"}`}
                             />
                         ))}
                     </div>
@@ -55,11 +56,15 @@ export default function BookingSteps({ tourName }) {
                             <li
                                 key={step.number}
                                 className="min-w-0 text-center"
-                                aria-current={index === 0 ? "step" : undefined}
+                                aria-current={index === currentStep - 1 ? "step" : undefined}
                             >
                                 <span
                                     className={`block truncate px-0.5 ${
-                                        index === 0 ? "font-bold text-foreground" : "font-medium text-muted"
+                                        index === currentStep - 1
+                                            ? "font-bold text-foreground"
+                                            : index < currentStep - 1
+                                              ? "font-medium text-primary"
+                                              : "font-medium text-muted"
                                     }`}
                                 >
                                     {step.number}. {step.title}
