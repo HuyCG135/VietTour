@@ -49,7 +49,9 @@ export default function UsersTable({ users, loading, searchMode, onEdit, onDelet
                                 return (
                                     <tr
                                         key={user.id}
-                                        className="transition-colors duration-150 even:bg-slate-50/60 hover:bg-primary-50/60"
+                                        onClick={() => onEdit(user)}
+                                        title="Nhấn để chỉnh sửa"
+                                        className="cursor-pointer transition-colors duration-150 even:bg-slate-50/60 hover:bg-primary-50/60"
                                     >
                                         <td className="px-5 py-4 align-middle font-semibold text-foreground">
                                             {user.id}
@@ -82,7 +84,10 @@ export default function UsersTable({ users, loading, searchMode, onEdit, onDelet
                                                 {status.label}
                                             </span>
                                         </td>
-                                        <td className="px-5 py-4 align-middle">
+                                        <td
+                                            className="px-5 py-4 align-middle"
+                                            onClick={(event) => event.stopPropagation()}
+                                        >
                                             <div className="flex gap-1">
                                                 <button
                                                     type="button"
