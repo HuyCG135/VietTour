@@ -21,7 +21,7 @@ const buildInitialForm = (mode, departure, defaultDate) => {
             price_moving_child: String(departure.price_moving_child ?? ""),
             seats_total: String(departure.seats_total ?? "20"),
             seats_available: String(departure.seats_available ?? "20"),
-            status: departure.status === "closed" ? "closed" : "open",
+            status: departure.is_closed ? "closed" : "open",
         };
     }
     return emptyForm(defaultDate);

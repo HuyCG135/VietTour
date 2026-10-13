@@ -1,13 +1,22 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useToast } from "../../../context/ToastContext";
 import MonthCalendar from "./MonthCalendar";
 import DepartureFormModal from "./DepartureFormModal";
 import TourPicker from "./TourPicker";
-import { MOCK_DEPARTURES, MOCK_TOURS } from "./mockData";
+import {
+    createDeparture,
+    deleteDeparture,
+    getDepartures,
+    getTours,
+    updateDeparture,
+    updateDepartureStatus,
+} from "./departures.api";
 import {
     MIN_LEAD_DAYS,
     STATUS_META,
     addMonths,
+    buildMonthGrid,
     deriveStatus,
     formatCompactCurrency,
     formatCurrency,
@@ -17,6 +26,7 @@ import {
     minAllowedKey,
     monthPrefix,
     startOfMonth,
+    toKey,
     todayKey,
 } from "./departureUtils";
 
@@ -338,18 +348,34 @@ function DeleteDepartureModal({ departure, onClose, onConfirm }) {
 
 export default function DepartureList() {
     const toast = useToast();
-    const [tourId, setTourId] = useState(MOCK_TOURS[0].id);
-    const [departures, setDepartures] = useState(MOCK_DEPARTURES);
+    const navigate = useNavigate();
+    const [tours, setTours] = useState([]);
+    const [toursLoading, setToursLoading] = useState(true);
+    const [tourId, setTourId] = useState(null);
+    const [departures, setDepartures] = useState([]);
+    const [dataLoading, setDataLoading] = useState(false);
     const [monthDate, setMonthDate] = useState(() => startOfMonth(new Date()));
     const [selectedDay, setSelectedDay] = useState(null);
     const [selectedDeparture, setSelectedDeparture] = useState(null);
     const [form, setForm] = useState({ open: false, mode: "create", departure: null, dateKey: null });
     const [deleteTarget, setDeleteTarget] = useState(null);
+    const requestSeq = useRef(0);
 
     const today = todayKey();
     const minKey = minAllowedKey();
 
-    const tour = useMemo(() => MOCK_TOURS.find((item) => item.id === tourId), [tourId]);
+    const tour = useMemo(() => tours.find((item) => item.id === tourId), [tours, tourId]);
+
+    // Phạm vi ngày hiển thị trên lưới lịch (bao gồm ngày kề tuần đầu/cuối tháng)
+    // để chip ở các ô ngày liền kề không bị thiếu khi fetch theo tháng.
+    const gridRange = useMemo(() => {
+        const days = buildMonthGrid(monthDate).flat();
+        return {
+            from: days.length ? toKey(days[0]) : "",
+            to: days.length ? toKey(days[days.length - 1]) : "",
+        };
+    }, [monthDate]);
+
     const tourDepartures = useMemo(
         () => departures.filter((item) => item.tour_id === tourId),
         [departures, tourId],
@@ -377,47 +403,149 @@ export default function DepartureList() {
         return () => window.removeEventListener("keydown", onKeyDown);
     }, []);
 
+    // Tải danh sách tour cho dropdown chọn tour (một lần khi mở màn hình).
+    useEffect(() => {
+        let cancelled = false;
+        (async () => {
+            try {
+                const res = await getTours();
+                if (cancelled) return;
+                if (res?.httpStatus === 401) {
+                    toast.error("Phiên đăng nhập hết hạn, vui lòng đăng nhập lại.");
+                    navigate("/login");
+                    return;
+                }
+                if (!res?.success) throw new Error(res?.message || "Không tải được danh sách tour.");
+                setTours(res.data ?? []);
+                setTourId((prev) => prev ?? res.data?.[0]?.id ?? null);
+            } catch (error) {
+                if (!cancelled) toast.error(error.message);
+            } finally {
+                if (!cancelled) setToursLoading(false);
+            }
+        })();
+        return () => {
+            cancelled = true;
+        };
+    }, [toast, navigate]);
+
+    // Tải chuyến khởi hành theo tour + tháng hiển thị. Dùng requestSeq để bỏ qua
+    // phản hồi của request cũ khi người dùng đổi tour/đổi tháng liên tục.
+    useEffect(() => {
+        if (!tourId || !gridRange.from) return;
+        let cancelled = false;
+        const seq = ++requestSeq.current;
+        setDataLoading(true);
+        (async () => {
+            try {
+                const res = await getDepartures({
+                    tour_id: tourId,
+                    from: gridRange.from,
+                    to: gridRange.to,
+                    limit: 100,
+                });
+                if (cancelled || seq !== requestSeq.current) return;
+                if (res?.httpStatus === 401) {
+                    toast.error("Phiên đăng nhập hết hạn, vui lòng đăng nhập lại.");
+                    navigate("/login");
+                    return;
+                }
+                if (!res?.success) throw new Error(res?.message || "Không tải được lịch khởi hành.");
+                setDepartures(res.data ?? []);
+            } catch (error) {
+                if (!cancelled && seq === requestSeq.current) toast.error(error.message);
+            } finally {
+                if (!cancelled && seq === requestSeq.current) setDataLoading(false);
+            }
+        })();
+        return () => {
+            cancelled = true;
+        };
+    }, [tourId, gridRange.from, gridRange.to, toast, navigate]);
+
     const openCreate = (dateKey) =>
         setForm({ open: true, mode: "create", departure: null, dateKey: dateKey ?? minKey });
     const openEdit = (departure) =>
         setForm({ open: true, mode: "edit", departure, dateKey: departure.departure_date });
 
-    const handleSubmit = (payload) => {
-        if (form.mode === "edit" && form.departure) {
-            setDepartures((prev) =>
-                prev.map((item) =>
-                    item.id === form.departure.id ? { ...item, ...payload } : item,
-                ),
-            );
-            toast.success("Đã cập nhật chuyến khởi hành.");
-        } else {
-            const nextId = departures.reduce((max, item) => Math.max(max, item.id), 0) + 1;
-            setDepartures((prev) => [...prev, { id: nextId, tour_id: tourId, ...payload }]);
-            toast.success("Đã thêm chuyến khởi hành.");
-            setMonthDate(startOfMonth(new Date(`${payload.departure_date}T00:00:00`)));
+    const handleSubmit = async (payload) => {
+        try {
+            if (form.mode === "edit" && form.departure) {
+                const res = await updateDeparture(form.departure.id, payload);
+                if (res?.httpStatus === 401) {
+                    toast.error("Phiên đăng nhập hết hạn, vui lòng đăng nhập lại.");
+                    navigate("/login");
+                    return;
+                }
+                if (!res?.success) throw new Error(res?.message || "Không cập nhật được chuyến.");
+                setDepartures((prev) =>
+                    prev.map((item) => (item.id === res.data.id ? { ...item, ...res.data } : item)),
+                );
+                toast.success(res?.message || "Đã cập nhật chuyến khởi hành.");
+            } else {
+                const res = await createDeparture({ ...payload, tour_id: tourId });
+                if (res?.httpStatus === 401) {
+                    toast.error("Phiên đăng nhập hết hạn, vui lòng đăng nhập lại.");
+                    navigate("/login");
+                    return;
+                }
+                if (!res?.success) throw new Error(res?.message || "Không tạo được chuyến.");
+                setDepartures((prev) => [...prev, res.data]);
+                toast.success(res?.message || "Đã thêm chuyến khởi hành.");
+                // Nhảy tới tháng chứa ngày vừa tạo để lịch hiển thị chuyến mới.
+                setMonthDate(startOfMonth(new Date(`${payload.departure_date}T00:00:00`)));
+            }
+            setForm((prev) => ({ ...prev, open: false }));
+        } catch (error) {
+            toast.error(error.message);
         }
-        setForm((prev) => ({ ...prev, open: false }));
     };
 
-    const toggleStatus = (departure) => {
+    const toggleStatus = async (departure) => {
         if (departure.departure_date < today) {
             toast.warning("Chuyến đã qua ngày, không thể mở lại.");
             return;
         }
-        const next = departure.status === "closed" ? "open" : "closed";
-        setDepartures((prev) =>
-            prev.map((item) => (item.id === departure.id ? { ...item, status: next } : item)),
-        );
-        toast.info(next === "closed" ? "Đã đóng chuyến." : "Đã mở lại chuyến.");
+        const next = departure.is_closed ? "open" : "closed";
+        try {
+            const res = await updateDepartureStatus(departure.id, next);
+            if (res?.httpStatus === 401) {
+                toast.error("Phiên đăng nhập hết hạn, vui lòng đăng nhập lại.");
+                navigate("/login");
+                return;
+            }
+            if (!res?.success) throw new Error(res?.message || "Không đổi được trạng thái.");
+            setDepartures((prev) =>
+                prev.map((item) => (item.id === departure.id ? { ...item, ...res.data } : item)),
+            );
+            toast.success(
+                res?.message || (next === "closed" ? "Đã đóng chuyến." : "Đã mở lại chuyến."),
+            );
+        } catch (error) {
+            toast.error(error.message);
+        }
     };
 
-    const confirmDelete = () => {
-        setDepartures((prev) => prev.filter((item) => item.id !== deleteTarget.id));
-        if (selectedDeparture && selectedDeparture.id === deleteTarget.id) {
-            setSelectedDeparture(null);
+    const confirmDelete = async () => {
+        try {
+            const res = await deleteDeparture(deleteTarget.id);
+            if (res?.httpStatus === 401) {
+                toast.error("Phiên đăng nhập hết hạn, vui lòng đăng nhập lại.");
+                navigate("/login");
+                setDeleteTarget(null);
+                return;
+            }
+            if (!res?.success) throw new Error(res?.message || "Không xóa được chuyến.");
+            setDepartures((prev) => prev.filter((item) => item.id !== deleteTarget.id));
+            if (selectedDeparture && selectedDeparture.id === deleteTarget.id) {
+                setSelectedDeparture(null);
+            }
+            toast.success(res?.message || "Đã xóa chuyến khởi hành.");
+            setDeleteTarget(null);
+        } catch (error) {
+            toast.error(error.message);
+            setDeleteTarget(null);
         }
-        toast.success("Đã xóa chuyến khởi hành.");
-        setDeleteTarget(null);
     };
 
     return (
@@ -446,15 +574,22 @@ export default function DepartureList() {
                         <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-muted">
                             Tour đang quản lý
                         </span>
-                        <TourPicker
-                            tours={MOCK_TOURS}
-                            value={tourId}
-                            onChange={(id) => {
-                                setTourId(id);
-                                setSelectedDay(null);
-                                setSelectedDeparture(null);
-                            }}
-                        />
+                        {toursLoading ? (
+                            <div className="flex items-center gap-2 rounded-xl border border-border bg-surface px-3 py-2 text-sm text-muted">
+                                <i className="fa-solid fa-spinner fa-spin" />
+                                Đang tải tour…
+                            </div>
+                        ) : (
+                            <TourPicker
+                                tours={tours}
+                                value={tourId}
+                                onChange={(id) => {
+                                    setTourId(id);
+                                    setSelectedDay(null);
+                                    setSelectedDeparture(null);
+                                }}
+                            />
+                        )}
                     </div>
                     <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm text-muted">
                         <span className="inline-flex items-center gap-1.5">
@@ -501,6 +636,12 @@ export default function DepartureList() {
                     >
                         Hôm nay
                     </button>
+                    {dataLoading && (
+                        <span className="ml-1 flex items-center gap-1.5 text-xs text-muted">
+                            <i className="fa-solid fa-spinner fa-spin" />
+                            Đang tải
+                        </span>
+                    )}
                 </div>
                 <Legend />
             </div>
