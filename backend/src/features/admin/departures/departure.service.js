@@ -47,12 +47,16 @@ export const createDepartureService = async (payload) => {
         throw createHttpError(404, "Không tìm thấy tour");
     }
 
-    const duplicated = await Departure.findByTourAndDate(
+    const duplicated = await Departure.findByTourDateLocation(
         payload.tour_id,
         payload.departure_date,
+        payload.departure_location,
     );
     if (duplicated) {
-        throw createHttpError(409, "Tour này đã có chuyến khởi hành vào ngày đã chọn");
+        throw createHttpError(
+            409,
+            "Tour này đã có chuyến khởi hành cùng điểm vào ngày đã chọn",
+        );
     }
 
     const id = await Departure.create(payload);
@@ -67,15 +71,28 @@ export const updateDepartureService = async (id, payload) => {
 
     const fields = { ...payload };
 
-    // Đổi ngày khởi hành → phải check trùng (bỏ qua chính bản ghi đang sửa).
-    if (fields.departure_date !== undefined && fields.departure_date !== existing.departure_date) {
-        const duplicated = await Departure.findByTourAndDate(
+    // Đổi ngày HOẶC đổi điểm khởi hành → phải check trùng theo bộ 3
+    // (tour_id, departure_date, departure_location), bỏ qua chính bản ghi đang sửa.
+    const dateChanged =
+        fields.departure_date !== undefined && fields.departure_date !== existing.departure_date;
+    const locationChanged =
+        fields.departure_location !== undefined &&
+        fields.departure_location !== existing.departure_location;
+
+    if (dateChanged || locationChanged) {
+        const duplicated = await Departure.findByTourDateLocation(
             existing.tour_id,
-            fields.departure_date,
+            fields.departure_date !== undefined ? fields.departure_date : existing.departure_date,
+            fields.departure_location !== undefined
+                ? fields.departure_location
+                : existing.departure_location,
             id,
         );
         if (duplicated) {
-            throw createHttpError(409, "Tour này đã có chuyến khởi hành vào ngày đã chọn");
+            throw createHttpError(
+                409,
+                "Tour này đã có chuyến khởi hành cùng điểm vào ngày đã chọn",
+            );
         }
     }
 

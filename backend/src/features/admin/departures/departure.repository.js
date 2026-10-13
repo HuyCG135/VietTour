@@ -106,11 +106,13 @@ class Departure {
         return row ? mapRow(row, toLocalDate(new Date())) : null;
     }
 
-    // Kiểm tra trùng (tour_id, departure_date) — bỏ qua chính nó khi sửa.
-    static async findByTourAndDate(tourId, departureDate, excludeId = null) {
+    // Kiểm tra trùng (tour_id, departure_date, departure_location) —
+    // bỏ qua chính nó khi sửa (excludeId).
+    static async findByTourDateLocation(tourId, departureDate, departureLocation, excludeId = null) {
         const query = db("tour_departures")
             .where("tour_id", tourId)
-            .where("departure_date", departureDate);
+            .where("departure_date", departureDate)
+            .where("departure_location", departureLocation);
 
         if (excludeId) {
             query.whereNot("id", excludeId);
