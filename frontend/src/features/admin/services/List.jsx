@@ -165,7 +165,7 @@ export default function ServiceList() {
             )}
 
             <div className="bg-white rounded-xl shadow-sm p-4 mb-4">
-                <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_180px_180px] gap-3">
+                <div className="space-y-3">
                     <div>
                         <label htmlFor="service-search" className="sr-only">Tìm kiếm dịch vụ</label>
                         <SearchBox
@@ -176,32 +176,34 @@ export default function ServiceList() {
                             className="search-group--full"
                         />
                     </div>
-                    <div>
-                        <label htmlFor="service-status-filter" className="block text-xs font-medium text-gray-500 mb-1">Trạng thái</label>
-                        <select
-                            id="service-status-filter"
-                            value={current.status}
-                            onChange={(event) => applyFilters({ status: event.target.value })}
-                            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white cursor-pointer outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
-                        >
-                            <option value="">Tất cả trạng thái</option>
-                            <option value="1">Đang hoạt động</option>
-                            <option value="0">Tạm ẩn</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label htmlFor="service-sort" className="block text-xs font-medium text-gray-500 mb-1">Sắp xếp</label>
-                        <select
-                            id="service-sort"
-                            value={current.sort}
-                            onChange={(event) => applyFilters({ sort: event.target.value })}
-                            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white cursor-pointer outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
-                        >
-                            <option value="newest">Mới nhất</option>
-                            <option value="updated_desc">Cập nhật gần đây</option>
-                            <option value="name_asc">Tên A-Z</option>
-                            <option value="name_desc">Tên Z-A</option>
-                        </select>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label htmlFor="service-status-filter" className="block text-xs font-medium text-gray-500 mb-1">Trạng thái</label>
+                            <select
+                                id="service-status-filter"
+                                value={current.status}
+                                onChange={(event) => applyFilters({ status: event.target.value })}
+                                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white cursor-pointer outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
+                            >
+                                <option value="">Tất cả trạng thái</option>
+                                <option value="1">Đang hoạt động</option>
+                                <option value="0">Tạm ẩn</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label htmlFor="service-sort" className="block text-xs font-medium text-gray-500 mb-1">Sắp xếp</label>
+                            <select
+                                id="service-sort"
+                                value={current.sort}
+                                onChange={(event) => applyFilters({ sort: event.target.value })}
+                                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white cursor-pointer outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
+                            >
+                                <option value="newest">Mới nhất</option>
+                                <option value="updated_desc">Cập nhật gần đây</option>
+                                <option value="name_asc">Tên A-Z</option>
+                                <option value="name_desc">Tên Z-A</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
 
