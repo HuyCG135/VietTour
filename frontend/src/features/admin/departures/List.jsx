@@ -9,6 +9,7 @@ import {
     STATUS_META,
     addMonths,
     deriveStatus,
+    formatCompactCurrency,
     formatCurrency,
     formatDateVN,
     formatMonthTitle,
@@ -49,14 +50,50 @@ function DetailRow({ icon, label, children }) {
     );
 }
 
+function DayDepartureItem({ departure, today, onSelect }) {
+    const status = deriveStatus(departure, today);
+    const itemMeta = STATUS_META[status];
+    const left = Number(departure.seats_available);
+
+    return (
+        <button
+            type="button"
+            onClick={onSelect}
+            className="mt-3 flex w-full items-center gap-3 rounded-xl border border-border bg-surface px-3 py-2.5 text-left transition-colors duration-150 hover:border-primary/40 hover:bg-primary-50/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+        >
+            <span className={`h-2 w-2 shrink-0 rounded-full ${itemMeta.dot}`} />
+            <span className="min-w-0 flex-1">
+                <span className="block truncate text-sm font-semibold text-foreground">
+                    {departure.departure_location}
+                </span>
+                <span className="mt-0.5 flex items-center gap-2 text-xs text-muted">
+                    <span className={`font-bold ${left <= 0 ? "text-warning" : "text-muted"}`}>
+                        {left}/{departure.seats_total} chỗ
+                    </span>
+                    <span className="truncate">{formatCompactCurrency(departure.price_moving)}</span>
+                </span>
+            </span>
+            <span
+                className={`inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold ${itemMeta.soft} ${itemMeta.text}`}
+            >
+                {itemMeta.label}
+            </span>
+            <i className="fa-solid fa-chevron-right text-xs text-muted" />
+        </button>
+    );
+}
+
 function DayDrawer({
     dateKey,
     departure,
+    dayDepartures,
     meta,
     seatsLeft,
     isPast,
     canAdd,
+    today,
     onClose,
+    onSelectDeparture,
     onEdit,
     onToggle,
     onDelete,
@@ -70,7 +107,7 @@ function DayDrawer({
                 onClick={onClose}
                 className="absolute inset-0 h-full w-full cursor-default bg-slate-950/40"
             />
-            <aside className="custom-scrollbar absolute right-0 top-0 flex h-full w-full max-w-sm flex-col overflow-y-auto bg-surface shadow-2xl motion-safe:animate-toast-in">
+            <aside className="custom-scrollbar absolute right-0 top-[70px] bottom-0 flex w-full max-w-sm flex-col overflow-y-auto bg-surface shadow-2xl motion-safe:animate-toast-in">
                 <div className="flex items-start justify-between gap-3 border-b border-border p-5">
                     <div>
                         <p className="text-xs font-semibold uppercase tracking-wide text-muted">
@@ -139,6 +176,13 @@ function DayDrawer({
                             </DetailRow>
                         </div>
 
+                        <div className="flex items-center justify-between gap-2 px-5 pt-3">
+                            <p className="text-xs text-muted">Ngày này còn:</p>
+                            <span className="text-xs font-bold text-foreground">
+                                {dayDepartures.length} chuyến
+                            </span>
+                        </div>
+
                         <div className="mt-auto space-y-2 border-t border-border p-5">
                             <div className="grid grid-cols-2 gap-2">
                                 <button
@@ -181,30 +225,64 @@ function DayDrawer({
                         </div>
                     </>
                 ) : (
-                    <div className="flex flex-1 flex-col items-center justify-center gap-3 p-8 text-center">
-                        <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary-50 text-xl text-primary">
-                            <i className="fa-solid fa-calendar-plus" />
-                        </span>
-                        {canAdd ? (
-                            <>
-                                <p className="text-sm text-muted">
-                                    Ngày này chưa có chuyến khởi hành nào.
+                    <>
+                        {dayDepartures.length > 0 ? (
+                            <div className="px-5 pt-4">
+                                <p className="text-xs font-semibold uppercase tracking-wide text-muted">
+                                    Các chuyến trong ngày ({dayDepartures.length})
                                 </p>
-                                <button
-                                    type="button"
-                                    onClick={onAdd}
-                                    className="flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-white transition-colors duration-150 hover:bg-primary-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
-                                >
-                                    <i className="fa-solid fa-plus" />
-                                    Thêm chuyến cho ngày này
-                                </button>
-                            </>
+                                <div>
+                                    {dayDepartures.map((item) => (
+                                        <DayDepartureItem
+                                            key={item.id}
+                                            departure={item}
+                                            today={today}
+                                            onSelect={() => onSelectDeparture(item)}
+                                        />
+                                    ))}
+                                </div>
+                                {canAdd ? (
+                                    <button
+                                        type="button"
+                                        onClick={onAdd}
+                                        className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors duration-150 hover:bg-primary-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+                                    >
+                                        <i className="fa-solid fa-plus" />
+                                        Thêm chuyến cho ngày này
+                                    </button>
+                                ) : (
+                                    <p className="mt-5 text-center text-xs text-muted">
+                                        Chỉ tạo được chuyến cách hôm nay ít nhất {MIN_LEAD_DAYS} ngày.
+                                    </p>
+                                )}
+                            </div>
                         ) : (
-                            <p className="text-sm text-muted">
-                                Chỉ tạo được chuyến cách hôm nay ít nhất {MIN_LEAD_DAYS} ngày.
-                            </p>
+                            <div className="flex flex-1 flex-col items-center justify-center gap-3 p-8 text-center">
+                                <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary-50 text-xl text-primary">
+                                    <i className="fa-solid fa-calendar-plus" />
+                                </span>
+                                {canAdd ? (
+                                    <>
+                                        <p className="text-sm text-muted">
+                                            Ngày này chưa có chuyến khởi hành nào.
+                                        </p>
+                                        <button
+                                            type="button"
+                                            onClick={onAdd}
+                                            className="flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-white transition-colors duration-150 hover:bg-primary-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+                                        >
+                                            <i className="fa-solid fa-plus" />
+                                            Thêm chuyến cho ngày này
+                                        </button>
+                                    </>
+                                ) : (
+                                    <p className="text-sm text-muted">
+                                        Chỉ tạo được chuyến cách hôm nay ít nhất {MIN_LEAD_DAYS} ngày.
+                                    </p>
+                                )}
+                            </div>
                         )}
-                    </div>
+                    </>
                 )}
             </aside>
         </div>
@@ -264,6 +342,7 @@ export default function DepartureList() {
     const [departures, setDepartures] = useState(MOCK_DEPARTURES);
     const [monthDate, setMonthDate] = useState(() => startOfMonth(new Date()));
     const [selectedDay, setSelectedDay] = useState(null);
+    const [selectedDeparture, setSelectedDeparture] = useState(null);
     const [form, setForm] = useState({ open: false, mode: "create", departure: null, dateKey: null });
     const [deleteTarget, setDeleteTarget] = useState(null);
 
@@ -281,14 +360,16 @@ export default function DepartureList() {
         item.departure_date.startsWith(prefix),
     ).length;
 
-    const drawerDeparture = selectedDay ? byDate[selectedDay] : null;
-    const drawerStatus = drawerDeparture ? deriveStatus(drawerDeparture, today) : null;
+    const dayDepartures = selectedDay ? byDate[selectedDay] ?? [] : [];
+    const drawerStatus = selectedDeparture ? deriveStatus(selectedDeparture, today) : null;
     const drawerMeta = drawerStatus ? STATUS_META[drawerStatus] : null;
+    const seatsLeft = selectedDeparture ? Number(selectedDeparture.seats_available) : 0;
 
     useEffect(() => {
         const onKeyDown = (event) => {
             if (event.key !== "Escape") return;
             setSelectedDay(null);
+            setSelectedDeparture(null);
             setDeleteTarget(null);
             setForm((prev) => ({ ...prev, open: false }));
         };
@@ -332,9 +413,11 @@ export default function DepartureList() {
 
     const confirmDelete = () => {
         setDepartures((prev) => prev.filter((item) => item.id !== deleteTarget.id));
+        if (selectedDeparture && selectedDeparture.id === deleteTarget.id) {
+            setSelectedDeparture(null);
+        }
         toast.success("Đã xóa chuyến khởi hành.");
         setDeleteTarget(null);
-        setSelectedDay(null);
     };
 
     return (
@@ -343,8 +426,8 @@ export default function DepartureList() {
                 <div>
                     <h2 className="text-xl font-bold text-foreground">Quản lý điểm khởi hành</h2>
                     <p className="mt-1 text-sm text-muted">
-                        Mỗi tour một lịch · mỗi ngày một chuyến · tạo mới phải cách hôm nay ít nhất{" "}
-                        {MIN_LEAD_DAYS} ngày.
+                        Mỗi tour một lịch · cùng ngày có thể mở nhiều chuyến (khác điểm khởi hành) ·
+                        tạo mới phải cách hôm nay ít nhất {MIN_LEAD_DAYS} ngày.
                     </p>
                 </div>
                 <button
@@ -369,6 +452,7 @@ export default function DepartureList() {
                             onChange={(id) => {
                                 setTourId(id);
                                 setSelectedDay(null);
+                                setSelectedDeparture(null);
                             }}
                         />
                     </div>
@@ -426,8 +510,11 @@ export default function DepartureList() {
                 departuresByDate={byDate}
                 selectedKey={selectedDay}
                 today={today}
-                minKey={minKey}
                 onSelectDay={setSelectedDay}
+                onSelectDeparture={(departure) => {
+                    setSelectedDay(departure.departure_date);
+                    setSelectedDeparture(departure);
+                }}
             />
 
             <p className="text-xs text-muted">
@@ -438,15 +525,21 @@ export default function DepartureList() {
             {selectedDay && (
                 <DayDrawer
                     dateKey={selectedDay}
-                    departure={drawerDeparture}
+                    departure={selectedDeparture}
+                    dayDepartures={dayDepartures}
                     meta={drawerMeta}
-                    seatsLeft={drawerDeparture ? Number(drawerDeparture.seats_available) : 0}
+                    seatsLeft={seatsLeft}
                     isPast={selectedDay < today}
                     canAdd={selectedDay >= minKey}
-                    onClose={() => setSelectedDay(null)}
-                    onEdit={() => openEdit(drawerDeparture)}
-                    onToggle={() => toggleStatus(drawerDeparture)}
-                    onDelete={() => setDeleteTarget(drawerDeparture)}
+                    today={today}
+                    onClose={() => {
+                        setSelectedDay(null);
+                        setSelectedDeparture(null);
+                    }}
+                    onSelectDeparture={setSelectedDeparture}
+                    onEdit={() => openEdit(selectedDeparture)}
+                    onToggle={() => toggleStatus(selectedDeparture)}
+                    onDelete={() => setDeleteTarget(selectedDeparture)}
                     onAdd={() => openCreate(selectedDay)}
                 />
             )}

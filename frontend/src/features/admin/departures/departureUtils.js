@@ -68,10 +68,13 @@ export const deriveStatus = (departure, today = todayKey()) => {
     return "open";
 };
 
-// Danh sách chuyến -> map theo ngày (mỗi ngày tối đa 1 chuyến).
+// Danh sách chuyến -> map theo ngày. Mỗi ngày có thể có NHIỀU chuyến
+// (cùng tour, khác điểm khởi hành) nên giá trị là mảng.
 export const groupByDate = (departures) =>
     departures.reduce((acc, item) => {
-        acc[item.departure_date] = item;
+        const key = item.departure_date;
+        if (!acc[key]) acc[key] = [];
+        acc[key].push(item);
         return acc;
     }, {});
 

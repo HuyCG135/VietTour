@@ -133,6 +133,10 @@ export default function DepartureFormModal({
                             placeholder="VD: Sân bay Nội Bài, Hà Nội"
                             className={inputClass}
                         />
+                        <p className="mt-1 text-xs text-muted">
+                            Một tour có thể mở nhiều chuyến trong cùng ngày — mỗi chuyến một điểm
+                            khởi hành.
+                        </p>
                         {errors.departure_location && (
                             <p className={errorClass}>{errors.departure_location}</p>
                         )}

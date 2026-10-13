@@ -1,6 +1,7 @@
 // DỮ LIỆU MOCK cho bản hardcode — sẽ thay bằng API ở bước nối backend.
 // `departure_date` dạng "yyyy-mm-dd"; `status` chỉ lưu cờ thủ công "open" | "closed"
 // (trạng thái "full" được suy diễn từ `seats_available`).
+// Cùng 1 tour + 1 ngày có thể có NHIỀU chuyến khác điểm khởi hành (xem tour 1 ngày +5).
 
 const pad2 = (value) => String(value).padStart(2, "0");
 
@@ -109,6 +110,29 @@ export const MOCK_DEPARTURES = [
         price_moving_child: 3600000,
         seats_total: 20,
         seats_available: 12,
+        status: "open",
+    },
+    // Tour 1 — CÙNG NGÀY (+5), HAI ĐIỂM KHỞI HÀNH khác nhau (demo tính năng mới)
+    {
+        id: 108,
+        tour_id: 1,
+        departure_location: "Sân bay Nội Bài, Hà Nội",
+        departure_date: shift(5),
+        price_moving: 4200000,
+        price_moving_child: 3200000,
+        seats_total: 30,
+        seats_available: 15,
+        status: "open",
+    },
+    {
+        id: 109,
+        tour_id: 1,
+        departure_location: "Bến xe Mỹ Đình",
+        departure_date: shift(5),
+        price_moving: 4150000,
+        price_moving_child: 3150000,
+        seats_total: 25,
+        seats_available: 25,
         status: "open",
     },
 
