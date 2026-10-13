@@ -34,7 +34,11 @@ export const createBookingService = async (userId, role, payload) => {
         throw createHttpError(404, "Không tìm thấy lịch khởi hành");
     }
 
-    if (departure.status === "closed" || departure.status === "full") {
+    if (
+        departure.status === "closed" ||
+        departure.status === "full" ||
+        Number(departure.seats_available) <= 0
+    ) {
         throw createHttpError(400, "Lịch khởi hành này hiện không nhận đặt chỗ");
     }
 
