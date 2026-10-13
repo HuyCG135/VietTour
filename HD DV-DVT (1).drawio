@@ -1,0 +1,287 @@
+<mxfile host="app.diagrams.net" agent="opencode" pages="2">
+  <diagram id="hd-quan-ly-dich-vu-tour" name="Biểu đồ hoạt động Quản lý Dịch vụ Tour">
+    <mxGraphModel grid="1" page="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- SWIMLANES -->
+        <mxCell id="HD_LANE_USER" parent="1" style="swimlane;whiteSpace=wrap;html=1;container=0;fontStyle=1;fontSize=13;" value="NHÂN VIÊN TOUR" vertex="1">
+          <mxGeometry height="950" width="380" x="34" y="50" as="geometry" />
+        </mxCell>
+        <mxCell id="HD_LANE_SYS" parent="1" style="swimlane;whiteSpace=wrap;html=1;container=0;fontStyle=1;fontSize=13;" value="HỆ THỐNG" vertex="1">
+          <mxGeometry height="950" width="380" x="414" y="50" as="geometry" />
+        </mxCell>
+
+        <!-- START NODE -->
+        <mxCell id="HD_START" parent="1" style="ellipse;fillColor=strokeColor;html=1;spacing=2;container=0;" value="" vertex="1">
+          <mxGeometry height="36" width="40" x="204" y="90" as="geometry" />
+        </mxCell>
+
+        <!-- BƯỚC 1: Chọn chức năng -->
+        <mxCell id="HD_A1" parent="1" style="html=1;align=center;verticalAlign=middle;rounded=1;absoluteArcSize=1;arcSize=10;dashed=0;whiteSpace=wrap;spacing=2;container=0;fontSize=12;" value="Chọn chức năng&#xa;Quản lý dịch vụ tour" vertex="1">
+          <mxGeometry height="40" width="180" x="134" y="150" as="geometry" />
+        </mxCell>
+
+        <!-- BƯỚC 2: Kiểm tra đăng nhập -->
+        <mxCell id="HD_A2" parent="1" style="html=1;align=center;verticalAlign=middle;rounded=1;absoluteArcSize=1;arcSize=10;dashed=0;whiteSpace=wrap;spacing=2;container=0;fontSize=12;" value="Kiểm tra trạng thái đăng nhập" vertex="1">
+          <mxGeometry height="36" width="180" x="514" y="152" as="geometry" />
+        </mxCell>
+
+        <!-- Decision: Đã đăng nhập? -->
+        <mxCell id="HD_D_AUTH" parent="1" style="rhombus;container=0;fontSize=11;" value="" vertex="1">
+          <mxGeometry height="30" width="30" x="589" y="215" as="geometry" />
+        </mxCell>
+
+        <!-- Đăng nhập thất bại / Chưa đăng nhập -->
+        <mxCell id="HD_A_LOGIN" parent="1" style="html=1;align=center;verticalAlign=middle;rounded=1;absoluteArcSize=1;arcSize=10;dashed=0;whiteSpace=wrap;spacing=2;container=0;fontSize=12;" value="Chuyển sang Giao diện Đăng nhập &amp;&#xa;Thực hiện UC Đăng nhập" vertex="1">
+          <mxGeometry height="40" width="200" x="504" y="270" as="geometry" />
+        </mxCell>
+
+        <!-- Hiển thị giao diện & DS -->
+        <mxCell id="HD_A_SHOW" parent="1" style="html=1;align=center;verticalAlign=middle;rounded=1;absoluteArcSize=1;arcSize=10;dashed=0;whiteSpace=wrap;spacing=2;container=0;fontSize=12;" value="Hiển thị danh sách dịch vụ tour&#xa;&amp; các nút thao tác" vertex="1">
+          <mxGeometry height="40" width="220" x="494" y="340" as="geometry" />
+        </mxCell>
+
+        <!-- Chọn thao tác tóm gọn trong 1 ô -->
+        <mxCell id="HD_A_SELECT" parent="1" style="html=1;align=center;verticalAlign=middle;rounded=1;absoluteArcSize=1;arcSize=10;dashed=0;whiteSpace=wrap;spacing=2;container=0;fontSize=12;" value="Chọn thao tác&#xa;(Xem DS / Thêm / Sửa / Xóa / Tìm kiếm /&#xa;Thêm DV vào Tour / Gỡ DV khỏi Tour)" vertex="1">
+          <mxGeometry height="55" width="230" x="109" y="332.5" as="geometry" />
+        </mxCell>
+
+        <!-- Decision: Loại thao tác -->
+        <mxCell id="HD_D_TYPE" parent="1" style="rhombus;container=0;fontSize=11;" value="" vertex="1">
+          <mxGeometry height="30" width="30" x="209" y="420" as="geometry" />
+        </mxCell>
+
+        <!-- Nhập dữ liệu / Từ khóa / Xác nhận -->
+        <mxCell id="HD_A_INPUT" parent="1" style="html=1;align=center;verticalAlign=middle;rounded=1;absoluteArcSize=1;arcSize=10;dashed=0;whiteSpace=wrap;spacing=2;container=0;fontSize=12;" value="Nhập dữ liệu dịch vụ / Từ khóa /&#xa;Xác nhận thao tác" vertex="1">
+          <mxGeometry height="40" width="200" x="124" y="485" as="geometry" />
+        </mxCell>
+
+        <!-- Kiểm tra điều kiện & Xử lý -->
+        <mxCell id="HD_A_PROCESS" parent="1" style="html=1;align=center;verticalAlign=middle;rounded=1;absoluteArcSize=1;arcSize=10;dashed=0;whiteSpace=wrap;spacing=2;container=0;fontSize=12;" value="Kiểm tra điều kiện &amp;&#xa;Thực hiện cập nhật CSDL" vertex="1">
+          <mxGeometry height="40" width="180" x="514" y="485" as="geometry" />
+        </mxCell>
+
+        <!-- Decision: Hợp lệ & Thành công? -->
+        <mxCell id="HD_D_CHECK" parent="1" style="rhombus;container=0;fontSize=11;" value="" vertex="1">
+          <mxGeometry height="30" width="30" x="589" y="555" as="geometry" />
+        </mxCell>
+
+        <!-- Thông báo lỗi -->
+        <mxCell id="HD_A_ERR" parent="1" style="html=1;align=center;verticalAlign=middle;rounded=1;absoluteArcSize=1;arcSize=10;dashed=0;whiteSpace=wrap;spacing=2;container=0;fontSize=12;" value="Thông báo lỗi&#xa;(Thiếu TT / Trùng mã / Giá ≤ 0 /&#xa;DV đang được dùng trong tour)" vertex="1">
+          <mxGeometry height="45" width="220" x="494" y="615" as="geometry" />
+        </mxCell>
+
+        <!-- Thông báo thành công -->
+        <mxCell id="HD_A_SUCCESS" parent="1" style="html=1;align=center;verticalAlign=middle;rounded=1;absoluteArcSize=1;arcSize=10;dashed=0;whiteSpace=wrap;spacing=2;container=0;fontSize=12;" value="Thông báo thao tác thành công &amp;&#xa;Cập nhật danh sách dịch vụ tour" vertex="1">
+          <mxGeometry height="40" width="220" x="494" y="690" as="geometry" />
+        </mxCell>
+
+        <!-- Decision: Tiếp tục quản lý? -->
+        <mxCell id="HD_D_CONTINUE" parent="1" style="rhombus;container=0;fontSize=11;" value="" vertex="1">
+          <mxGeometry height="30" width="30" x="209" y="695" as="geometry" />
+        </mxCell>
+
+        <!-- End Node -->
+        <mxCell id="HD_END" parent="1" style="ellipse;html=1;shape=endState;fillColor=strokeColor;spacing=2;container=0;" value="" vertex="1">
+          <mxGeometry height="36" width="40" x="204" y="780" as="geometry" />
+        </mxCell>
+
+        <!-- EDGES -->
+        <mxCell id="HD_E1" edge="1" parent="1" source="HD_START" target="HD_A1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="HD_E2" edge="1" parent="1" source="HD_A1" target="HD_A2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="HD_E3" edge="1" parent="1" source="HD_A2" target="HD_D_AUTH" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;"><mxGeometry relative="1" as="geometry"/></mxCell>
+
+        <mxCell id="HD_E4" edge="1" parent="1" source="HD_D_AUTH" target="HD_A_LOGIN" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="HD_E4_LB" connectable="0" parent="HD_E4" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=11;" value="Chưa" vertex="1"><mxGeometry relative="1" x="-0.1" y="0" as="geometry"><mxPoint as="offset"/></mxGeometry></mxCell>
+
+        <mxCell id="HD_E5" edge="1" parent="1" source="HD_A_LOGIN" target="HD_A_SHOW" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;"><mxGeometry relative="1" as="geometry"/></mxCell>
+
+        <mxCell id="HD_E6" edge="1" parent="1" source="HD_D_AUTH" target="HD_A_SHOW" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;"><mxGeometry relative="1" as="geometry">
+          <Array as="points"><mxPoint x="470" y="230"/><mxPoint x="470" y="360"/></Array>
+        </mxGeometry></mxCell>
+        <mxCell id="HD_E6_LB" connectable="0" parent="HD_E6" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=11;" value="Rồi" vertex="1"><mxGeometry relative="1" x="-0.1" y="0" as="geometry"><mxPoint as="offset"/></mxGeometry></mxCell>
+
+        <mxCell id="HD_E7" edge="1" parent="1" source="HD_A_SHOW" target="HD_A_SELECT" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="HD_E8" edge="1" parent="1" source="HD_A_SELECT" target="HD_D_TYPE" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;"><mxGeometry relative="1" as="geometry"/></mxCell>
+
+        <mxCell id="HD_E9" edge="1" parent="1" source="HD_D_TYPE" target="HD_A_INPUT" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="HD_E10" edge="1" parent="1" source="HD_A_INPUT" target="HD_A_PROCESS" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="HD_E11" edge="1" parent="1" source="HD_A_PROCESS" target="HD_D_CHECK" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;"><mxGeometry relative="1" as="geometry"/></mxCell>
+
+        <mxCell id="HD_E12" edge="1" parent="1" source="HD_D_CHECK" target="HD_A_ERR" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="HD_E12_LB" connectable="0" parent="HD_E12" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=11;" value="Không" vertex="1"><mxGeometry relative="1" x="-0.1" y="0" as="geometry"><mxPoint as="offset"/></mxGeometry></mxCell>
+
+        <mxCell id="HD_E13" edge="1" parent="1" source="HD_A_ERR" target="HD_A_INPUT" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points"><mxPoint x="360" y="638"/><mxPoint x="360" y="505"/></Array>
+          </mxGeometry>
+        </mxCell>
+
+        <mxCell id="HD_E14" edge="1" parent="1" source="HD_D_CHECK" target="HD_A_SUCCESS" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points"><mxPoint x="740" y="570"/><mxPoint x="740" y="710"/></Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="HD_E14_LB" connectable="0" parent="HD_E14" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=11;" value="Hợp lệ" vertex="1"><mxGeometry relative="1" x="-0.1" y="0" as="geometry"><mxPoint as="offset"/></mxGeometry></mxCell>
+
+        <mxCell id="HD_E15" edge="1" parent="1" source="HD_A_SUCCESS" target="HD_D_CONTINUE" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;"><mxGeometry relative="1" as="geometry"/></mxCell>
+
+        <mxCell id="HD_E16" edge="1" parent="1" source="HD_D_CONTINUE" target="HD_A_SELECT" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points"><mxPoint x="80" y="730"/><mxPoint x="80" y="360"/></Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="HD_E16_LB" connectable="0" parent="HD_E16" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=11;" value="Có" vertex="1"><mxGeometry relative="1" x="-0.1" y="0" as="geometry"><mxPoint as="offset"/></mxGeometry></mxCell>
+
+        <mxCell id="HD_E17" edge="1" parent="1" source="HD_D_CONTINUE" target="HD_END" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="HD_E17_LB" connectable="0" parent="HD_E17" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=11;" value="Không" vertex="1"><mxGeometry relative="1" x="-0.1" y="0" as="geometry"><mxPoint as="offset"/></mxGeometry></mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+
+  <diagram id="hd-quan-ly-dich-vu" name="Biểu đồ hoạt động Quản lý Dịch vụ">
+    <mxGraphModel grid="1" page="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- SWIMLANES -->
+        <mxCell id="DV_HD_LANE_USER" parent="1" style="swimlane;whiteSpace=wrap;html=1;container=0;fontStyle=1;fontSize=13;" value="NHÂN VIÊN TOUR" vertex="1">
+          <mxGeometry height="950" width="380" x="34" y="50" as="geometry" />
+        </mxCell>
+        <mxCell id="DV_HD_LANE_SYS" parent="1" style="swimlane;whiteSpace=wrap;html=1;container=0;fontStyle=1;fontSize=13;" value="HỆ THỐNG" vertex="1">
+          <mxGeometry height="950" width="380" x="414" y="50" as="geometry" />
+        </mxCell>
+
+        <!-- START NODE -->
+        <mxCell id="DV_HD_START" parent="1" style="ellipse;fillColor=strokeColor;html=1;spacing=2;container=0;" value="" vertex="1">
+          <mxGeometry height="36" width="40" x="204" y="90" as="geometry" />
+        </mxCell>
+
+        <!-- BƯỚC 1: Chọn chức năng -->
+        <mxCell id="DV_HD_A1" parent="1" style="html=1;align=center;verticalAlign=middle;rounded=1;absoluteArcSize=1;arcSize=10;dashed=0;whiteSpace=wrap;spacing=2;container=0;fontSize=12;" value="Chọn chức năng&#xa;Quản lý dịch vụ" vertex="1">
+          <mxGeometry height="40" width="180" x="134" y="150" as="geometry" />
+        </mxCell>
+
+        <!-- BƯỚC 2: Kiểm tra đăng nhập -->
+        <mxCell id="DV_HD_A2" parent="1" style="html=1;align=center;verticalAlign=middle;rounded=1;absoluteArcSize=1;arcSize=10;dashed=0;whiteSpace=wrap;spacing=2;container=0;fontSize=12;" value="Kiểm tra trạng thái đăng nhập" vertex="1">
+          <mxGeometry height="36" width="180" x="514" y="152" as="geometry" />
+        </mxCell>
+
+        <!-- Decision: Đã đăng nhập? -->
+        <mxCell id="DV_HD_D_AUTH" parent="1" style="rhombus;container=0;fontSize=11;" value="" vertex="1">
+          <mxGeometry height="30" width="30" x="589" y="215" as="geometry" />
+        </mxCell>
+
+        <!-- Đăng nhập thất bại / Chưa đăng nhập -->
+        <mxCell id="DV_HD_A_LOGIN" parent="1" style="html=1;align=center;verticalAlign=middle;rounded=1;absoluteArcSize=1;arcSize=10;dashed=0;whiteSpace=wrap;spacing=2;container=0;fontSize=12;" value="Chuyển sang Giao diện Đăng nhập &amp;&#xa;Thực hiện UC Đăng nhập" vertex="1">
+          <mxGeometry height="40" width="200" x="504" y="270" as="geometry" />
+        </mxCell>
+
+        <!-- Hiển thị giao diện & DS -->
+        <mxCell id="DV_HD_A_SHOW" parent="1" style="html=1;align=center;verticalAlign=middle;rounded=1;absoluteArcSize=1;arcSize=10;dashed=0;whiteSpace=wrap;spacing=2;container=0;fontSize=12;" value="Hiển thị danh sách dịch vụ&#xa;&amp; các nút thao tác" vertex="1">
+          <mxGeometry height="40" width="220" x="494" y="340" as="geometry" />
+        </mxCell>
+
+        <!-- Chọn thao tác tóm gọn trong 1 ô -->
+        <mxCell id="DV_HD_A_SELECT" parent="1" style="html=1;align=center;verticalAlign=middle;rounded=1;absoluteArcSize=1;arcSize=10;dashed=0;whiteSpace=wrap;spacing=2;container=0;fontSize=12;" value="Chọn thao tác&#xa;(Thêm / Sửa / Xóa / Tìm kiếm dịch vụ)" vertex="1">
+          <mxGeometry height="50" width="220" x="114" y="335" as="geometry" />
+        </mxCell>
+
+        <!-- Decision: Loại thao tác -->
+        <mxCell id="DV_HD_D_TYPE" parent="1" style="rhombus;container=0;fontSize=11;" value="" vertex="1">
+          <mxGeometry height="30" width="30" x="209" y="420" as="geometry" />
+        </mxCell>
+
+        <!-- Nhập dữ liệu / Từ khóa / Xác nhận -->
+        <mxCell id="DV_HD_A_INPUT" parent="1" style="html=1;align=center;verticalAlign=middle;rounded=1;absoluteArcSize=1;arcSize=10;dashed=0;whiteSpace=wrap;spacing=2;container=0;fontSize=12;" value="Nhập dữ liệu dịch vụ / Từ khóa /&#xa;Xác nhận thao tác" vertex="1">
+          <mxGeometry height="40" width="200" x="124" y="485" as="geometry" />
+        </mxCell>
+
+        <!-- Kiểm tra điều kiện & Xử lý -->
+        <mxCell id="DV_HD_A_PROCESS" parent="1" style="html=1;align=center;verticalAlign=middle;rounded=1;absoluteArcSize=1;arcSize=10;dashed=0;whiteSpace=wrap;spacing=2;container=0;fontSize=12;" value="Kiểm tra điều kiện &amp;&#xa;Thực hiện cập nhật CSDL" vertex="1">
+          <mxGeometry height="40" width="180" x="514" y="485" as="geometry" />
+        </mxCell>
+
+        <!-- Decision: Hợp lệ & Thành công? -->
+        <mxCell id="DV_HD_D_CHECK" parent="1" style="rhombus;container=0;fontSize=11;" value="" vertex="1">
+          <mxGeometry height="30" width="30" x="589" y="555" as="geometry" />
+        </mxCell>
+
+        <!-- Thông báo lỗi -->
+        <mxCell id="DV_HD_A_ERR" parent="1" style="html=1;align=center;verticalAlign=middle;rounded=1;absoluteArcSize=1;arcSize=10;dashed=0;whiteSpace=wrap;spacing=2;container=0;fontSize=12;" value="Thông báo lỗi&#xa;(Thiếu TT / Trùng mã / Dữ liệu không hợp lệ /&#xa;Dịch vụ đang nằm trong đơn hàng)" vertex="1">
+          <mxGeometry height="45" width="220" x="494" y="615" as="geometry" />
+        </mxCell>
+
+        <!-- Thông báo thành công -->
+        <mxCell id="DV_HD_A_SUCCESS" parent="1" style="html=1;align=center;verticalAlign=middle;rounded=1;absoluteArcSize=1;arcSize=10;dashed=0;whiteSpace=wrap;spacing=2;container=0;fontSize=12;" value="Thông báo thao tác thành công &amp;&#xa;Cập nhật danh sách dịch vụ" vertex="1">
+          <mxGeometry height="40" width="220" x="494" y="690" as="geometry" />
+        </mxCell>
+
+        <!-- Decision: Tiếp tục quản lý? -->
+        <mxCell id="DV_HD_D_CONTINUE" parent="1" style="rhombus;container=0;fontSize=11;" value="" vertex="1">
+          <mxGeometry height="30" width="30" x="209" y="695" as="geometry" />
+        </mxCell>
+
+        <!-- End Node -->
+        <mxCell id="DV_HD_END" parent="1" style="ellipse;html=1;shape=endState;fillColor=strokeColor;spacing=2;container=0;" value="" vertex="1">
+          <mxGeometry height="36" width="40" x="204" y="780" as="geometry" />
+        </mxCell>
+
+        <!-- EDGES -->
+        <mxCell id="DV_HD_E1" edge="1" parent="1" source="DV_HD_START" target="DV_HD_A1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="DV_HD_E2" edge="1" parent="1" source="DV_HD_A1" target="DV_HD_A2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="DV_HD_E3" edge="1" parent="1" source="DV_HD_A2" target="DV_HD_D_AUTH" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;"><mxGeometry relative="1" as="geometry"/></mxCell>
+
+        <mxCell id="DV_HD_E4" edge="1" parent="1" source="DV_HD_D_AUTH" target="DV_HD_A_LOGIN" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="DV_HD_E4_LB" connectable="0" parent="DV_HD_E4" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=11;" value="Chưa" vertex="1"><mxGeometry relative="1" x="-0.1" y="0" as="geometry"><mxPoint as="offset"/></mxGeometry></mxCell>
+
+        <mxCell id="DV_HD_E5" edge="1" parent="1" source="DV_HD_A_LOGIN" target="DV_HD_A_SHOW" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;"><mxGeometry relative="1" as="geometry"/></mxCell>
+
+        <mxCell id="DV_HD_E6" edge="1" parent="1" source="DV_HD_D_AUTH" target="DV_HD_A_SHOW" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;"><mxGeometry relative="1" as="geometry">
+          <Array as="points"><mxPoint x="470" y="230"/><mxPoint x="470" y="360"/></Array>
+        </mxGeometry></mxCell>
+        <mxCell id="DV_HD_E6_LB" connectable="0" parent="DV_HD_E6" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=11;" value="Rồi" vertex="1"><mxGeometry relative="1" x="-0.1" y="0" as="geometry"><mxPoint as="offset"/></mxGeometry></mxCell>
+
+        <mxCell id="DV_HD_E7" edge="1" parent="1" source="DV_HD_A_SHOW" target="DV_HD_A_SELECT" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="DV_HD_E8" edge="1" parent="1" source="DV_HD_A_SELECT" target="DV_HD_D_TYPE" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;"><mxGeometry relative="1" as="geometry"/></mxCell>
+
+        <mxCell id="DV_HD_E9" edge="1" parent="1" source="DV_HD_D_TYPE" target="DV_HD_A_INPUT" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="DV_HD_E10" edge="1" parent="1" source="DV_HD_A_INPUT" target="DV_HD_A_PROCESS" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="DV_HD_E11" edge="1" parent="1" source="DV_HD_A_PROCESS" target="DV_HD_D_CHECK" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;"><mxGeometry relative="1" as="geometry"/></mxCell>
+
+        <mxCell id="DV_HD_E12" edge="1" parent="1" source="DV_HD_D_CHECK" target="DV_HD_A_ERR" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="DV_HD_E12_LB" connectable="0" parent="DV_HD_E12" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=11;" value="Không" vertex="1"><mxGeometry relative="1" x="-0.1" y="0" as="geometry"><mxPoint as="offset"/></mxGeometry></mxCell>
+
+        <mxCell id="DV_HD_E13" edge="1" parent="1" source="DV_HD_A_ERR" target="DV_HD_A_INPUT" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points"><mxPoint x="360" y="638"/><mxPoint x="360" y="505"/></Array>
+          </mxGeometry>
+        </mxCell>
+
+        <mxCell id="DV_HD_E14" edge="1" parent="1" source="DV_HD_D_CHECK" target="DV_HD_A_SUCCESS" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points"><mxPoint x="740" y="570"/><mxPoint x="740" y="710"/></Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="DV_HD_E14_LB" connectable="0" parent="DV_HD_E14" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=11;" value="Hợp lệ" vertex="1"><mxGeometry relative="1" x="-0.1" y="0" as="geometry"><mxPoint as="offset"/></mxGeometry></mxCell>
+
+        <mxCell id="DV_HD_E15" edge="1" parent="1" source="DV_HD_A_SUCCESS" target="DV_HD_D_CONTINUE" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;"><mxGeometry relative="1" as="geometry"/></mxCell>
+
+        <mxCell id="DV_HD_E16" edge="1" parent="1" source="DV_HD_D_CONTINUE" target="DV_HD_A_SELECT" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points"><mxPoint x="80" y="715"/><mxPoint x="80" y="360"/></Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="DV_HD_E16_LB" connectable="0" parent="DV_HD_E16" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=11;" value="Có" vertex="1"><mxGeometry relative="1" x="-0.1" y="0" as="geometry"><mxPoint as="offset"/></mxGeometry></mxCell>
+
+        <mxCell id="DV_HD_E17" edge="1" parent="1" source="DV_HD_D_CONTINUE" target="DV_HD_END" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="DV_HD_E17_LB" connectable="0" parent="DV_HD_E17" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=11;" value="Không" vertex="1"><mxGeometry relative="1" x="-0.1" y="0" as="geometry"><mxPoint as="offset"/></mxGeometry></mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
