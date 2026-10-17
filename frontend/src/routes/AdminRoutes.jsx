@@ -4,7 +4,7 @@ import TourForm from "../features/admin/tours/Form";
 import ItineraryList from "../features/admin/itineraries/List";
 import ItineraryForm from "../features/admin/itineraries/Form";
 import DepartureList from "../features/admin/departures/List";
-import BookingList from "../features/admin/bookings/List";
+import BookingDashboard from "../features/admin/bookings/DashboardBooking";
 import ServiceList from "../features/admin/services/List";
 import ServiceForm from "../features/admin/services/Form";
 import TourServiceList from "../features/admin/tour-services/List";
@@ -24,7 +24,7 @@ export default function AdminRoutes() {
             <Route path="itineraries" element={<ItineraryList />} />
             <Route path="itineraries/:tourId/edit" element={<ItineraryForm />} />
             <Route path="departures" element={<DepartureList />} />
-            <Route path="bookings" element={<BookingList />} />
+            <Route path="bookings" element={<BookingDashboard />} />
             <Route path="services" element={<ServiceList />} />
             <Route path="services/new" element={<ServiceForm />} />
             <Route path="services/:id/edit" element={<ServiceForm />} />
