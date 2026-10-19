@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { createBooking, createPaymentUrl } from "../user/bookings/booking.api.js";
+import { createBooking, createPaymentUrl } from "../bookings/booking.api.js";
 import BookingSteps from "./BookingSteps.jsx";
 import ContactInfoForm from "./ContactInfoForm.jsx";
 import BookingDetailsForm from "./BookingDetailsForm.jsx";

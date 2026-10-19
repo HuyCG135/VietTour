@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import defaultTourImage from "../../../assets/images/image.png";
-import { formatVnd } from "../../booking/bookingPrices";
+import { formatVnd } from "../book-tour/bookingPrices";
 import { BOOKING_STATUS, BOOKING_PAYMENT, COMPLETED_STATUS } from "./bookingStatus";
 import { formatDate, formatDateTime, formatPax } from "./bookingFormat";
 import { createPaymentUrl } from "./booking.api";

@@ -1,5 +1,5 @@
 import { PaymentPill } from "./common";
-import { formatVnd } from "../../../booking/bookingPrices";
+import { formatVnd } from "../../book-tour/bookingPrices";
 import { formatDate, formatDateTime, formatPax } from "../bookingFormat";
 
 function InvoiceField({ label, value }) {

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, Navigate, useLocation, useParams } from "react-router-dom";
-import useAuth from "../../hooks/useAuth.js";
-import { getTourById } from "../tours/tour.api.js";
+import useAuth from "../../../hooks/useAuth.js";
+import { getTourById } from "../../tours/tour.api.js";
 import BookingFlow from "./BookingFlow.jsx";
 
 export default function BookingPage() {
