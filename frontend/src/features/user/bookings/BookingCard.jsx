@@ -1,8 +1,10 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import defaultTourImage from "../../../assets/images/image.png";
 import { formatVnd } from "../../booking/bookingPrices";
 import { BOOKING_STATUS, BOOKING_PAYMENT, COMPLETED_STATUS } from "./bookingStatus";
 import { formatDate, formatDateTime, formatPax } from "./bookingFormat";
+import { createPaymentUrl } from "./booking.api";
 
 function InfoRow({ icon, iconClass, label, children }) {
     return (
@@ -15,6 +17,7 @@ function InfoRow({ icon, iconClass, label, children }) {
 }
 
 export default function BookingCard({ booking: b }) {
+    const [payingId, setPayingId] = useState(null);
     const status = BOOKING_STATUS[b.status] || {
         label: b.status,
         icon: "fa-solid fa-circle-info",
@@ -32,6 +35,21 @@ export default function BookingCard({ booking: b }) {
     const isCompleted =
         b.status === "confirmed" && b.payment_status === "paid" && String(b.departure_date).slice(0, 10) < todayStr;
     const statusTag = isCompleted ? COMPLETED_STATUS : status;
+
+    const handlePay = async (id) => {
+        setPayingId(id);
+        try {
+            const res = await createPaymentUrl(id);
+            if (res.success && res.vnpayUrl) {
+                window.location.href = res.vnpayUrl;
+                return;
+            }
+            alert(res.message || "Không tạo được liên kết thanh toán.");
+        } catch {
+            alert("Không kết nối được máy chủ.");
+        }
+        setPayingId(null);
+    };
 
     return (
         <div className="space-y-2">
@@ -111,6 +129,27 @@ export default function BookingCard({ booking: b }) {
                             <span className="text-xs text-muted block mt-0.5">{formatPax(b.adults, b.children)}</span>
                         </div>
                     </div>
+
+                    {b.payment_status !== "paid" && b.status !== "cancelled" && (
+                        <button
+                            type="button"
+                            onClick={() => handlePay(b.id)}
+                            disabled={payingId === b.id}
+                            className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-bold text-white transition-colors duration-150 hover:bg-primary-dark disabled:cursor-not-allowed disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 cursor-pointer"
+                        >
+                            {payingId === b.id ? (
+                                <>
+                                    <span className="w-4 h-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />
+                                    Đang tạo...
+                                </>
+                            ) : (
+                                <>
+                                    <i className="fa-solid fa-credit-card" />
+                                    Thanh toán ngay
+                                </>
+                            )}
+                        </button>
+                    )}
                 </div>
             </article>
         </div>

@@ -15,7 +15,7 @@ CREATE TABLE users (
     password VARCHAR(255) NOT NULL,
     address VARCHAR(255),
 
-    role ENUM('customer','admin') NOT NULL DEFAULT 'customer',
+    role ENUM('customer','admin','tour-staff','booking-staff') NOT NULL DEFAULT 'customer',
     status TINYINT(1) NOT NULL DEFAULT 1 CHECK (status IN (0,1)),
     is_verified TINYINT(1) NOT NULL DEFAULT 0 CHECK (is_verified IN (0,1)),
     

@@ -9,7 +9,13 @@ import requestLogger from "./middlewares/logger.js";
 import { errorHandler, notFound } from "./middlewares/errorHandler.js";
 import rateLimiter from "./middlewares/rateLimiter.js";
 import tourRoutes from "./features/tour/tour.routes.js";
-import tourAdminRoutes from "./features/tour-admin/tour-admin.routes.js";
+import tourAdminRoutes from "./features/admin/tours/tour.routes.js";
+import itineraryAdminRoutes from "./features/admin/itineraries/itinerary.routes.js";
+import serviceAdminRoutes from "./features/admin/services/service.routes.js";
+import tourServiceAdminRoutes from "./features/admin/tour-services/tour-service.routes.js";
+import tourImageAdminRoutes from "./features/admin/tour-images/tourImage.routes.js";
+import departureAdminRoutes from "./features/admin/departures/departure.routes.js";
+import userAdminRoutes from "./features/admin/users/user.routes.js";
 import authRoutes from "./features/auth/auth.routes.js";
 import bookingRoutes from "./features/booking/booking.routes.js";
 import favoriteRoutes from "./features/favorite/favorite.routes.js";
@@ -31,12 +37,18 @@ app.use(express.urlencoded({ extended: true }));
 app.use(requestLogger);
 
 // Rate limiter (100 requests per 15 minutes)
-app.use("/api", rateLimiter(100, 15 * 60 * 1000));
+app.use("/api", rateLimiter(400, 15 * 60 * 1000));
 
-const frontendDistPath = join(__dirname, "../frontend/dist");
+const frontendDistPath = join(__dirname, "../../frontend/dist");
 
 app.use("/api/tours", tourRoutes);
 app.use("/api/admin/tours", tourAdminRoutes);
+app.use("/api/admin/itineraries", itineraryAdminRoutes);
+app.use("/api/admin/services", serviceAdminRoutes);
+app.use("/api/admin/tour-services", tourServiceAdminRoutes);
+app.use("/api/admin/tour-images", tourImageAdminRoutes);
+app.use("/api/admin/departures", departureAdminRoutes);
+app.use("/api/admin/users", userAdminRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/bookings", bookingRoutes);
 app.use("/api/favorites", favoriteRoutes);

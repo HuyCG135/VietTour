@@ -54,13 +54,21 @@ export function makeService(index) {
     };
 }
 
+// Tài khoản nhân viên dùng email cố định để login test phân quyền
+const ROLE_EMAILS = {
+    admin: "admin@viettour.vn",
+    "tour-staff": "tourstaff@viettour.vn",
+    "booking-staff": "bookingstaff@viettour.vn",
+};
+
 export const makeUser = async (index, role = "customer") => {
     const fullname = role === "admin" ? "Quản trị viên" : makeFullname();
-    const lastName = fullname.split(" ").at(-1).toLowerCase();
+    // email phải ASCII + không trùng (UNIQUE), ghép index để chắc chắn duy nhất
+    const emailName = slugify(fullname.split(" ").at(-1));
     return {
         fullname,
         phone: makeVietnamesePhone(),
-        email: role === "admin" ? "admin@viettour.vn" : `${lastName}${faker.number.int({ min: 10, max: 99 })}@gmail.com`,
+        email: ROLE_EMAILS[role] ?? `${emailName}${index}@gmail.com`,
         password: await bcrypt.hash("123456", 10),
         role,
         status: 1,

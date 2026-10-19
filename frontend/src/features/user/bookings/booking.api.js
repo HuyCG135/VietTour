@@ -9,8 +9,17 @@ const authHeaders = (extra = {}) => ({
 export async function createBooking(data) {
     const res = await fetch(`${API_URL}/bookings`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: authHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify(data),
+    });
+    return res.json();
+}
+
+export async function createPaymentUrl(bookingId) {
+    const res = await fetch(`${API_URL}/bookings/create-payment-url`, {
+        method: 'POST',
+        headers: authHeaders({ 'Content-Type': 'application/json' }),
+        body: JSON.stringify({ booking_id: bookingId }),
     });
     return res.json();
 }
@@ -33,6 +42,20 @@ export async function cancelBooking(id) {
     const res = await fetch(`${API_URL}/bookings/${id}/cancel`, {
         method: "PUT",
         headers: authHeaders(),
+    });
+    return res.json();
+}
+
+export async function getPaymentSummary(bookingId, token) {
+    const res = await fetch(`${API_URL}/bookings/payment-summary/${bookingId}?token=${encodeURIComponent(token)}`);
+    return res.json();
+}
+
+export async function payLater(bookingId, token) {
+    const res = await fetch(`${API_URL}/bookings/pay-later`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ booking_id: bookingId, token }),
     });
     return res.json();
 }

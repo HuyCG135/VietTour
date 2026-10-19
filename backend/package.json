@@ -10,7 +10,9 @@
         "migrate": "knex migrate:latest",
         "migrate:rollback": "knex migrate:rollback",
         "migrate:make": "knex migrate:make",
-        "seed": "knex seed:run"
+        "seed": "knex seed:run",
+        "db:reset": "knex migrate:rollback --all && knex migrate:latest && knex seed:run",
+        "db:seed:reset": "knex seed:run"
     },
     "keywords": [],
     "author": "",
@@ -19,6 +21,7 @@
     "dependencies": {
         "@faker-js/faker": "^10.6.0",
         "bcryptjs": "^3.0.3",
+        "cloudinary": "^2.11.0",
         "cors": "^2.8.5",
         "dotenv": "^17.2.3",
         "express": "^5.2.1",
