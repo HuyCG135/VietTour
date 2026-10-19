@@ -126,7 +126,7 @@ export default function PaymentPage() {
                         <h1 className="mt-5 text-2xl font-extrabold text-foreground">Đơn đã được thanh toán</h1>
                         <p className="mt-2 text-muted">
                             Đơn <strong className="text-foreground">#{`MB${bookingId}`}</strong> của bạn đã thanh toán và
-                            xác nhận chỗ. Cảm ơn bạn đã chọn VietTour!
+                            xác nhận chỗ. Cảm ơn bạn đã chọn Vietravel!
                         </p>
                         <p className="mt-4 text-lg font-extrabold text-primary">{fmtVND(data.total_price)}</p>
                         <div className="mt-7">

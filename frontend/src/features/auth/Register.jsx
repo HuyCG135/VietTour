@@ -97,13 +97,13 @@ export default function Register() {
                     <div className="absolute inset-0 bg-slate-950/60" />
                     <div className="relative z-10 flex h-full flex-col p-10 text-white">
                         <Link to="/" className="flex items-center gap-2.5 no-underline text-white">
-                            <img src={logoIcon} alt="VietTour" width="32" height="32" />
-                            <span className="text-lg font-bold">VietTour</span>
+                            <img src={logoIcon} alt="Vietravel" width="32" height="32" />
+                            <span className="text-lg font-bold">Vietravel</span>
                         </Link>
 
                         <div className="mt-auto">
                             <span className="text-xs font-bold uppercase tracking-wider text-amber-400">Tạo tài khoản mới</span>
-                            <h1 className="mt-2 text-3xl font-extrabold leading-tight">Bắt đầu hành trình của bạn cùng VietTour</h1>
+                            <h1 className="mt-2 text-3xl font-extrabold leading-tight">Bắt đầu hành trình của bạn cùng Vietravel</h1>
                             <p className="mt-3 text-sm leading-relaxed text-white/80">Cùng khám phá Việt Nam với hàng ngàn tour du lịch hấp dẫn, giá tốt và trải nghiệm liền mạch.</p>
                         </div>
                     </div>
@@ -111,8 +111,8 @@ export default function Register() {
 
                 <div className="h-full overflow-y-auto p-6 sm:p-9">
                     <div className="flex items-center gap-2.5 lg:hidden">
-                        <img src={logoIcon} alt="VietTour" width="28" height="28" />
-                        <span className="text-lg font-bold text-foreground">VietTour</span>
+                        <img src={logoIcon} alt="Vietravel" width="28" height="28" />
+                        <span className="text-lg font-bold text-foreground">Vietravel</span>
                     </div>
 
                     <div className="mt-2 lg:mt-0">

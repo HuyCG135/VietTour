@@ -56,9 +56,9 @@ export function makeService(index) {
 
 // Tài khoản nhân viên dùng email cố định để login test phân quyền
 const ROLE_EMAILS = {
-    admin: "admin@viettour.vn",
-    "tour-staff": "tourstaff@viettour.vn",
-    "booking-staff": "bookingstaff@viettour.vn",
+    admin: "admin@vietravel.vn",
+    "tour-staff": "tourstaff@vietravel.vn",
+    "booking-staff": "bookingstaff@vietravel.vn",
 };
 
 export const makeUser = async (index, role = "customer") => {

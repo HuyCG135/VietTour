@@ -219,6 +219,23 @@ Invoke-RestMethod -Uri "http://localhost:3000/api/admin/bookings/top-packages?ra
 
 ## 7. Lịch sử cập nhật
 
+### 2026-10-20 — Đổi tên hiển thị VietTour → Vietravel
+
+**Đã làm:**
+- [x] Đổi thương hiệu hiển thị trên UI: Header, Footer, Login/Register/ForgotPassword, About, Contact, Home (Hero/Reviews/WhyChooseUs), BookingSteps, PaymentPage, 2 InvoiceModal (chuẩn `VIETRAVEL`), ChatWidget, title tab `index.html`.
+- [x] Đổi tên trong email gửi đi (`backend/src/shared/mailService.js`: xác thực TK, reset mật khẩu, thanh toán) + system prompt chatbot (`chat.service.js`).
+- [x] Đổi email liên hệ `info@viettour.vn` → `info@vietravel.vn`, placeholder `nhanvien@vietravel.vn`, seed `ROLE_EMAILS` trong `backend/db/factories.js` → `admin@vietravel.vn`, `tourstaff@vietravel.vn`, `bookingstaff@vietravel.vn`.
+- [x] **Giữ nguyên** (ngoài phạm vi): tên DB `db_viet_tour`/`db_viet_travel`, container `viettour-redis`, localStorage key `viettour_view_mode`, console log `server.js`, tài liệu (README/AGENTS/design/LICENSE).
+
+**File liên quan:**
+- Sửa: `frontend/index.html`, `components/Header.jsx`, `components/Footer.jsx`, `features/auth/{Login,Register,ForgotPassword}.jsx`, `features/admin/users/CreateStaffModal.jsx`, `features/home/sections/{HomeHero,HomeReviews,WhyChooseUs}.jsx`, `features/chat/ChatWidget.jsx`, `features/user/book-tour/BookingSteps.jsx`, `features/user/bookings/BookingDetail/InvoiceModal.jsx`, `features/admin/bookings/BookingDetail/InvoiceModal.jsx`, `pages/{About,Contact,PaymentPage}.jsx`, `backend/src/shared/mailService.js`, `backend/src/features/chat/chat.service.js`, `backend/db/factories.js`
+
+**Kiểm tra:**
+- `npm run lint` pass; grep lại `VietTour|viettour.vn|VIETTOUR` không còn khớp chỗ UI/email.
+- ⚠️ Tài khoản staff/admin **đã seed trong DB cũ** vẫn là `admin@viettour.vn` — muốn khớp phải seed lại (`cd backend; npm run seed`) hoặc tự sửa email trực tiếp trong DB.
+
+---
+
 ### 2026-10-19 — Chỉnh nền header card + màu khối "Chưa thu"
 
 **Đã làm:**

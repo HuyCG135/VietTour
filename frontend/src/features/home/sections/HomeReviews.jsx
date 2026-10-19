@@ -19,7 +19,7 @@ const testimonials = [
         rating: 5,
         avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=200&h=200&q=80",
         quote:
-            "Gia đình mình có trải nghiệm cực kỳ đáng nhớ tại Phú Quốc. Đặt tour trên VietTour rất nhanh gọn, giá minh bạch và không phát sinh thêm chi phí nào.",
+            "Gia đình mình có trải nghiệm cực kỳ đáng nhớ tại Phú Quốc. Đặt tour trên Vietravel rất nhanh gọn, giá minh bạch và không phát sinh thêm chi phí nào.",
     },
     {
         name: "Trần Hoàng Nam",
@@ -43,7 +43,7 @@ const testimonials = [
         rating: 5,
         avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&h=200&q=80",
         quote:
-            "Biển Quy Nhơn trong xanh tuyệt đẹp, hải sản tươi ngon. Đội ngũ hỗ trợ 24/7 của VietTour phản hồi cực kỳ nhanh chóng khi đoàn mình cần đổi lịch trình.",
+            "Biển Quy Nhơn trong xanh tuyệt đẹp, hải sản tươi ngon. Đội ngũ hỗ trợ 24/7 của Vietravel phản hồi cực kỳ nhanh chóng khi đoàn mình cần đổi lịch trình.",
     },
 ];
 
@@ -76,7 +76,7 @@ const HomeReviews = ({ backgroundImage = DEFAULT_BACKGROUND }) => {
                             Ý kiến khách hàng
                         </span>
                         <h2 className="mt-1 text-2xl font-extrabold text-white sm:text-3xl lg:text-4xl">
-                            Khách hàng nói gì về VietTour?
+                            Khách hàng nói gì về Vietravel?
                         </h2>
                     </div>
 

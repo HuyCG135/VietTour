@@ -76,7 +76,7 @@ const HomeHero = ({ backgroundImage = DEFAULT_BACKGROUND }) => {
 
             <div className="absolute bottom-0 left-1/2 w-[92%] max-w-[960px] -translate-x-1/2 rounded-[20px] bg-white px-9 pb-6 pt-8 shadow-[0_20px_45px_rgba(15,40,60,0.15)]">
                 <h1 className="mb-1.5 text-[28px] font-bold text-primary">
-                    VietTour welcome!
+                    Vietravel welcome!
                 </h1>
                 <p className="mb-6 text-[15px] text-slate-600">
                     Khám phá những miền đẹp nhất Việt Nam cùng chúng tôi
