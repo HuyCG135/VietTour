@@ -219,6 +219,21 @@ Invoke-RestMethod -Uri "http://localhost:3000/api/admin/bookings/top-packages?ra
 
 ## 7. Lịch sử cập nhật
 
+### 2026-10-19 — Chỉnh nền header card + màu khối "Chưa thu"
+
+**Đã làm:**
+- [x] Header các card (Thông tin tour, Thông tin khách hàng, Danh sách hành khách, Tổng tiền, Lịch sử hoạt động) dùng nền xanh nhạt `bg-primary-50/60`.
+- [x] Khối **Chưa thu** đổi từ nền vàng (amber) sang xanh dương (`bg-sky-100`, chữ `text-sky-700`).
+- [x] Đưa tiêu đề Tổng tiền / Lịch sử hoạt động vào header card thống nhất với các card còn lại.
+
+**File liên quan:**
+- Sửa: `frontend/src/features/admin/bookings/BookingDetail/common.jsx`, `TotalPriceCard.jsx`, `ActivityHistory.jsx`
+
+**Kiểm tra:**
+- `npm run lint` pass, `npm run build` pass.
+
+---
+
 ### 2026-10-19 — Trang Admin Booking Detail + click dòng mở chi tiết
 
 **Đã làm:**

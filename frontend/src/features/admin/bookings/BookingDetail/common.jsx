@@ -7,10 +7,8 @@ export function SectionCard({ icon, title, children, className = "" }) {
         <section
             className={`rounded-2xl border border-border bg-surface shadow-[0_1px_2px_rgba(15,23,42,0.06)] ${className}`}
         >
-            <header className="flex items-center gap-2.5 border-b border-border px-5 py-4">
-                <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary-50">
-                    <IconComponent className="h-4 w-4 text-primary" aria-hidden="true" />
-                </span>
+            <header className="flex items-center gap-2.5 border-b border-border bg-primary-50/60 px-5 py-4">
+                <IconComponent className="h-4 w-4 text-primary" aria-hidden="true" />
                 <h2 className="text-base font-bold text-foreground">{title}</h2>
             </header>
             <div className="p-5">{children}</div>
