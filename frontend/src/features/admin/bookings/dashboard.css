@@ -15,6 +15,8 @@
     padding: 16px;
     box-shadow: 0 1px 2px color-mix(in srgb, var(--color-foreground) 6%, transparent);
     transition: box-shadow 150ms ease;
+    /* Cho phép các phần tử con truy vấn theo bề rộng thực của thẻ. */
+    container-type: inline-size;
 }
 
 .stat-card:hover {
@@ -67,19 +69,29 @@
     display: flex;
     align-items: flex-end;
     justify-content: space-between;
-    gap: 12px;
+    gap: 8px;
     margin-top: 12px;
+    min-width: 0;
+}
+
+/* Khối chữ được phép co lại, tránh đẩy sparkline ra ngoài khung thẻ. */
+.stat-card-body > div:first-child {
+    flex: 1 1 auto;
+    min-width: 0;
 }
 
 .stat-value {
     font-size: 22px;
     font-weight: 700;
+    line-height: 1.2;
     color: var(--color-foreground);
     font-variant-numeric: tabular-nums;
+    letter-spacing: -0.01em;
 }
 
 .stat-change {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     gap: 6px;
     margin-top: 4px;
@@ -107,9 +119,59 @@
 }
 
 .sparkline {
-    width: 96px;
+    width: 72px;
     height: 44px;
-    flex-shrink: 0;
+    flex: 0 0 auto;
+}
+
+/* Thẻ hẹp dần (3 cột trong cột trái ở màn ~1281–1440px) → giảm cỡ số tiền
+   + sparkline theo bề rộng thẻ (đã trừ 32px padding) để không tràn khung. */
+@container (max-width: 280px) {
+    .stat-value {
+        font-size: 18px;
+    }
+
+    .sparkline {
+        width: 60px;
+        height: 40px;
+    }
+}
+
+@container (max-width: 240px) {
+    .stat-value {
+        font-size: 16px;
+    }
+
+    .sparkline {
+        width: 48px;
+        height: 38px;
+    }
+}
+
+@container (max-width: 215px) {
+    .stat-value {
+        font-size: 14px;
+    }
+
+    .sparkline {
+        width: 38px;
+        height: 34px;
+    }
+}
+
+@container (max-width: 190px) {
+    .stat-value {
+        font-size: 13px;
+    }
+
+    .sparkline {
+        width: 32px;
+        height: 30px;
+    }
+
+    .stat-note {
+        display: none;
+    }
 }
 
 @media (max-width: 1280px) {

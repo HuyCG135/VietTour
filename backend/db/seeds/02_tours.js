@@ -1,4 +1,5 @@
 import { TOUR_SEED } from "../seed-data/tours.js";
+import { EXTRA_DEPARTURES } from "../seed-data/departures.js";
 
 export async function seed(knex) {
     const tours = TOUR_SEED.map((t) => ({
@@ -30,7 +31,13 @@ export async function seed(knex) {
         for (const it of t.itineraries || []) {
             itineraries.push({ tour_id: id, day_number: it.day, description: it.description });
         }
-        for (const d of t.departures || []) {
+
+        // Gộp chuyến gốc (tours.js) + chuyến bổ sung (departures.js), chặn trùng ngày
+        // vì DB có unique uk_tour_date (tour_id, departure_date).
+        const seenDates = new Set();
+        for (const d of [...(t.departures || []), ...(EXTRA_DEPARTURES[t.slug] || [])]) {
+            if (seenDates.has(d.departure_date)) continue;
+            seenDates.add(d.departure_date);
             departures.push({
                 tour_id: id,
                 departure_location: d.departure_location,
@@ -39,7 +46,8 @@ export async function seed(knex) {
                 price_moving_child: d.price_moving_child,
                 seats_total: d.seats_total,
                 seats_available: d.seats_available,
-                status: d.status,
+                // Chỉ lưu open/closed; "full" do hệ thống suy ra từ seats_available <= 0.
+                status: d.status === "closed" ? "closed" : "open",
                 created_at: new Date(),
                 updated_at: new Date(),
             });

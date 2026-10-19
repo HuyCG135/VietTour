@@ -78,6 +78,21 @@
 - [x] Chạy `npm run seed` + verify: 33 users / 50 bookings / 172 passengers; 0 đơn lệch giá; 0 sai ngày; 0 lệch passenger
 - [x] Test API admin: `/stats`, `/trips`, `/top-packages`, list, `/:id` đều `success=true` với dữ liệu mới
 
+### ✅ Fix UI — thẻ Doanh thu không tràn khung (2026-10-20)
+
+- [x] `.stat-card-body`: khối chữ được phép co lại (`min-width: 0`, `flex: 1 1 auto`) thay vì đẩy sparkline ra ngoài
+- [x] Sparkline thu nhỏ theo bề rộng thẻ (72 → 60 → 48 → 38 → 32px)
+- [x] Dùng container query trên `.stat-card` để giảm cỡ số tiền ở thẻ hẹp (22 → 18 → 16 → 14 → 13px), ẩn ghi chú khi quá hẹp
+- [x] `npm run lint` + `npm run build` pass
+
+### ✅ Bổ sung chuyến khởi hành cho seed (2026-10-20)
+
+- [x] Thêm `backend/db/seed-data/departures.js` (`EXTRA_DEPARTURES`) — 36 chuyến mới (2/tour), trải 11/2026 → 01/2027
+- [x] `02_tours.js` gộp chuyến gốc + chuyến bổ sung, **chống trùng ngày** (`uk_tour_date`)
+- [x] Chuẩn hoá `status` chỉ lưu `open`/`closed` (không ghi `full`)
+- [x] Verify: 170 departures, 0 trùng `(tour_id, departure_date)`; 50 booking vẫn toàn vẹn (0 lệch giá/ngày/passenger)
+- [x] Test API admin: tạo trùng ngày → `409`, tạo mới hợp lệ → `201`, xoá chuyến không có booking → `200`
+
 ### ⬜ Việc có thể làm tiếp (backlog, chưa làm)
 
 - [ ] Nút **Add Booking** trên dashboard — đã bỏ theo yêu cầu, chỉ thêm lại khi cần
@@ -232,6 +247,48 @@ Invoke-RestMethod -Uri "http://localhost:3000/api/admin/bookings/top-packages?ra
 ---
 
 ## 7. Lịch sử cập nhật
+
+### 2026-10-20 — Bổ sung chuyến khởi hành (tour_departures) vào seed
+
+**Đã làm:**
+- [x] Tạo `backend/db/seed-data/departures.js` — `EXTRA_DEPARTURES` key theo slug tour, 2 chuyến/tour (36 chuyến), trải `2026-11-20` → `2027-01-30`.
+- [x] Sửa `02_tours.js`: gộp `t.departures` (tours.js) + `EXTRA_DEPARTURES[slug]`, **chặn trùng ngày** bằng `Set` trước khi insert (DB unique `uk_tour_date`).
+- [x] Chuẩn hoá `status` khi seed: chỉ lưu `open`/`closed`, không ghi `full` (hệ thống tự suy ra từ `seats_available <= 0`).
+
+**File liên quan:**
+- Thêm: `backend/db/seed-data/departures.js`
+- Sửa: `backend/db/seeds/02_tours.js`, `AGENTS.md`
+
+**Kiểm tra:**
+- `cd backend; npm run seed` → 170 departures; query 0 cặp `(tour_id, departure_date)` trùng; status lưu DB chỉ `open`/`closed`.
+- Toàn vẹn booking sau seed: 50 booking, 173 passenger, 0 lệch `total_price`, 0 đơn tạo sau ngày khởi hành, 0 lệch số passenger.
+- API admin: `GET /api/admin/departures` thấy chuyến mới; POST trùng ngày → `409`; POST hợp lệ → `201`; DELETE chuyến test → `200` (đã xoá, DB về 170).
+
+**Ghi chú / quy tắc khi thêm chuyến:**
+- `(tour_id, departure_date)` **duy nhất** → không trùng ngày cho cùng tour.
+- Ngày ≥ hôm nay + 3 (`MIN_LEAD_DAYS`); `seats_total ≥ 1`; `0 ≤ seats_available ≤ seats_total`; `price_moving* ≥ 0`; `status` chỉ `open`/`closed`.
+- Chuyến đã có booking thì **không xoá được** (FK RESTRICT) → dùng `status = "closed"`.
+- Thêm trực tiếp vào `EXTRA_DEPARTURES` rồi `npm run seed` là xong.
+
+---
+
+### 2026-10-20 — Fix thẻ Doanh thu bị tràn khung
+
+**Đã làm:**
+- [x] Xác định nguyên nhân: `.stat-card-body` là flex nhưng khối chữ không được phép co (`min-width: auto`) nên số tiền dài đẩy sparkline/tràn card.
+- [x] Cho khối chữ co lại: `min-width: 0`, `flex: 1 1 auto`; giảm gap 12 → 8px.
+- [x] Sparkline co theo thẻ: `72 → 60 → 48 → 38 → 32px`.
+- [x] `.stat-card { container-type: inline-size }` + container query giảm cỡ `.stat-value` ở thẻ hẹp (`22 → 18 → 16 → 14 → 13px`), ẩn `.stat-note` khi thẻ < 190px.
+- [x] `.stat-change` cho phép xuống dòng để không tràn ngang.
+
+**File liên quan:**
+- Sửa: `frontend/src/features/admin/bookings/dashboard.css`
+
+**Kiểm tra:**
+- `npm run lint` pass, `npm run build` pass.
+- Đã kiểm tra CSS sau build vẫn giữ `container-type` + `@container`.
+
+---
 
 ### 2026-10-20 — Seed DB thực tế: user thật + 50 booking + passenger khớp
 
