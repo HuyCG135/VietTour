@@ -1,6 +1,38 @@
 const PHONE_REGEX = /^(0\d{9,10}|\+84\d{9,10})$/;
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const MAX_PASSENGERS = 50;
+const VALID_STATUSES = ["pending", "confirmed", "cancelled"];
+
+const respondInvalid = (res, errors) =>
+    res.status(400).json({
+        success: false,
+        message: "Dữ liệu không hợp lệ",
+        errors,
+    });
+
+// GET /api/bookings/:id, PUT /api/bookings/:id/cancel, PUT /api/bookings/:id/status, DELETE /api/bookings/:id
+export const validateIdParam = (req, res, next) => {
+    const id = Number(req.params.id);
+
+    if (!Number.isInteger(id) || id < 1) {
+        return respondInvalid(res, ["ID booking không hợp lệ"]);
+    }
+
+    next();
+};
+
+// PUT /api/bookings/:id/status
+export const validateStatusUpdate = (req, res, next) => {
+    const { status } = req.body || {};
+
+    if (!VALID_STATUSES.includes(status)) {
+        return respondInvalid(res, [
+            "Trạng thái phải là pending, confirmed hoặc cancelled",
+        ]);
+    }
+
+    next();
+};
 
 export const validateBooking = (req, res, next) => {
     const { departure_id, adults, children = 0, contact_name, contact_phone, contact_email, contact_dob, contact_gender, passengers } = req.body;
