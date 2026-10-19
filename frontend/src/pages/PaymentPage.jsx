@@ -10,7 +10,7 @@ export default function PaymentPage() {
     const token = params.get("token");
 
     const [data, setData] = useState(null);
-    const [error, setError] = useState(null);
+    const [error, setError] = useState(null); // { message, statusCode }
     const [loading, setLoading] = useState(true);
     const [paying, setPaying] = useState(false);
     const missingToken = !token;
@@ -22,12 +22,15 @@ export default function PaymentPage() {
             .then((res) => {
                 if (cancelled) return;
                 if (!res.success) {
-                    setError(res.message || "Không tải được thông tin đơn.");
+                    setError({
+                        message: res.message || "Không tải được thông tin đơn.",
+                        statusCode: res.statusCode,
+                    });
                 } else {
                     setData(res.data);
                 }
             })
-            .catch(() => !cancelled && setError("Không kết nối được máy chủ."))
+            .catch(() => !cancelled && setError({ message: "Không kết nối được máy chủ." }))
             .finally(() => !cancelled && setLoading(false));
         return () => { cancelled = true; };
     }, [bookingId, token]);
@@ -40,9 +43,12 @@ export default function PaymentPage() {
                 window.location.href = res.vnpayUrl;
                 return;
             }
-            setError(res.message || "Không tạo được liên kết thanh toán.");
+            setError({
+                message: res.message || "Không tạo được liên kết thanh toán.",
+                statusCode: res.statusCode,
+            });
         } catch {
-            setError("Không kết nối được máy chủ.");
+            setError({ message: "Không kết nối được máy chủ." });
         }
         setPaying(false);
     };
@@ -79,18 +85,31 @@ export default function PaymentPage() {
                     </div>
                 )}
 
-                {/* Lỗi / sai token */}
+                {/* Lỗi / sai token / token hết hạn (401) / đơn lỗi (400) */}
                 {!loading && error && (
                     <div className="text-center">
                         <span className="mx-auto flex w-16 h-16 items-center justify-center rounded-full bg-warning/10 text-warning text-2xl">
                             <i className="fa-solid fa-triangle-exclamation" />
                         </span>
                         <h1 className="mt-5 text-2xl font-extrabold text-foreground">Không thể thanh toán</h1>
-                        <p className="mt-2 text-muted">{error}</p>
-                        <div className="mt-7">
+                        <p className="mt-2 text-muted">{error.message}</p>
+                        <div className="mt-7 flex flex-col sm:flex-row items-center justify-center gap-3">
+                            {(error.statusCode === 400 || error.statusCode === 401) && (
+                                <Link
+                                    to="/user/bookings"
+                                    className="inline-flex items-center gap-2 rounded-xl bg-primary px-6 py-3 font-bold text-white transition-colors duration-150 hover:bg-primary-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 no-underline"
+                                >
+                                    <i className="fa-solid fa-clock-rotate-left text-sm" />
+                                    Lịch sử đặt tour
+                                </Link>
+                            )}
                             <Link
                                 to="/tours"
-                                className="inline-flex items-center gap-2 rounded-xl bg-primary px-6 py-3 font-bold text-white transition-colors duration-150 hover:bg-primary-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 no-underline"
+                                className={`inline-flex items-center gap-2 rounded-xl px-6 py-3 font-bold transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 no-underline ${
+                                    error.statusCode === 400 || error.statusCode === 401
+                                        ? "border border-primary text-primary hover:bg-primary hover:text-white"
+                                        : "bg-primary text-white hover:bg-primary-dark"
+                                }`}
                             >
                                 Xem các tour khác
                             </Link>
@@ -122,7 +141,7 @@ export default function PaymentPage() {
                     </div>
                 )}
 
-                {/* Đơn đã bị hủy */}
+                {/* Đơn đã bị hủy (hết hạn thanh toán hoặc tự hủy) — B2.2 */}
                 {!loading && !error && data?.status === "cancelled" && (
                     <div className="text-center">
                         <span className="mx-auto flex w-16 h-16 items-center justify-center rounded-full bg-warning/10 text-warning text-2xl">
@@ -133,12 +152,19 @@ export default function PaymentPage() {
                             Đơn <strong className="text-foreground">#{`MB${bookingId}`}</strong> đã bị hủy nên không thể
                             thanh toán.
                         </p>
-                        <div className="mt-7">
+                        <div className="mt-7 flex flex-col sm:flex-row items-center justify-center gap-3">
                             <Link
-                                to="/tours"
+                                to={data.tour_id ? `/tours/${data.tour_id}` : "/tours"}
                                 className="inline-flex items-center gap-2 rounded-xl bg-primary px-6 py-3 font-bold text-white transition-colors duration-150 hover:bg-primary-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 no-underline"
                             >
-                                Xem các tour khác
+                                <i className="fa-solid fa-rotate-right text-sm" />
+                                Đặt lại tour
+                            </Link>
+                            <Link
+                                to="/user/bookings"
+                                className="inline-flex items-center gap-2 rounded-xl border border-primary px-6 py-3 font-bold text-primary transition-colors duration-150 hover:bg-primary hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 no-underline"
+                            >
+                                Lịch sử đặt tour
                             </Link>
                         </div>
                     </div>
@@ -183,12 +209,6 @@ export default function PaymentPage() {
                             <span className="font-semibold text-foreground">Tổng tiền</span>
                             <span className="text-xl font-extrabold text-primary">{fmtVND(data.total_price)}</span>
                         </div>
-
-                        {error && (
-                            <p className="mt-4 rounded-xl bg-danger/10 px-4 py-3 text-center text-sm font-semibold text-danger">
-                                {error}
-                            </p>
-                        )}
 
                         <div className="mt-6 flex flex-col items-center gap-3">
                             <button

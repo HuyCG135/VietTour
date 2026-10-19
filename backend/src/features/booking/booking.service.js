@@ -4,11 +4,65 @@ import jwt from "jsonwebtoken";
 import { ProductCode, VnpLocale, dateFormat } from "vnpay";
 import { sendBookingPaymentEmail } from "../../shared/mailService.js";
 import { ROLE, BOOKING_MANAGEMENT } from "../../middlewares/auth.js";
+import { scheduleExpireJob } from "../../jobs/expireQueue.js";
 
 const createHttpError = (status, message) => {
     const err = new Error(message);
     err.status = status;
     return err;
+};
+
+const PAYMENT_DEADLINE_HOURS = Number(process.env.PAYMENT_DEADLINE_HOURS) || 24;
+
+const isPastPaymentDeadline = (booking) => {
+    if (!booking) return false;
+    const createdAt = booking.created_at || booking.createdAt;
+    if (!createdAt) return false;
+    const deadlineMs = new Date(createdAt).getTime() + PAYMENT_DEADLINE_HOURS * 60 * 60 * 1000;
+    return Date.now() > deadlineMs;
+};
+
+const expireOrCancelIfDue = async (booking) => {
+    // Đã đóng tiền / confirmed / đã hủy trước đó → giữ nguyên (idempotent)
+    if (!booking || booking.payment_status === "paid") return booking;
+    if (booking.status !== "pending") return booking;
+    if (!isPastPaymentDeadline(booking)) return booking;
+
+    // Quá hạn: conditional update — chỉ request đầu tiên hủy + trả ghế được,
+    // request song song thấy false sẽ không restore ghế lần 2
+    const didCancel = await Booking.cancelIfActive(booking.id);
+    if (didCancel) {
+        const totalPax = (booking.adults || 0) + (booking.children || 0);
+        await Booking.restoreSeats(booking.departure_id, totalPax);
+        return { ...booking, status: "cancelled" };
+    }
+    // Không đổi được → vừa có request khác hủy/đóng tiền, đọc lại DB cho đúng
+    const fresh = await Booking.getById(booking.id);
+    return fresh || booking;
+};
+
+// ============ Gói nghiệp vụ hết hạn — dùng chung cho BullMQ worker/sweep ============
+// Cả hai chỉ "gói" lại expireOrCancelIfDue() ở trên: cùng 1 quy tắc idempotent,
+// nên chạy trùng với lazy-check (user chạm đơn) cũng không hủy lặp / trả ghế 2 lần.
+
+// Worker gọi khi job "expire-booking" đến hạn: hủy 1 đơn nếu đúng điều kiện
+export const expireBookingById = async (bookingId) => {
+    const booking = await Booking.getById(bookingId);
+    if (!booking) return null;
+    return expireOrCancelIfDue(booking);
+};
+
+// Sweep gọi định kỳ (mỗi 5 phút): quét các đơn pending+unpaid quá hạn còn trôi
+// (job mất do Redis rớt / app nghỉ qua hạn...) → trả về số đơn vừa bị hủy
+export const sweepExpiredBookings = async () => {
+    const deadlineAt = new Date(Date.now() - PAYMENT_DEADLINE_HOURS * 60 * 60 * 1000);
+    const dueBookings = await Booking.findExpiredUnpaid(deadlineAt);
+    let expiredCount = 0;
+    for (const b of dueBookings) {
+        const result = await expireOrCancelIfDue(b);
+        if (result?.status === "cancelled") expiredCount++;
+    }
+    return expiredCount;
 };
 
 export const createBookingService = async (userId, role, payload) => {
@@ -108,6 +162,10 @@ export const createBookingService = async (userId, role, payload) => {
         console.error("Không tạo được link thanh toán (không ảnh hưởng đơn đặt tour):", err.message);
     }
 
+    // Hẹn giờ tự hủy khi quá hạn thanh toán (BullMQ + Redis) — fire-and-forget:
+    // scheduleExpireJob đã tự bọc lỗi, Redis chết cũng không ảnh hưởng đơn đặt tour
+    scheduleExpireJob(bookingId);
+
     return {
         id: bookingId,
         tour_name: tour.name,
@@ -122,7 +180,12 @@ export const createBookingService = async (userId, role, payload) => {
 };
 
 export const getMyBookingsService = async (userId) => {
-    return Booking.getByUserId(userId);
+    const bookings = await Booking.getByUserId(userId);
+    const results = [];
+    for (const b of bookings) {
+        results.push(await expireOrCancelIfDue(b));
+    }
+    return results;
 };
 
 export const getBookingDetailService = async (userId, role, bookingId) => {
@@ -135,8 +198,11 @@ export const getBookingDetailService = async (userId, role, bookingId) => {
         throw createHttpError(403, "Bạn không có quyền xem booking này");
     }
 
+    // Kiểm tra & xử lý hết hạn (lazy-check)
+    const currentBooking = await expireOrCancelIfDue(booking);
+
     const passengers = await Booking.getPassengersByBookingId(bookingId);
-    return { ...booking, passengers };
+    return { ...currentBooking, passengers };
 };
 
 export const getAllBookingsService = async () => {
@@ -247,9 +313,15 @@ export const createPaymentUrlService = async (req, bookingId, vnpay) => {
         throw createHttpError(400, "Thiếu booking_id");
     }
 
-    const booking = await Booking.getByIdWithDeparture(bookingId);
+    let booking = await Booking.getByIdWithDeparture(bookingId);
     if (!booking) {
         throw createHttpError(404, "Không tìm thấy booking");
+    }
+
+    // Lazy-check hết hạn: vừa bị hủy (tự hết hạn hoặc request khác) → chặn thanh toán
+    booking = await expireOrCancelIfDue(booking);
+    if (booking.status === "cancelled") {
+        throw createHttpError(400, "Đơn đã hết hạn thanh toán, vui lòng đặt lại");
     }
 
     // Kiểm tra quyền sở hữu
@@ -271,13 +343,18 @@ export const getPaymentSummaryService = async (bookingId, token) => {
     }
     verifyPaymentToken(bookingId, token);
 
-    const booking = await Booking.getByIdWithDeparture(bookingId);
+    let booking = await Booking.getByIdWithDeparture(bookingId);
     if (!booking) {
         throw createHttpError(404, "Không tìm thấy booking");
     }
 
+    // Lazy-check hết hạn: KHÔNG throw — trả data kèm status='cancelled' để trang
+    // thanh toán hiển thị UI "đơn đã bị hủy" (2 endpoint TẠO thanh toán vẫn chặn 400)
+    booking = await expireOrCancelIfDue(booking);
+
     return {
         id: booking.id,
+        tour_id: booking.tour_id,
         tour_name: booking.tour_name,
         departure_date: booking.departure_date,
         departure_location: booking.departure_location,
@@ -297,17 +374,19 @@ export const payLaterService = async (bookingId, token, vnpay, req) => {
     }
     verifyPaymentToken(bookingId, token);
 
-    const booking = await Booking.getByIdWithDeparture(bookingId);
+    let booking = await Booking.getByIdWithDeparture(bookingId);
     if (!booking) {
         throw createHttpError(404, "Không tìm thấy booking");
     }
 
-    if (booking.payment_status === "paid") {
-        throw createHttpError(400, "Đơn này đã được thanh toán");
+    // Lazy-check hết hạn → chặn
+    booking = await expireOrCancelIfDue(booking);
+    if (booking.status === "cancelled") {
+        throw createHttpError(400, "Đơn đã hết hạn thanh toán, vui lòng đặt lại");
     }
 
-    if (booking.status === "cancelled") {
-        throw createHttpError(400, "Đơn này đã bị hủy, không thể thanh toán");
+    if (booking.payment_status === "paid") {
+        throw createHttpError(400, "Đơn này đã được thanh toán");
     }
 
     return buildVnpayUrl(booking, getClientIp(req), vnpay);
