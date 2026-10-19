@@ -12,7 +12,7 @@
 - **Backend:** Express + MySQL (`db_viet_travel`, port `3307`), chạy `npm run dev` trong `backend/`.
 - **Frontend:** React + Vite, chạy `npm run dev` trong `frontend/` (proxy `/api` → `http://localhost:3000`).
 - **Đăng nhập admin test:** `admin@viettour.vn` / `123456` (field là `username`).
-- **Đã hoàn thành:** dashboard `/admin/bookings` đã đọc dữ liệu thật từ DB (không còn mock data).
+- **Đã hoàn thành:** dashboard `/admin/bookings` đọc dữ liệu thật từ DB; đã có trang chi tiết `/admin/bookings/:id` (bấm dòng trong bảng để mở).
 
 ---
 
@@ -41,6 +41,7 @@
 - [x] Đổi toàn bộ nhãn dashboard sang tiếng Việt (StatCards, Trips Overview, Top Packages, bảng booking)
 - [x] Top Packages: tính theo **số lượt đặt trong 12 tháng**, xếp tour nhiều booking nhất lên đầu
 - [x] Đổi % Top Packages = số booking của tour / tổng booking trong năm
+- [x] Nhãn % Top Packages: chữ trắng, nền trùng đúng màu lát donut tương ứng
 - [x] Bảng booking: đưa **Mã booking** lên cột đầu, **Tên khách** cột thứ hai
 - [x] Bỏ nút **Add Booking**
 - [x] Thay nút **Today** bằng bộ lọc **Từ ngày / Đến ngày** (ngày khởi hành)
@@ -49,12 +50,24 @@
 - [x] Trả về `status` (raw) + `status_label` (tiếng Việt)
 - [x] `npm run lint` + `npm run build` pass; test API lọc ngày + trạng thái
 
+### ✅ Admin Booking Detail `/admin/bookings/:id` (hoàn thành 2026-10-19)
+
+- [x] Thêm route `/admin/bookings/:id` + nút bấm được trên từng dòng bảng booking
+- [x] Tạo thư mục `frontend/src/features/admin/bookings/BookingDetail/` tách nhỏ component
+- [x] Header chi tiết: mã booking, ngày đặt, trạng thái, link quay lại
+- [x] Thông tin tour, thông tin khách hàng (gồm ghi chú), danh sách hành khách
+- [x] Component **Tổng tiền** (giống ảnh): dòng người lớn/trẻ em, tổng cộng, khối ĐÃ THU / CHƯA THU / ĐÃ HOÀN TIỀN
+- [x] Component **Lịch sử hoạt động**: timeline dot màu, mới nhất trên cùng
+- [x] Backend detail trả thêm `history` (suy ra từ `created_at`, `updated_at`, `status`, `payment_status`)
+- [x] Modal **In hóa đơn** dùng `print-only` có sẵn + `window.print()`
+- [x] Skeleton khi tải, alert + nút thử lại khi lỗi
+- [x] `npm run lint` + `npm run build` pass; test API `GET /:id` có `history`
+
 
 ### ⬜ Việc có thể làm tiếp (backlog, chưa làm)
 
 - [ ] Nút **Add Booking** trên dashboard — đã bỏ theo yêu cầu, chỉ thêm lại khi cần
 - [ ] Sắp xếp theo cột (Name / Date / Price…) — backend chưa hỗ trợ sort
-- [ ] Modal xem chi tiết booking — API `GET /api/admin/bookings/:id` đã sẵn sàng
 - [ ] Đổi trạng thái booking ngay trên UI — API `PUT /api/admin/bookings/:id/status` đã sẵn sàng
 - [ ] Xử lý 401 → chuyển về `/login` (hiện chỉ hiện toast lỗi)
 - [ ] Thêm vài booking `payment_status = 'paid'` để thấy Earnings khác 0
@@ -72,7 +85,7 @@ Base: `/api/admin/bookings` — tất cả yêu cầu header `Authorization: Bea
 | GET | `/stats` | — | 3 thẻ thống kê + sparkline 12 tháng |
 | GET | `/trips` | `range=7d\|30d\|3m\|12m` | Số chuyến `done` / `canceled` theo thời gian |
 | GET | `/top-packages` | `range=12m`, `limit=5` | Top tour theo số lượt đặt |
-| GET | `/:id` | — | Chi tiết booking + passengers |
+| GET | `/:id` | — | Chi tiết booking + passengers + `history` (lịch sử suy ra) |
 | PUT | `/:id/status` | `{ "status": "pending\|confirmed\|cancelled" }` | Đổi trạng thái, tự hoàn/trừ ghế |
 
 ### Quy tắc nghiệp vụ đã chốt
@@ -86,6 +99,8 @@ Base: `/api/admin/bookings` — tất cả yêu cầu header `Authorization: Bea
 - **Lọc ngày trên bảng:** `fromDate` / `toDate` áp lên `tour_departures.departure_date` (cột Ngày khởi hành), định dạng `YYYY-MM-DD`.
 - **% thay đổi:** tháng hiện tại vs tháng trước; kỳ trước = 0 → `0%` (hoặc `100%` nếu kỳ này có dữ liệu).
 - **Đổi trạng thái:** hủy booking → hoàn ghế; mở lại booking đã hủy → kiểm tra đủ chỗ rồi trừ ghế; tất cả trong transaction.
+- **Lịch sử hoạt động:** suy ra (DB chưa có bảng audit) từ `created_at` (khởi tạo), `updated_at` + `status`/`payment_status` (xác nhận/thanh toán/hủy/hoàn tiền). Trùng thời điểm thì ưu tiên: hủy/hoàn tiền → thanh toán → xác nhận → khởi tạo.
+- **Bảng giá chi tiết:** đơn giá = `price_default + price_moving` (người lớn), `price_child + price_moving_child` (trẻ em). Nếu tổng các dòng lệch `total_price` → thêm dòng "Ưu đãi / điều chỉnh".
 
 ### Response mẫu
 
@@ -133,12 +148,14 @@ Base: `/api/admin/bookings` — tất cả yêu cầu header `Authorization: Bea
 | File | Thay đổi |
 |---|---|
 | `backend/src/app.js` | Import + mount `/api/admin/bookings` |
+| `backend/src/features/admin/bookings/booking.service.js` | Thêm `buildHistory()` + trả `history` trong chi tiết booking |
 
 ### Frontend (mới)
 
 | File | Vai trò |
 |---|---|
 | `frontend/src/features/admin/bookings/bookings.api.js` | Gọi 6 endpoint admin bookings |
+| `frontend/src/features/admin/bookings/BookingDetail/` | Trang chi tiết booking: `index.jsx`, `BookingHeader`, `TourInfoSection`, `CustomerSection`, `PassengersSection`, `TotalPriceCard`, `ActivityHistory`, `InvoiceModal`, `common`, `bookingMeta`, `detailFormat` |
 
 ### Frontend (sửa)
 
@@ -146,9 +163,10 @@ Base: `/api/admin/bookings` — tất cả yêu cầu header `Authorization: Bea
 |---|---|
 | `frontend/src/features/admin/bookings/DashboardBooking.jsx` | Tải stats + top packages thật, nhãn thẻ tiếng Việt |
 | `frontend/src/features/admin/bookings/components/TripsOverview.jsx` | Tự fetch theo range, trục Y động, tiêu đề/chú thích tiếng Việt |
-| `frontend/src/features/admin/bookings/components/BookingsTable.jsx` | Mã booking cột đầu, search debounce, lọc ngày + trạng thái, phân trang server-side |
+| `frontend/src/features/admin/bookings/components/BookingsTable.jsx` | Mã booking cột đầu (link chi tiết), cả dòng bấm được để mở chi tiết, search debounce, lọc ngày + trạng thái, phân trang server-side |
 | `frontend/src/features/admin/bookings/components/TopPackages.jsx` | Top tour theo lượt đặt trong 12 tháng, nhãn tiếng Việt |
-| `frontend/src/features/admin/bookings/dashboard.css` | Style bộ lọc `.filter-box`, `.filter-select`, trạng thái tải/rỗng |
+| `frontend/src/features/admin/bookings/dashboard.css` | Style bộ lọc `.filter-box`, `.filter-select`, trạng thái tải/rỗng, dòng bấm được `.row-clickable`, link mã `.booking-code-link` |
+| `frontend/src/routes/AdminRoutes.jsx` | Thêm route `bookings/:id` → trang chi tiết booking |
 
 ### Đã xóa
 
@@ -200,6 +218,47 @@ Invoke-RestMethod -Uri "http://localhost:3000/api/admin/bookings/top-packages?ra
 ---
 
 ## 7. Lịch sử cập nhật
+
+### 2026-10-19 — Trang Admin Booking Detail + click dòng mở chi tiết
+
+**Đã làm:**
+- [x] Thêm route `/admin/bookings/:id`; bấm một dòng (hoặc mã booking) trong bảng sẽ mở chi tiết đúng `id`.
+- [x] Tạo thư mục `frontend/src/features/admin/bookings/BookingDetail/` và tách component: header, thông tin tour, khách hàng, hành khách, tổng tiền, lịch sử hoạt động, modal hóa đơn.
+- [x] Component **Tổng tiền**: dòng người lớn/trẻ em + dòng "Ưu đãi / điều chỉnh" khi lệch tổng, tổng cộng, khối thu tiền theo `payment_status` (ĐÃ THU / CHƯA THU / ĐÃ HOÀN TIỀN).
+- [x] Component **Lịch sử hoạt động**: timeline dot màu, sắp xếp mới nhất trên cùng.
+- [x] Backend `getBookingDetailService` trả thêm `history` (suy ra, không cần migration).
+- [x] Modal **In hóa đơn** dùng `print-only` có sẵn.
+- [x] Skeleton khi tải + alert/nút thử lại khi lỗi.
+
+**File liên quan:**
+- Thêm: `frontend/src/features/admin/bookings/BookingDetail/` (index, BookingHeader, TourInfoSection, CustomerSection, PassengersSection, TotalPriceCard, ActivityHistory, InvoiceModal, common, bookingMeta, detailFormat)
+- Sửa: `backend/src/features/admin/bookings/booking.service.js`, `frontend/src/routes/AdminRoutes.jsx`, `frontend/src/features/admin/bookings/components/BookingsTable.jsx`, `frontend/src/features/admin/bookings/dashboard.css`
+
+**Kiểm tra:**
+- `npm run lint` pass, `npm run build` pass.
+- Test API `GET /api/admin/bookings/:id`: booking hủy trả `history` 2 mốc (hủy + khởi tạo) đúng thứ tự; kèm `passengers` và `status_label`.
+
+**Ghi chú:**
+- Lịch sử là **suy ra** từ `created_at`/`updated_at` + trạng thái; chưa có bảng audit riêng. Booking seed đều `unpaid` nên khối thu tiền hiển thị "CHƯA THU".
+- Trang chi tiết hiện chỉ hiển thị, chưa có nút đổi trạng thái.
+
+---
+
+### 2026-10-19 — Chỉnh độ tương phản nhãn % Top Packages
+
+**Đã làm:**
+- [x] Nhãn phần trăm trong Top Packages dùng **chữ trắng**.
+- [x] Nền nhãn giữ đúng **màu tương ứng với lát donut** của từng tour.
+- [x] Thêm bóng chữ nhẹ để chữ trắng dễ đọc hơn trên nền sáng.
+- [x] Giữ nguyên màu lát donut.
+
+**File liên quan:**
+- Sửa: `TopPackages.jsx`, `dashboard.css`
+
+**Kiểm tra:**
+- `npm run lint` pass, `npm run build` pass.
+
+---
 
 ### 2026-10-19 — Việt hóa dashboard + bộ lọc ngày/trạng thái + Top Packages theo lượt đặt
 

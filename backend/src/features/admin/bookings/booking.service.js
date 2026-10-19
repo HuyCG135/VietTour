@@ -234,6 +234,71 @@ export const getTopPackagesService = async (range, limit) => {
     };
 };
 
+// Lịch sử hoạt động: DB chưa có bảng audit nên suy ra từ created_at/updated_at
+// + status/payment_status. Thời điểm thanh toán/hủy lấy theo updated_at.
+const HISTORY_PRIORITY = { cancelled: 0, refunded: 0, paid: 1, confirmed: 2, created: 3 };
+
+const buildHistory = (booking) => {
+    const createdTime = booking.created_at;
+    const updatedTime = booking.updated_at || createdTime;
+    const events = [
+        {
+            id: "created",
+            type: "created",
+            tone: "primary",
+            title: "Khách hàng khởi tạo đặt tour",
+            time: createdTime,
+        },
+    ];
+
+    if (booking.status === "confirmed") {
+        events.push({
+            id: "confirmed",
+            type: "confirmed",
+            tone: "success",
+            title: "Booking đã được xác nhận",
+            time: updatedTime,
+        });
+    }
+
+    if (booking.payment_status === "paid") {
+        events.push({
+            id: "paid",
+            type: "paid",
+            tone: "success",
+            title: "Thanh toán thành công qua VNPay",
+            time: updatedTime,
+        });
+    }
+
+    if (booking.payment_status === "refunded") {
+        events.push({
+            id: "refunded",
+            type: "refunded",
+            tone: "info",
+            title: "Đã hoàn tiền cho khách hàng",
+            time: updatedTime,
+        });
+    }
+
+    if (booking.status === "cancelled") {
+        events.push({
+            id: "cancelled",
+            type: "cancelled",
+            tone: "danger",
+            title: "Booking đã bị hủy",
+            time: updatedTime,
+        });
+    }
+
+    return events.sort((a, b) => {
+        const timeA = new Date(a.time).getTime() || 0;
+        const timeB = new Date(b.time).getTime() || 0;
+        if (timeA !== timeB) return timeB - timeA;
+        return (HISTORY_PRIORITY[a.type] ?? 99) - (HISTORY_PRIORITY[b.type] ?? 99);
+    });
+};
+
 // Chi tiết booking cho admin (kèm passengers + thông tin tour/lịch khởi hành).
 export const getBookingDetailService = async (id) => {
     const booking = await AdminBooking.findDetailById(id);
@@ -247,6 +312,7 @@ export const getBookingDetailService = async (id) => {
         ...booking,
         status_label: STATUS_LABEL[booking.status] || booking.status,
         passengers,
+        history: buildHistory(booking),
     };
 };
 

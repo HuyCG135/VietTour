@@ -51,7 +51,7 @@ export default function TopPackages({ data }) {
                     <li key={it.id} className="package-item">
                         <span
                             className="package-percent"
-                            style={{ background: it.color, color: it.percent > 20 ? "#fff" : "#2f80c4" }}
+                            style={{ "--package-color": it.color }}
                         >
                             {it.percent}%
                         </span>

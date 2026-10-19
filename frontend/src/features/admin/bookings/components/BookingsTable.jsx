@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { Search, ChevronDown, ChevronLeft, ChevronRight, ArrowUpDown } from "lucide-react";
 import { useToast } from "../../../../context/ToastContext";
 import { getBookings } from "../bookings.api";
@@ -42,6 +43,7 @@ const buildPageNumbers = (currentPage, totalPages) => {
 // Search, lọc ngày khởi hành, lọc trạng thái và phân trang chạy phía server.
 export default function BookingsTable() {
     const toast = useToast();
+    const navigate = useNavigate();
     const requestSeq = useRef(0);
 
     const [search, setSearch] = useState("");
@@ -233,8 +235,20 @@ export default function BookingsTable() {
                                 </tr>
                             ) : (
                                 rows.map((row) => (
-                                    <tr key={row.id}>
-                                        <td>{row.code}</td>
+                                    <tr
+                                        key={row.id}
+                                        className="row-clickable"
+                                        onClick={() => navigate(`/admin/bookings/${row.id}`)}
+                                    >
+                                        <td>
+                                            <Link
+                                                to={`/admin/bookings/${row.id}`}
+                                                className="booking-code-link"
+                                                onClick={(event) => event.stopPropagation()}
+                                            >
+                                                {row.code}
+                                            </Link>
+                                        </td>
                                         <td className="cell-strong">{row.name}</td>
                                         <td>{row.package}</td>
                                         <td>{row.duration}</td>
