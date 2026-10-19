@@ -134,7 +134,7 @@ class Booking {
         return db("tour_departures").where("id", id).first();
     }
 
-    // Booking kA'm departure + tour (dA1ng cho thanh toAc)
+    // Booking kèm departure + tour (dành cho thanh toán)
     static async getByIdWithDeparture(id) {
         return db("bookings as b")
             .leftJoin("tour_departures as d", "b.departure_id", "d.id")
@@ -143,6 +143,7 @@ class Booking {
                 "b.*",
                 "d.departure_date",
                 "d.departure_location",
+                "d.tour_id",
                 "d.price_moving",
                 "d.price_moving_child",
                 "t.name as tour_name",
@@ -170,6 +171,17 @@ class Booking {
         const updated = await db("bookings")
             .where("id", id)
             .update({ status, updated_at: new Date() });
+        return updated > 0;
+    }
+
+    // Hủy booking nếu chưa cancelled/paid — trả về true nếu VỪA đổi trạng thái thành công.
+    // Dùng cho lazy-check hết hạn: 2 request song song chỉ 1 bên trả lời true → không restore ghế 2 lần.
+    static async cancelIfActive(id) {
+        const updated = await db("bookings")
+            .where("id", id)
+            .whereNot("status", "cancelled")
+            .whereNot("payment_status", "paid")
+            .update({ status: "cancelled", updated_at: new Date() });
         return updated > 0;
     }
 
