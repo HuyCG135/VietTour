@@ -98,6 +98,18 @@ curl http://localhost:11434/api/generate -d "{\"model\":\"qwen2.5:3b\",\"prompt\
 - Nếu cần stop: `docker compose down` (volume giữ nguyên model).
 - Nếu muốn xóa model: `docker exec ollama ollama rm qwen2.5:3b`.
 
+## Tự hủy đơn hết hạn thanh toán (BullMQ + Redis)
+
+Backend hẹn giờ hủy đơn quá hạn 24h (`PAYMENT_DEADLINE_HOURS`) qua BullMQ — **yêu cầu Redis đang chạy**:
+
+```bash
+cd backend; docker compose up -d redis   # chỉ cần 1 lần / sau khi reboot
+```
+
+- Job "hẹn giờ" (đơn tạo → job chạy sau 24h) + sweep đối soát mỗi 5 phút + lazy-check khi user chạm đơn — cả 3 gọi chung `expireOrCancelIfDue()` (idempotent).
+- **Redis chết không làm hỏng nghiệp vụ**: tạo đơn vẫn OK (log warning), sweep + lazy-check lo bù.
+- Test: `cd backend; node test_bullmq_expire.js` (cần Redis + MySQL).
+
 ## Conventions
 
 - Code comment và message API/UI bằng **Tiếng Việt**. Giữ nguyên ngôn ngữ khi sửa.

@@ -4,6 +4,7 @@ import jwt from "jsonwebtoken";
 import { ProductCode, VnpLocale, dateFormat } from "vnpay";
 import { sendBookingPaymentEmail } from "../../shared/mailService.js";
 import { ROLE, BOOKING_MANAGEMENT } from "../../middlewares/auth.js";
+import { scheduleExpireJob } from "../../jobs/expireQueue.js";
 
 const createHttpError = (status, message) => {
     const err = new Error(message);
@@ -38,6 +39,30 @@ const expireOrCancelIfDue = async (booking) => {
     // Không đổi được → vừa có request khác hủy/đóng tiền, đọc lại DB cho đúng
     const fresh = await Booking.getById(booking.id);
     return fresh || booking;
+};
+
+// ============ Gói nghiệp vụ hết hạn — dùng chung cho BullMQ worker/sweep ============
+// Cả hai chỉ "gói" lại expireOrCancelIfDue() ở trên: cùng 1 quy tắc idempotent,
+// nên chạy trùng với lazy-check (user chạm đơn) cũng không hủy lặp / trả ghế 2 lần.
+
+// Worker gọi khi job "expire-booking" đến hạn: hủy 1 đơn nếu đúng điều kiện
+export const expireBookingById = async (bookingId) => {
+    const booking = await Booking.getById(bookingId);
+    if (!booking) return null;
+    return expireOrCancelIfDue(booking);
+};
+
+// Sweep gọi định kỳ (mỗi 5 phút): quét các đơn pending+unpaid quá hạn còn trôi
+// (job mất do Redis rớt / app nghỉ qua hạn...) → trả về số đơn vừa bị hủy
+export const sweepExpiredBookings = async () => {
+    const deadlineAt = new Date(Date.now() - PAYMENT_DEADLINE_HOURS * 60 * 60 * 1000);
+    const dueBookings = await Booking.findExpiredUnpaid(deadlineAt);
+    let expiredCount = 0;
+    for (const b of dueBookings) {
+        const result = await expireOrCancelIfDue(b);
+        if (result?.status === "cancelled") expiredCount++;
+    }
+    return expiredCount;
 };
 
 export const createBookingService = async (userId, role, payload) => {
@@ -136,6 +161,10 @@ export const createBookingService = async (userId, role, payload) => {
     } catch (err) {
         console.error("Không tạo được link thanh toán (không ảnh hưởng đơn đặt tour):", err.message);
     }
+
+    // Hẹn giờ tự hủy khi quá hạn thanh toán (BullMQ + Redis) — fire-and-forget:
+    // scheduleExpireJob đã tự bọc lỗi, Redis chết cũng không ảnh hưởng đơn đặt tour
+    scheduleExpireJob(bookingId);
 
     return {
         id: bookingId,

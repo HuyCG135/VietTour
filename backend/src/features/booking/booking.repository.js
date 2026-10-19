@@ -192,6 +192,14 @@ class Booking {
             .increment("seats_available", paxCount);
     }
 
+    // Các đơn pending + unpaid đã qua hạn thanh toán (dùng cho sweep BullMQ)
+    static async findExpiredUnpaid(deadlineAt) {
+        return db("bookings")
+            .where("status", "pending")
+            .where("payment_status", "unpaid")
+            .where("created_at", "<", deadlineAt);
+    }
+
     static async delete(id) {
         const deleted = await db("bookings").where("id", id).del();
         return deleted > 0;
