@@ -1,0 +1,293 @@
+import db from "../../../config/knex.js";
+import AdminBooking from "./booking.repository.js";
+
+const createHttpError = (status, message) => {
+    const err = new Error(message);
+    err.status = status;
+    return err;
+};
+
+// Chỉ 3 trạng thái theo yêu cầu (không suy diễn "Completed").
+const STATUS_LABEL = {
+    pending: "Pending",
+    confirmed: "Confirmed",
+    cancelled: "Cancelled",
+};
+
+// Cấu hình range cho TripsOverview + TopPackages.
+const RANGE_CONFIG = {
+    "7d": { days: 7, granularity: "day", label: "7 ngày gần nhất" },
+    "30d": { days: 30, granularity: "day", label: "30 ngày gần nhất" },
+    "3m": { months: 3, granularity: "month", label: "3 tháng gần nhất" },
+    "12m": { months: 12, granularity: "month", label: "12 tháng gần nhất" },
+};
+
+const pad2 = (value) => String(value).padStart(2, "0");
+
+const startOfDay = (value) => {
+    const date = new Date(value);
+    date.setHours(0, 0, 0, 0);
+    return date;
+};
+
+const startOfMonth = (value) => {
+    const date = new Date(value);
+    date.setDate(1);
+    date.setHours(0, 0, 0, 0);
+    return date;
+};
+
+const addDays = (value, days) => {
+    const date = new Date(value);
+    date.setDate(date.getDate() + days);
+    return date;
+};
+
+const addMonths = (value, months) => {
+    const date = new Date(value);
+    date.setMonth(date.getMonth() + months);
+    return date;
+};
+
+const monthKey = (date) => `${date.getFullYear()}-${pad2(date.getMonth() + 1)}`;
+const dateKey = (date) =>
+    `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())}`;
+
+// % thay đổi có guard chia 0 (kỳ trước = 0 → 100% nếu kỳ này có dữ liệu, ngược lại 0%).
+const percentChange = (current, previous) => {
+    if (!previous) {
+        return current > 0 ? 100 : 0;
+    }
+    return Math.round(((current - previous) / previous) * 1000) / 10;
+};
+
+const trendOf = (change) => (change >= 0 ? "up" : "down");
+
+// Chuẩn hóa range; giá trị lạ fallback về "12m".
+export const resolveRange = (range) => {
+    const key = RANGE_CONFIG[range] ? range : "12m";
+    const config = RANGE_CONFIG[key];
+    const now = new Date();
+
+    if (config.granularity === "day") {
+        return {
+            key,
+            ...config,
+            from: startOfDay(addDays(now, -(config.days - 1))),
+            to: now,
+        };
+    }
+
+    return {
+        key,
+        ...config,
+        from: startOfMonth(addMonths(now, -(config.months - 1))),
+        to: now,
+    };
+};
+
+// Danh sách booking + map sang shape frontend (BookingsTable) đang dùng.
+export const listBookingsService = async (query = {}) => {
+    const result = await AdminBooking.list({
+        page: query.page,
+        limit: query.limit,
+        search: typeof query.search === "string" ? query.search.trim() : "",
+        status: query.status,
+    });
+
+    return {
+        rows: result.rows.map((row) => ({
+            id: row.id,
+            code: `BK-${String(row.id).padStart(5, "0")}`,
+            name: row.fullname || row.contact_name || "",
+            package: row.tour_name || "",
+            duration: row.duration || "",
+            date: row.departure_date_text || "",
+            price: Number(row.total_price) || 0,
+            status: STATUS_LABEL[row.status] || row.status,
+            payment_status: row.payment_status,
+            adults: Number(row.adults) || 0,
+            children: Number(row.children) || 0,
+            created_at: row.created_at,
+        })),
+        total: result.total,
+        page: result.page,
+        limit: result.limit,
+    };
+};
+
+// 3 thẻ StatCards: tổng all-time + spark/change 12 tháng gần nhất theo created_at.
+export const getStatsService = async () => {
+    const now = new Date();
+    const seriesStart = startOfMonth(addMonths(now, -11));
+    const currentStart = startOfMonth(now);
+    const previousStart = startOfMonth(addMonths(now, -1));
+    const tomorrow = addDays(startOfDay(now), 1);
+
+    const [totals, current, previous, monthlyRows] = await Promise.all([
+        AdminBooking.getTotals(),
+        AdminBooking.getPeriodTotals(currentStart, tomorrow),
+        AdminBooking.getPeriodTotals(previousStart, currentStart),
+        AdminBooking.getMonthlyStats(seriesStart),
+    ]);
+
+    // Zero-fill đủ 12 tháng để sparkline không bị hụt.
+    const monthMap = new Map(monthlyRows.map((row) => [row.period, row]));
+    const spark = { bookings: [], participants: [], earnings: [] };
+
+    for (let i = 0; i < 12; i += 1) {
+        const month = addMonths(seriesStart, i);
+        const row = monthMap.get(monthKey(month));
+        spark.bookings.push(Number(row?.bookings) || 0);
+        spark.participants.push(Number(row?.participants) || 0);
+        spark.earnings.push(Number(row?.earnings) || 0);
+    }
+
+    const bookingsChange = percentChange(current.totalBookings, previous.totalBookings);
+    const participantsChange = percentChange(current.participants, previous.participants);
+    const earningsChange = percentChange(current.earnings, previous.earnings);
+
+    return {
+        totalBookings: totals.totalBookings,
+        totalBookingsChange: bookingsChange,
+        totalBookingsTrend: trendOf(bookingsChange),
+        participants: totals.participants,
+        participantsChange,
+        participantsTrend: trendOf(participantsChange),
+        earnings: totals.earnings,
+        earningsChange,
+        earningsTrend: trendOf(earningsChange),
+        spark,
+    };
+};
+
+// TripsOverview: done = confirmed, canceled = cancelled, zero-fill theo range.
+export const getTripsOverviewService = async (range) => {
+    const resolved = resolveRange(range);
+    const rows =
+        resolved.granularity === "month"
+            ? await AdminBooking.getTripsMonthly(resolved.from)
+            : await AdminBooking.getTripsDaily(resolved.from);
+
+    const rowMap = new Map(rows.map((row) => [row.period, row]));
+    const data = [];
+
+    if (resolved.granularity === "month") {
+        for (let i = 0; i < resolved.months; i += 1) {
+            const month = addMonths(resolved.from, i);
+            const key = monthKey(month);
+            const row = rowMap.get(key);
+            data.push({
+                period: key,
+                month: `${pad2(month.getMonth() + 1)}/${month.getFullYear()}`,
+                done: Number(row?.done) || 0,
+                canceled: Number(row?.canceled) || 0,
+            });
+        }
+        return data;
+    }
+
+    for (let i = 0; i < resolved.days; i += 1) {
+        const day = addDays(resolved.from, i);
+        const key = dateKey(day);
+        const row = rowMap.get(key);
+        data.push({
+            period: key,
+            month: `${pad2(day.getDate())}/${pad2(day.getMonth() + 1)}`,
+            done: Number(row?.done) || 0,
+            canceled: Number(row?.canceled) || 0,
+        });
+    }
+
+    return data;
+};
+
+// TopPackages: top tour theo tổng khách, percent tính trên toàn bộ khách trong range.
+export const getTopPackagesService = async (range, limit) => {
+    const resolved = resolveRange(range);
+    const limitNum = Math.min(20, Math.max(1, Number(limit) || 5));
+
+    const [rows, totalParticipants] = await Promise.all([
+        AdminBooking.getTopPackages(resolved.from, limitNum),
+        AdminBooking.getParticipantsTotal(resolved.from),
+    ]);
+
+    return {
+        period: resolved.label,
+        totalParticipants,
+        items: rows.map((row) => {
+            const participants = Number(row.participants) || 0;
+            return {
+                id: row.id,
+                name: row.name,
+                participants,
+                percent:
+                    totalParticipants > 0
+                        ? Math.round((participants / totalParticipants) * 100)
+                        : 0,
+            };
+        }),
+    };
+};
+
+// Chi tiết booking cho admin (kèm passengers + thông tin tour/lịch khởi hành).
+export const getBookingDetailService = async (id) => {
+    const booking = await AdminBooking.findDetailById(id);
+    if (!booking) {
+        throw createHttpError(404, "Không tìm thấy booking");
+    }
+
+    const passengers = await AdminBooking.getPassengers(id);
+
+    return {
+        ...booking,
+        status_label: STATUS_LABEL[booking.status] || booking.status,
+        passengers,
+    };
+};
+
+// Đổi trạng thái: hoàn ghế khi hủy, trừ ghế khi mở lại — trong 1 transaction.
+export const updateBookingStatusService = async (id, status) => {
+    if (!STATUS_LABEL[status]) {
+        throw createHttpError(
+            400,
+            "Trạng thái không hợp lệ. Chỉ chấp nhận: pending, confirmed, cancelled",
+        );
+    }
+
+    return db.transaction(async (trx) => {
+        const booking = await AdminBooking.findRawById(id, trx, true);
+        if (!booking) {
+            throw createHttpError(404, "Không tìm thấy booking");
+        }
+
+        if (booking.status !== status) {
+            const pax = Number(booking.adults) + Number(booking.children);
+
+            // Hủy booking -> hoàn ghế.
+            if (booking.status !== "cancelled" && status === "cancelled") {
+                await AdminBooking.adjustSeats(booking.departure_id, pax, trx);
+            }
+
+            // Mở lại booking đã hủy -> cần đủ chỗ rồi trừ ghế.
+            if (booking.status === "cancelled" && status !== "cancelled") {
+                const available = Number(booking.seats_available);
+                if (available < pax) {
+                    throw createHttpError(
+                        400,
+                        `Không đủ chỗ trống để mở lại booking (cần ${pax} chỗ, còn ${available} chỗ)`,
+                    );
+                }
+                await AdminBooking.adjustSeats(booking.departure_id, -pax, trx);
+            }
+
+            await AdminBooking.updateStatus(id, status, trx);
+        }
+
+        return {
+            id: Number(id),
+            status,
+            status_label: STATUS_LABEL[status],
+        };
+    });
+};

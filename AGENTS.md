@@ -104,3 +104,11 @@ curl http://localhost:11434/api/generate -d "{\"model\":\"qwen2.5:3b\",\"prompt\
 - Frontend route: `/admin/*` và `/user/*` là layout riêng (`AdminRoutes.jsx` / `UserRoutes.jsx`); routes public nằm trong `MainLayout`. Tour detail dùng `:id` (không phải slug).
 - Frontend theme (Tailwind v4): design tokens khai báo trong `frontend/src/assets/styles/index.css` dùng `@theme` — `--color-primary[-light|-dark|-50|-100]` (blue family, giá trị hex cố định), `--color-accent` (amber, điểm nhấn travel), `--color-background`, `--color-surface`, `--color-foreground` (text chính), `--color-muted` (text phụ), `--color-border`, `--color-success/-warning/-danger/-info`, `--font-sans` ("Lexend Deca"). Muốn đổi brand chỉ sửa ở `@theme`; code cũ đang dùng trực tiếp `blue-*`/`gray-*` (chưa refactor sang `primary-*`). Lưu ý: Tailwind v4 chỉ emit biến `--color-*` khi có utility sử dụng; `primary-light #3b82f6` tương phản 3.68:1 trên trắng nên **chỉ dùng cho ring/large text, không cho body text** (dùng `primary` hoặc `muted` thay thế).
 - Env vars không được viết trong git (`.gitignore` đã loại `.env*`).
+
+## Progress tracking
+
+- Sau mỗi lần hoàn thành thay đổi (feature, fix, refactor), cập nhật `PROGRESS.md` ở root:
+  - Đánh dấu `[x]` các việc đã xong trong checklist (hoặc thêm mục mới vào backlog).
+  - Thêm một mục vào **Lịch sử cập nhật** theo mẫu có sẵn: ngày, việc đã làm, file thêm/sửa/xóa, cách kiểm tra, ghi chú.
+  - Giữ file đủ ngắn gọn nhưng đủ context để người dùng gửi lại khi mở phiên làm việc mới.
+- Nếu người dùng gửi `PROGRESS.md`, coi đó là nguồn context tóm tắt chính thức và đối chiếu với code hiện tại trước khi làm tiếp.

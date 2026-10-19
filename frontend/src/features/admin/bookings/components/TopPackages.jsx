@@ -1,6 +1,8 @@
 import { PieChart, Pie, Cell } from "recharts";
 import { MoreHorizontal, ChevronDown } from "lucide-react";
 
+const numberFormatter = new Intl.NumberFormat("vi-VN");
+
 // Biểu đồ donut + danh sách top package
 export default function TopPackages({ data }) {
     const { period, totalParticipants, items } = data;
@@ -38,7 +40,7 @@ export default function TopPackages({ data }) {
                     <span className="donut-period">
                         {period} <ChevronDown size={10} />
                     </span>
-                    <strong>{totalParticipants.toLocaleString("en-US")}</strong>
+                    <strong>{numberFormatter.format(totalParticipants)}</strong>
                     <span className="donut-sub">Total Participants</span>
                 </div>
             </div>
