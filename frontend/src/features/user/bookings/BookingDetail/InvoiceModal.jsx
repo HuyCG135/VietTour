@@ -1,5 +1,5 @@
 import { PaymentPill } from "./common";
-import { formatVnd } from "../../../booking/bookingPrices";
+import { formatVnd } from "../../book-tour/bookingPrices";
 import { formatDate, formatDateTime, formatPax } from "../bookingFormat";
 
 function InvoiceField({ label, value }) {
@@ -53,7 +53,7 @@ export default function InvoiceModal({ booking, open, priceRows, adults, childre
                 <div className="overflow-y-auto p-6 sm:p-8 print-only">
                     <div className="flex items-start justify-between gap-6">
                         <div>
-                            <p className="font-black text-2xl text-primary leading-none mb-1">VIETTOUR</p>
+                            <p className="font-black text-2xl text-primary leading-none mb-1">VIETRAVEL</p>
                             <p className="text-xs text-muted mb-0">Du lịch trọn vẹn</p>
                         </div>
                         <div className="text-right">
@@ -119,7 +119,7 @@ export default function InvoiceModal({ booking, open, priceRows, adults, childre
                     </table>
 
                     <p className="mt-8 pt-4 border-t border-slate-100 text-center text-xs text-muted mb-0 no-print">
-                        * Cảm ơn quý khách đã tin tưởng dịch vụ VietTour. Hóa đơn xác nhận đặt chỗ thành công.
+                        * Cảm ơn quý khách đã tin tưởng dịch vụ Vietravel. Hóa đơn xác nhận đặt chỗ thành công.
                     </p>
                 </div>
             </div>

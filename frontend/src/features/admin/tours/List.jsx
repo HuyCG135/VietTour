@@ -1,8 +1,12 @@
-import { useEffect, useRef, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
-import { getAllTours, deleteTour, getTourFilters } from "./tours.api";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
+import { useToast } from "../../../context/ToastContext";
+import { getAllTours, deleteTour, getTourFilters, createTour, updateTour } from "./tours.api";
+import TourFormModal from "./TourFormModal";
 import Pagination from "../../tours/Pagination";
 import SearchBox from "../../../components/SearchBox";
+import SelectMenu from "../../../components/SelectMenu";
+import ImageLightbox from "../../../components/ImageLightbox";
 
 const formatPrice = (value) => new Intl.NumberFormat("vi-VN").format(value || 0);
 const formatMoney = (value) => `${new Intl.NumberFormat("vi-VN").format(value || 0)}đ`;
@@ -27,8 +31,13 @@ const buildQueryString = (params) => {
     return sp.toString();
 };
 
+const extractError = (res, fallback) => {
+    if (Array.isArray(res?.errors) && res.errors.length) return res.errors.join(", ");
+    return res?.message || fallback;
+};
+
 export default function TourList() {
-    const navigate = useNavigate();
+    const toast = useToast();
     const [searchParams, setSearchParams] = useSearchParams();
     const current = normalizeParams(searchParams);
 
@@ -38,15 +47,46 @@ export default function TourList() {
     const [error, setError] = useState("");
     const [deleting, setDeleting] = useState(null);
     const [deletingLoading, setDeletingLoading] = useState(false);
+    const [form, setForm] = useState({ open: false, mode: "create", tour: null });
+    const [saving, setSaving] = useState(false);
     const [filters, setFilters] = useState({ regions: [], priceRange: { min: 0, max: 0 } });
     const [draft, setDraft] = useState({ q: current.q, min_price: current.min_price, max_price: current.max_price });
     const [initialized, setInitialized] = useState(false);
+    const [preview, setPreview] = useState(null);
     const priceTimer = useRef(null);
-    const searchParamsRef = useRef(searchParams);
+    const requestSeq = useRef(0);
+
+    const loadTours = useCallback(async () => {
+        const seq = ++requestSeq.current;
+        setLoading(true);
+        setError("");
+        try {
+            const res = await getAllTours(normalizeParams(searchParams));
+            if (seq !== requestSeq.current) return;
+            if (res?.success) {
+                setTours(res.data || []);
+                setPagination(res.pagination || null);
+            } else {
+                setTours([]);
+                setPagination(null);
+                setError(extractError(res, "Không thể tải danh sách tour"));
+            }
+        } catch {
+            if (seq !== requestSeq.current) return;
+            setTours([]);
+            setPagination(null);
+            setError("Không thể kết nối đến máy chủ");
+        } finally {
+            if (seq === requestSeq.current) {
+                setLoading(false);
+                setInitialized(true);
+            }
+        }
+    }, [searchParams]);
 
     useEffect(() => {
-        searchParamsRef.current = searchParams;
-    }, [searchParams]);
+        loadTours();
+    }, [loadTours]);
 
     useEffect(() => () => clearTimeout(priceTimer.current), []);
 
@@ -61,38 +101,14 @@ export default function TourList() {
     }, []);
 
     useEffect(() => {
-        let ignore = false;
-
-        const load = async () => {
-            setLoading(true);
-            setError("");
-            try {
-                const res = await getAllTours(normalizeParams(searchParams));
-                if (ignore) return;
-                if (res?.success) {
-                    setTours(res.data || []);
-                    setPagination(res.pagination || null);
-                } else {
-                    setTours([]);
-                    setPagination(null);
-                    setError(res?.message || "Không thể tải danh sách tour");
-                }
-            } catch {
-                if (ignore) return;
-                setTours([]);
-                setPagination(null);
-                setError("Không thể kết nối đến máy chủ");
-            } finally {
-                if (!ignore) {
-                    setLoading(false);
-                    setInitialized(true);
-                }
-            }
+        const onKeyDown = (event) => {
+            if (event.key !== "Escape") return;
+            setForm((prev) => ({ ...prev, open: false }));
+            setDeleting(null);
         };
-
-        load();
-        return () => { ignore = true; };
-    }, [searchParams]);
+        window.addEventListener("keydown", onKeyDown);
+        return () => window.removeEventListener("keydown", onKeyDown);
+    }, []);
 
     const priceRange = filters.priceRange;
     const priceReady = priceRange.max > priceRange.min;
@@ -139,7 +155,7 @@ export default function TourList() {
 
         clearTimeout(priceTimer.current);
         priceTimer.current = setTimeout(() => {
-            const params = normalizeParams(searchParamsRef.current);
+            const params = normalizeParams(searchParams);
             const next = { ...params, min_price: nextMinParam, max_price: nextMaxParam, page: 1 };
             setSearchParams(buildQueryString(next), { replace: true });
             setDraft((prev) => ({
@@ -161,6 +177,34 @@ export default function TourList() {
         commit({ q: "", region: "", min_price: "", max_price: "", sort: "newest", page: 1 });
     };
 
+    const openCreate = () => setForm({ open: true, mode: "create", tour: null });
+    const openEdit = (tour) => setForm({ open: true, mode: "edit", tour });
+    const closeForm = () => {
+        if (saving) return;
+        setForm({ open: false, mode: "create", tour: null });
+    };
+
+    const handleFormSubmit = async (payload) => {
+        setSaving(true);
+        try {
+            if (form.mode === "edit" && form.tour) {
+                const res = await updateTour(form.tour.id, payload);
+                if (!res?.success) throw new Error(extractError(res, "Không thể lưu tour"));
+                toast.success(res?.message || "Đã cập nhật tour.");
+            } else {
+                const res = await createTour(payload);
+                if (!res?.success) throw new Error(extractError(res, "Không thể tạo tour"));
+                toast.success(res?.message || "Đã thêm tour mới.");
+            }
+            setForm({ open: false, mode: "create", tour: null });
+            await loadTours();
+        } catch (err) {
+            toast.error(err?.message || "Không thể kết nối đến máy chủ");
+        } finally {
+            setSaving(false);
+        }
+    };
+
     const handleDelete = () => {
         if (!deleting) return;
         setDeletingLoading(true);
@@ -169,18 +213,19 @@ export default function TourList() {
                 setDeleting(null);
                 if (data.success) {
                     setError("");
+                    toast.success(data.message || "Đã xóa tour.");
                     if (pagination && current.page > 1 && tours.length === 1) {
                         changePage(current.page - 1);
                     } else {
-                        setSearchParams(buildQueryString(current), { replace: true });
+                        loadTours();
                     }
                 } else {
-                    setError(data.message || "Không thể xóa tour");
+                    toast.error(extractError(data, "Không thể xóa tour"));
                 }
             })
             .catch(() => {
                 setDeleting(null);
-                setError("Không thể kết nối đến máy chủ");
+                toast.error("Không thể kết nối đến máy chủ");
             })
             .finally(() => setDeletingLoading(false));
     };
@@ -190,33 +235,39 @@ export default function TourList() {
     if (!initialized) {
         return (
             <div className="flex justify-center items-center py-16">
-                <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" role="status" />
+                <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" role="status" />
             </div>
         );
     }
 
     return (
-        <div>
-            <div className="flex justify-between items-center mb-6">
-                <h2 className="font-bold text-xl mb-0">Quản lý Tour</h2>
+        <div className="space-y-5">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                    <h2 className="text-xl font-bold text-foreground">Quản lý Tour</h2>
+                    <p className="mt-1 text-sm text-muted">
+                        Quản lý thông tin, giá mặc định và ảnh bìa của các tour — bấm &quot;Sửa&quot; để
+                        chỉnh sửa ngay trên popup.
+                    </p>
+                </div>
                 <button
                     type="button"
-                    onClick={() => navigate("/admin/tours/new")}
-                    className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-lg transition-colors cursor-pointer"
+                    onClick={openCreate}
+                    className="flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors duration-150 hover:bg-primary-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
                 >
-                    <i className="fa-solid fa-plus mr-2" />
+                    <i className="fa-solid fa-plus" />
                     Thêm Tour
                 </button>
             </div>
 
             {error && (
-                <div className="mb-4 rounded-xl bg-red-50 border border-red-200 text-red-600 text-sm px-4 py-3">
+                <div className="rounded-xl border border-danger/30 bg-danger/10 px-4 py-3 text-sm text-danger">
                     <i className="fa-solid fa-circle-exclamation mr-1.5" />
                     {error}
                 </div>
             )}
 
-            <div className="bg-white rounded-xl shadow-sm p-4 mb-4">
+            <div className="rounded-2xl border border-border bg-surface p-4">
                 <div className="mb-4">
                     <SearchBox
                         value={draft.q}
@@ -228,9 +279,9 @@ export default function TourList() {
                 </div>
 
                 <div className="mb-4">
-                    <div className="flex items-center justify-between mb-2">
-                        <span className="text-xs font-medium text-gray-500">Khoảng giá</span>
-                        <span className="text-sm font-bold text-blue-600 tabular-nums">
+                    <div className="mb-2 flex items-center justify-between">
+                        <span className="text-xs font-semibold uppercase tracking-wide text-muted">Khoảng giá</span>
+                        <span className="text-sm font-bold tabular-nums text-primary">
                             {formatMoney(sliderMin)} – {formatMoney(sliderMax)}
                         </span>
                     </div>
@@ -265,57 +316,65 @@ export default function TourList() {
                         />
                     </div>
 
-                    <div className="flex justify-between text-xs text-gray-400 mt-1 tabular-nums">
+                    <div className="mt-1 flex justify-between text-xs tabular-nums text-muted">
                         <span>{formatMoney(priceRange.min)}</span>
                         <span>{formatMoney(priceRange.max)}</span>
                     </div>
                 </div>
 
-                <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
-                    <div className="flex flex-col sm:flex-row gap-3">
+                <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
+                    <div className="flex flex-col gap-3 sm:flex-row">
                         <div>
-                            <label htmlFor="tour-region" className="block text-xs font-medium text-gray-500 mb-1">Miền</label>
-                            <select
+                            <label htmlFor="tour-region" className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-muted">Miền</label>
+                            <SelectMenu
                                 id="tour-region"
+                                ariaLabel="Lọc theo miền"
+                                icon="fa-solid fa-location-dot"
                                 value={current.region}
-                                onChange={(e) => applyFilters({ region: e.target.value })}
-                                className="w-full sm:w-44 border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white cursor-pointer outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
-                            >
-                                <option value="">Tất cả miền</option>
-                                {filters.regions.map((region) => (
-                                    <option key={region} value={region}>{region}</option>
-                                ))}
-                            </select>
+                                onChange={(value) => applyFilters({ region: value })}
+                                options={[
+                                    { value: "", label: "Tất cả miền", icon: "fa-solid fa-earth-asia" },
+                                    ...filters.regions.map((region) => ({
+                                        value: region,
+                                        label: region,
+                                        icon: "fa-solid fa-location-dot",
+                                    })),
+                                ]}
+                                className="sm:w-48"
+                            />
                         </div>
 
                         <div>
-                            <label htmlFor="tour-sort" className="block text-xs font-medium text-gray-500 mb-1">Sắp xếp</label>
-                            <select
+                            <label htmlFor="tour-sort" className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-muted">Sắp xếp</label>
+                            <SelectMenu
                                 id="tour-sort"
+                                ariaLabel="Sắp xếp danh sách tour"
+                                icon="fa-solid fa-arrow-down-wide-short"
                                 value={current.sort}
-                                onChange={(e) => applyFilters({ sort: e.target.value })}
-                                className="w-full sm:w-40 border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white cursor-pointer outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
-                            >
-                                <option value="newest">Mới nhất</option>
-                                <option value="price_asc">Giá tăng dần</option>
-                                <option value="price_desc">Giá giảm dần</option>
-                                <option value="name_asc">Tên A-Z</option>
-                            </select>
+                                onChange={(value) => applyFilters({ sort: value })}
+                                options={[
+                                    { value: "newest", label: "Mới nhất", icon: "fa-solid fa-clock-rotate-left" },
+                                    { value: "price_asc", label: "Giá tăng dần", icon: "fa-solid fa-arrow-up" },
+                                    { value: "price_desc", label: "Giá giảm dần", icon: "fa-solid fa-arrow-down" },
+                                    { value: "name_asc", label: "Tên A-Z", icon: "fa-solid fa-font" },
+                                ]}
+                                className="sm:w-44"
+                            />
                         </div>
                     </div>
 
                     <div className="flex items-center gap-4 sm:justify-end">
-                        <p className="text-sm text-gray-500">
-                            Tìm thấy <b className="text-gray-800">{pagination?.total ?? tours.length}</b> tour
+                        <p className="text-sm text-muted">
+                            Tìm thấy <b className="text-foreground">{pagination?.total ?? tours.length}</b> tour
                             {refetching && (
-                                <i className="fa-solid fa-spinner fa-spin text-blue-600 text-xs ml-1.5" aria-hidden="true" />
+                                <i className="fa-solid fa-spinner fa-spin ml-1.5 text-xs text-primary" aria-hidden="true" />
                             )}
                         </p>
                         {hasFilters && (
                             <button
                                 type="button"
                                 onClick={clearFilters}
-                                className="text-sm text-blue-600 hover:text-blue-800 font-medium cursor-pointer"
+                                className="cursor-pointer text-sm font-semibold text-primary transition-colors duration-150 hover:text-primary-dark"
                             >
                                 <i className="fa-solid fa-rotate-left mr-1" />
                                 Xóa bộ lọc
@@ -325,114 +384,136 @@ export default function TourList() {
                 </div>
             </div>
 
-            <div
-                className={`transition-opacity duration-150 ${refetching ? "opacity-60 pointer-events-none" : ""}`}
-            >
-
-            {tours.length === 0 ? (
-                <div className="bg-white rounded-xl shadow-sm text-center text-gray-500 py-16">
-                    <i className="fa-solid fa-map text-blue-600 mb-3" style={{ fontSize: 40 }} />
-                    <p>Không có tour nào phù hợp.</p>
-                </div>
-            ) : (
-                <>
-                    <div className="space-y-4">
-                        {tours.map((tour) => (
-                            <div
-                                key={tour.id}
-                                className="bg-white rounded-xl shadow-sm p-3 flex flex-col sm:flex-row gap-4"
-                            >
-                                <div className="sm:w-72 shrink-0">
-                                    {tour.cover_image ? (
-                                        <img
-                                            src={tour.cover_image}
-                                            alt={tour.name}
-                                            className="w-full h-40 sm:h-[150px] object-cover rounded-xl"
-                                        />
-                                    ) : (
-                                        <div className="w-full h-40 sm:h-[150px] bg-gray-100 rounded-xl flex items-center justify-center">
-                                            <i className="fa-solid fa-image text-gray-400" style={{ fontSize: 32 }} />
-                                        </div>
-                                    )}
-                                </div>
-
-                                <div className="flex-1 min-w-0 p-4 sm:p-5">
-                                    <div className="flex items-start gap-3">
-                                        <div className="flex-1 min-w-0">
-                                            <h3 className="font-semibold text-base text-gray-900 line-clamp-2">
-                                                {tour.name}
-                                            </h3>
-                                            {tour.slug && (
-                                                <div className="text-xs text-gray-400 mt-0.5">/{tour.slug}</div>
-                                            )}
-                                        </div>
-                                        <div className="shrink-0">
-                                            <button
-                                                type="button"
-                                                onClick={() => navigate(`/admin/tours/${tour.id}/edit`)}
-                                                className="border border-blue-600 text-blue-600 hover:bg-blue-50 font-medium px-3 py-1.5 rounded-lg text-sm transition-colors cursor-pointer"
-                                            >
-                                                Sửa
-                                            </button>
-                                            <button
-                                                type="button"
-                                                onClick={() => setDeleting(tour)}
-                                                className="border border-red-500 text-red-500 hover:bg-red-50 font-medium px-3 py-1.5 rounded-lg text-sm ml-2 transition-colors cursor-pointer"
-                                            >
-                                                Xóa
-                                            </button>
-                                        </div>
-                                    </div>
-
-                                    <div className="mt-3 grid grid-cols-2 gap-x-6 gap-y-2 text-sm">
-                                        <span className="text-gray-600">
-                                            <span className="text-gray-400">Miền:</span> {tour.region || "—"}
-                                        </span>
-                                        <span className="text-gray-600">
-                                            <span className="text-gray-400">Địa điểm:</span> {tour.location || "—"}
-                                        </span>
-                                        <span className="text-gray-600">
-                                            <span className="text-gray-400">Thời gian:</span> {tour.duration || "—"}
-                                        </span>
-                                        <span className="text-gray-600">
-                                            <span className="text-gray-400">Giá người lớn:</span>{" "}
-                                            <span className="font-semibold text-blue-600">
-                                                {formatPrice(tour.price_default)} VNĐ
-                                            </span>
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-                        ))}
+            <div className={`transition-opacity duration-150 ${refetching ? "opacity-60 pointer-events-none" : ""}`}>
+                {tours.length === 0 ? (
+                    <div className="rounded-2xl border border-border bg-surface py-16 text-center text-muted">
+                        <i className="fa-solid fa-map mb-3 text-primary" style={{ fontSize: 40 }} />
+                        <p>Không có tour nào phù hợp.</p>
                     </div>
+                ) : (
+                    <>
+                        <div className="space-y-4">
+                            {tours.map((tour) => (
+                                <div
+                                    key={tour.id}
+                                    className="flex flex-col gap-4 rounded-2xl border border-border bg-surface p-3 sm:flex-row"
+                                >
+                                    <div className="shrink-0 sm:w-72">
+                                        {tour.cover_image ? (
+                                            <button
+                                                type="button"
+                                                onClick={() => setPreview({ src: tour.cover_image, alt: tour.name, caption: tour.name })}
+                                                title="Bấm để xem ảnh bìa"
+                                                className="group relative block w-full cursor-zoom-in overflow-hidden rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+                                            >
+                                                <img
+                                                    src={tour.cover_image}
+                                                    alt={tour.name}
+                                                    className="h-40 w-full object-cover transition-transform duration-200 group-hover:scale-105 sm:h-[150px]"
+                                                />
+                                                <span className="absolute inset-0 flex items-center justify-center bg-slate-950/0 text-white opacity-0 transition-opacity duration-200 group-hover:bg-slate-950/35 group-hover:opacity-100">
+                                                    <i className="fa-solid fa-magnifying-glass-plus" style={{ fontSize: 22 }} />
+                                                </span>
+                                            </button>
+                                        ) : (
+                                            <div className="flex h-40 w-full items-center justify-center rounded-xl bg-primary-50 sm:h-[150px]">
+                                                <i className="fa-solid fa-image text-primary" style={{ fontSize: 32 }} />
+                                            </div>
+                                        )}
+                                    </div>
 
-                    {pagination && (
-                        <Pagination page={current.page} totalPages={pagination.totalPages} onChange={changePage} />
-                    )}
-                </>
-            )}
+                                    <div className="min-w-0 flex-1 p-4 sm:p-5">
+                                        <div className="flex items-start gap-3">
+                                            <div className="min-w-0 flex-1">
+                                                <h3 className="line-clamp-2 text-base font-semibold text-foreground">
+                                                    {tour.name}
+                                                </h3>
+                                                {tour.slug && (
+                                                    <div className="mt-0.5 text-xs text-muted">/{tour.slug}</div>
+                                                )}
+                                            </div>
+                                            <div className="shrink-0 flex gap-2">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => openEdit(tour)}
+                                                    className="flex cursor-pointer items-center gap-1.5 rounded-xl bg-primary px-3 py-1.5 text-sm font-semibold text-white transition-colors duration-150 hover:bg-primary-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+                                                >
+                                                    <i className="fa-solid fa-pen" />
+                                                    Sửa
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setDeleting(tour)}
+                                                    className="flex cursor-pointer items-center gap-1.5 rounded-xl border border-danger/30 px-3 py-1.5 text-sm font-semibold text-danger transition-colors duration-150 hover:bg-danger/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-danger/40"
+                                                >
+                                                    <i className="fa-solid fa-trash" />
+                                                    Xóa
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <div className="mt-3 grid grid-cols-2 gap-x-6 gap-y-2 text-sm">
+                                            <span className="text-muted">
+                                                <span className="text-primary/70">Miền:</span>{" "}
+                                                <span className="font-medium text-foreground">{tour.region || "—"}</span>
+                                            </span>
+                                            <span className="text-muted">
+                                                <span className="text-primary/70">Địa điểm:</span>{" "}
+                                                <span className="font-medium text-foreground">{tour.location || "—"}</span>
+                                            </span>
+                                            <span className="text-muted">
+                                                <span className="text-primary/70">Thời gian:</span>{" "}
+                                                <span className="font-medium text-foreground">{tour.duration || "—"}</span>
+                                            </span>
+                                            <span className="text-muted">
+                                                <span className="text-primary/70">Giá người lớn:</span>{" "}
+                                                <span className="font-bold text-primary">
+                                                    {formatPrice(tour.price_default)} VNĐ
+                                                </span>
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
+                        {pagination && (
+                            <Pagination page={current.page} totalPages={pagination.totalPages} onChange={changePage} />
+                        )}
+                    </>
+                )}
             </div>
+
+            {form.open && (
+                <TourFormModal
+                    mode={form.mode}
+                    tour={form.tour}
+                    saving={saving}
+                    onClose={closeForm}
+                    onSubmit={handleFormSubmit}
+                />
+            )}
 
             {deleting && (
                 <div
                     role="dialog"
                     aria-modal="true"
-                    className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/50"
+                    aria-labelledby="delete-tour-title"
                     onClick={() => !deletingLoading && setDeleting(null)}
+                    className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4"
                 >
                     <div
-                        className="w-full max-w-md bg-white rounded-2xl border border-gray-100 p-6 shadow-2xl"
+                        className="w-full max-w-md rounded-2xl border border-border bg-surface p-6 shadow-2xl motion-safe:animate-toast-in"
                         onClick={(e) => e.stopPropagation()}
                     >
-                        <h3 className="font-bold text-lg text-red-600 flex items-center gap-2 mb-3">
+                        <h3 id="delete-tour-title" className="mb-3 flex items-center gap-2 text-lg font-bold text-danger">
                             <i className="fa-solid fa-triangle-exclamation" />
                             Xóa tour
                         </h3>
-                        <p className="text-sm text-gray-600 mb-4">
-                            Quý khách chắc chắn muốn xóa tour{" "}
-                            <b>“{deleting.name}”</b> không?
+                        <p className="mb-4 text-sm text-muted">
+                            Bạn chắc chắn muốn xóa tour <b className="text-foreground">“{deleting.name}”</b> không?
                         </p>
-                        <div className="rounded-xl bg-red-50 border border-red-200 text-red-600 text-sm px-4 py-3 mb-5">
+                        <div className="mb-5 rounded-xl border border-danger/30 bg-danger/10 px-4 py-3 text-sm text-danger">
                             <i className="fa-solid fa-circle-info mr-1.5" />
                             Tour và lịch trình, hình ảnh liên quan sẽ bị xóa vĩnh viễn và không thể khôi phục.
                         </div>
@@ -441,7 +522,7 @@ export default function TourList() {
                                 type="button"
                                 disabled={deletingLoading}
                                 onClick={() => setDeleting(null)}
-                                className="border border-gray-200 text-gray-800 px-4 py-2 rounded-xl font-semibold text-sm hover:bg-gray-50 transition-colors cursor-pointer disabled:opacity-50"
+                                className="rounded-xl border border-border px-4 py-2 text-sm font-semibold text-muted transition-colors duration-150 hover:bg-slate-50 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 disabled:opacity-50"
                             >
                                 Không, quay lại
                             </button>
@@ -449,7 +530,7 @@ export default function TourList() {
                                 type="button"
                                 disabled={deletingLoading}
                                 onClick={handleDelete}
-                                className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-xl font-semibold text-sm transition-colors cursor-pointer disabled:opacity-50 inline-flex items-center gap-2"
+                                className="inline-flex items-center gap-2 rounded-xl bg-danger px-4 py-2 text-sm font-semibold text-white transition-colors duration-150 hover:bg-danger/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-danger/40 disabled:opacity-50"
                             >
                                 {deletingLoading && <i className="fa-solid fa-spinner fa-spin" />}
                                 Chắc chắn xóa
@@ -457,6 +538,15 @@ export default function TourList() {
                         </div>
                     </div>
                 </div>
+            )}
+
+            {preview && (
+                <ImageLightbox
+                    src={preview.src}
+                    alt={preview.alt}
+                    caption={preview.caption}
+                    onClose={() => setPreview(null)}
+                />
             )}
         </div>
     );

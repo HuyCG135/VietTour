@@ -4,7 +4,7 @@ import MainLayout from "../layouts/MainLayout";
 import Home from "../pages/Home";
 import TourList from "../features/tours/TourList";
 import TourDetail from "../features/tours/TourDetail";
-import BookingPage from "../features/booking/BookingPage";
+import BookingPage from "../features/user/book-tour/BookingPage";
 import Login from "../features/auth/Login";
 import Register from "../features/auth/Register";
 import ForgotPassword from "../features/auth/ForgotPassword";

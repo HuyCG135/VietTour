@@ -13,7 +13,7 @@ export default function BookingSteps({ tourName, currentStep = 1 }) {
             <div className="mx-auto max-w-7xl px-6 pt-8 pb-6 sm:pb-8">
                 <nav aria-label="breadcrumb" className="mb-3 flex flex-wrap items-center gap-1.5 text-sm text-muted">
                     <Link to="/" className="no-underline font-medium text-muted hover:text-primary transition-colors">
-                        VietTour
+                        Vietravel
                     </Link>
                     <i className="fa-solid fa-angle-right text-[10px] text-primary/40" aria-hidden="true" />
                     <Link to="/tours" className="no-underline font-medium text-muted hover:text-primary transition-colors">

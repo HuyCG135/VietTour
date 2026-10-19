@@ -28,8 +28,8 @@ export default function Header() {
     return (
         <header className="fixed top-0 left-0 right-0 z-50 flex h-[70px] items-center justify-between border-b border-border px-12 bg-surface/80 backdrop-blur-sm">
             <Link to="/" className="flex items-center gap-3 no-underline text-foreground">
-                <img className="mr-2" src={logoIcon} alt="VietTour" width="32" height="32" />
-                <h2 className="text-lg font-bold mb-0">VietTour</h2>
+                <img className="mr-2" src={logoIcon} alt="Vietravel" width="32" height="32" />
+                <h2 className="text-lg font-bold mb-0">Vietravel</h2>
             </Link>
 
             <nav className="hidden lg:flex flex-1 justify-center items-center gap-6">

@@ -54,7 +54,7 @@ export default function InvoiceModal({ booking, open, rows = [], total = 0, onCl
                 <div className="print-only overflow-y-auto p-6 sm:p-8">
                     <div className="flex items-start justify-between gap-6">
                         <div>
-                            <p className="text-2xl font-black leading-none text-primary">VIETTOUR</p>
+                            <p className="text-2xl font-black leading-none text-primary">VIETRAVEL</p>
                             <p className="mt-1 text-xs text-muted">Du lịch trọn vẹn</p>
                         </div>
                         <div className="text-right">
@@ -127,7 +127,7 @@ export default function InvoiceModal({ booking, open, rows = [], total = 0, onCl
                     </table>
 
                     <p className="no-print mt-8 border-t border-slate-100 pt-4 text-center text-xs text-muted">
-                        * Cảm ơn quý khách đã tin tưởng dịch vụ VietTour. Hóa đơn xác nhận đặt chỗ thành công.
+                        * Cảm ơn quý khách đã tin tưởng dịch vụ Vietravel. Hóa đơn xác nhận đặt chỗ thành công.
                     </p>
                 </div>
             </div>

@@ -172,7 +172,7 @@ export default function CreateStaffModal({ onClose, onSubmit }) {
                             type="email"
                             value={form.email}
                             onChange={setField("email")}
-                            placeholder="nhanvien@viettour.vn"
+                            placeholder="nhanvien@vietravel.vn"
                             className={`${inputClass} ${errors.email ? inputErrorClass : ""}`}
                         />
                         {errors.email && <p className={errorClass}>{errors.email}</p>}

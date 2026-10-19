@@ -30,11 +30,11 @@ const sendVerificationEmail = async ({ email, verifyUrl }) => {
     await transporter.sendMail({
         from,
         to: email,
-        subject: "Xác thực tài khoản VietTour",
+        subject: "Xác thực tài khoản Vietravel",
         html: `
                <div style="font-family: Arial, sans-serif; line-height: 1.5; color: #222;">
-                    <h2 style="margin-bottom: 8px;">Xác thực tài khoản VietTour</h2>
-                    <p>Cảm ơn bạn đã đăng ký tài khoản VietTour!</p>
+                    <h2 style="margin-bottom: 8px;">Xác thực tài khoản Vietravel</h2>
+                    <p>Cảm ơn bạn đã đăng ký tài khoản Vietravel!</p>
                     <p>Vui lòng nhấn vào nút bên dưới để xác thực email của bạn:</p>
                     <a href="${verifyUrl}"
                        style="display: inline-block; padding: 14px 28px; margin: 16px 0;
@@ -66,10 +66,10 @@ const sendResetPasswordEmail = async ({ email, resetUrl }) => {
     await transporter.sendMail({
         from,
         to: email,
-        subject: "Đặt lại mật khẩu VietTour",
+        subject: "Đặt lại mật khẩu Vietravel",
         html: `
             <div style="font-family: Arial, sans-serif; line-height: 1.5; color: #222;">
-                <h2 style="margin-bottom: 8px;">Đặt lại mật khẩu VietTour</h2>
+                <h2 style="margin-bottom: 8px;">Đặt lại mật khẩu Vietravel</h2>
                 <p>Chúng tôi nhận được yêu cầu đặt lại mật khẩu cho tài khoản của bạn.</p>
                 <p>Vui lòng nhấn vào nút bên dưới để đặt lại mật khẩu:</p>
                 <a href="${resetUrl}"
@@ -104,11 +104,11 @@ const sendBookingPaymentEmail = async ({ email, bookingId, amount, paymentUrl })
     await transporter.sendMail({
         from,
         to: email,
-        subject: `Thanh toán đơn đặt tour #MB${bookingId} - VietTour`,
+        subject: `Thanh toán đơn đặt tour #MB${bookingId} - Vietravel`,
         html: `
             <div style="font-family: Arial, sans-serif; line-height: 1.5; color: #222;">
                 <h2 style="margin-bottom: 8px;">Thanh toán đơn đặt tour #MB${bookingId}</h2>
-                <p>Cảm ơn bạn đã đặt tour tại VietTour!</p>
+                <p>Cảm ơn bạn đã đặt tour tại Vietravel!</p>
                 <p style="margin: 12px 0 4px;">
                     Số tiền cần thanh toán:
                     <strong style="font-size: 18px; color: #2563eb;">${prettyAmount}</strong>

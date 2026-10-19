@@ -4,8 +4,8 @@ export default function Footer() {
             <div className="max-w-7xl mx-auto px-6">
                 <div className="flex flex-wrap gap-8">
                     <div className="w-full md:w-5/12 lg:w-1/3">
-                        <h5 className="font-bold text-lg mb-3">VietTour</h5>
-                        <p className="text-gray-400 text-sm leading-relaxed">Khám phá Việt Nam cùng VietTour — đồng hành cùng bạn trên mọi hành trình.</p>
+                        <h5 className="font-bold text-lg mb-3">Vietravel</h5>
+                        <p className="text-gray-400 text-sm leading-relaxed">Khám phá Việt Nam cùng Vietravel — đồng hành cùng bạn trên mọi hành trình.</p>
                     </div>
 
                     <div className="w-full md:w-5/12 lg:w-1/6">
@@ -22,7 +22,7 @@ export default function Footer() {
                         <ul className="list-none p-0 m-0 text-sm text-gray-400 space-y-1">
                             <li>
                                 <i className="fa-solid fa-envelope mr-2" />
-                                info@viettour.vn
+                                info@vietravel.vn
                             </li>
                             <li>
                                 <i className="fa-solid fa-phone mr-2" />
@@ -46,7 +46,7 @@ export default function Footer() {
                 </div>
 
                 <hr className="my-6 border-gray-700" />
-                <p className="text-center text-gray-500 text-sm mb-0">&copy; {new Date().getFullYear()} VietTour. All rights reserved.</p>
+                <p className="text-center text-gray-500 text-sm mb-0">&copy; {new Date().getFullYear()} Vietravel. All rights reserved.</p>
             </div>
         </footer>
     );

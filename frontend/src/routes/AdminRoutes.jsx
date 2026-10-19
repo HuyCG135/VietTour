@@ -1,8 +1,6 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import TourList from "../features/admin/tours/List";
-import TourForm from "../features/admin/tours/Form";
 import ItineraryList from "../features/admin/itineraries/List";
-import ItineraryForm from "../features/admin/itineraries/Form";
 import DepartureList from "../features/admin/departures/List";
 import BookingDashboard from "../features/admin/bookings/DashboardBooking";
 import AdminBookingDetail from "../features/admin/bookings/BookingDetail";
@@ -11,7 +9,6 @@ import ServiceForm from "../features/admin/services/Form";
 import TourServiceList from "../features/admin/tour-services/List";
 import TourServiceForm from "../features/admin/tour-services/Form";
 import TourImageList from "../features/admin/tour-images/List";
-import TourImageForm from "../features/admin/tour-images/Form";
 import UserList from "../features/admin/users/List";
 import Statistics from "../features/admin/statistics/List";
 
@@ -20,10 +17,10 @@ export default function AdminRoutes() {
         <Routes>
             <Route index element={<Navigate to="tours" />} />
             <Route path="tours" element={<TourList />} />
-            <Route path="tours/new" element={<TourForm />} />
-            <Route path="tours/:id/edit" element={<TourForm />} />
+            <Route path="tours/new" element={<Navigate to="/admin/tours" replace />} />
+            <Route path="tours/:id/edit" element={<Navigate to="/admin/tours" replace />} />
             <Route path="itineraries" element={<ItineraryList />} />
-            <Route path="itineraries/:tourId/edit" element={<ItineraryForm />} />
+            <Route path="itineraries/:tourId/edit" element={<Navigate to="/admin/itineraries" replace />} />
             <Route path="departures" element={<DepartureList />} />
             <Route path="bookings" element={<BookingDashboard />} />
             <Route path="bookings/:id" element={<AdminBookingDetail />} />
@@ -33,7 +30,7 @@ export default function AdminRoutes() {
             <Route path="tour-services" element={<TourServiceList />} />
             <Route path="tour-services/:tourId/edit" element={<TourServiceForm />} />
             <Route path="tour-images" element={<TourImageList />} />
-            <Route path="tour-images/:tourId/edit" element={<TourImageForm />} />
+            <Route path="tour-images/:tourId/edit" element={<Navigate to="/admin/tour-images" replace />} />
             <Route path="users" element={<UserList />} />
             <Route path="statistics" element={<Statistics />} />
         </Routes>

@@ -1,9 +1,12 @@
-import { useEffect, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { getTourImages } from "./tour-images.api";
 import { getTourFilters } from "../tours/tours.api";
+import TourImageFormModal from "./TourImageFormModal";
 import Pagination from "../../tours/Pagination";
 import SearchBox from "../../../components/SearchBox";
+import SelectMenu from "../../../components/SelectMenu";
+import ImageLightbox from "../../../components/ImageLightbox";
 
 const normalizeParams = (searchParams) => ({
     q: searchParams.get("q") ?? "",
@@ -21,8 +24,13 @@ const buildQueryString = (params) => {
     return sp.toString();
 };
 
+const SORT_OPTIONS = [
+    { value: "newest", label: "Mới nhất", icon: "fa-solid fa-clock-rotate-left" },
+    { value: "name_asc", label: "Tên A-Z", icon: "fa-solid fa-font" },
+    { value: "most_images", label: "Nhiều ảnh nhất", icon: "fa-solid fa-images" },
+];
+
 export default function TourImageList() {
-    const navigate = useNavigate();
     const [searchParams, setSearchParams] = useSearchParams();
     const current = normalizeParams(searchParams);
 
@@ -33,6 +41,41 @@ export default function TourImageList() {
     const [regions, setRegions] = useState([]);
     const [draft, setDraft] = useState({ q: current.q });
     const [initialized, setInitialized] = useState(false);
+    const [editing, setEditing] = useState(null);
+    const [preview, setPreview] = useState(null);
+    const requestSeq = useRef(0);
+
+    const loadTours = useCallback(async () => {
+        const seq = ++requestSeq.current;
+        setLoading(true);
+        setError("");
+        try {
+            const res = await getTourImages(normalizeParams(searchParams));
+            if (seq !== requestSeq.current) return;
+            if (res?.success) {
+                setTours(res.data || []);
+                setPagination(res.pagination || null);
+            } else {
+                setTours([]);
+                setPagination(null);
+                setError(res?.message || "Không thể tải danh sách ảnh tour");
+            }
+        } catch {
+            if (seq !== requestSeq.current) return;
+            setTours([]);
+            setPagination(null);
+            setError("Không thể kết nối đến máy chủ");
+        } finally {
+            if (seq === requestSeq.current) {
+                setLoading(false);
+                setInitialized(true);
+            }
+        }
+    }, [searchParams]);
+
+    useEffect(() => {
+        loadTours();
+    }, [loadTours]);
 
     useEffect(() => {
         let ignore = false;
@@ -43,40 +86,6 @@ export default function TourImageList() {
             .catch(() => {});
         return () => { ignore = true; };
     }, []);
-
-    useEffect(() => {
-        let ignore = false;
-
-        const load = async () => {
-            setLoading(true);
-            setError("");
-            try {
-                const res = await getTourImages(normalizeParams(searchParams));
-                if (ignore) return;
-                if (res?.success) {
-                    setTours(res.data || []);
-                    setPagination(res.pagination || null);
-                } else {
-                    setTours([]);
-                    setPagination(null);
-                    setError(res?.message || "Không thể tải danh sách ảnh tour");
-                }
-            } catch {
-                if (ignore) return;
-                setTours([]);
-                setPagination(null);
-                setError("Không thể kết nối đến máy chủ");
-            } finally {
-                if (!ignore) {
-                    setLoading(false);
-                    setInitialized(true);
-                }
-            }
-        };
-
-        load();
-        return () => { ignore = true; };
-    }, [searchParams]);
 
     const commit = (params) => {
         setDraft({ q: params.q ?? "" });
@@ -104,25 +113,30 @@ export default function TourImageList() {
     if (!initialized) {
         return (
             <div className="flex justify-center items-center py-16">
-                <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" role="status" />
+                <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" role="status" />
             </div>
         );
     }
 
     return (
-        <div>
-            <div className="flex justify-between items-center mb-6">
-                <h2 className="font-bold text-xl mb-0">Quản lý hình ảnh tour</h2>
+        <div className="space-y-5">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                    <h2 className="text-xl font-bold text-foreground">Quản lý hình ảnh tour</h2>
+                    <p className="mt-1 text-sm text-muted">
+                        Thư viện ảnh từng tour — bấm &quot;Chỉnh sửa ảnh&quot; để tải lên hoặc xóa ảnh ngay trên popup.
+                    </p>
+                </div>
             </div>
 
             {error && (
-                <div className="mb-4 rounded-xl bg-red-50 border border-red-200 text-red-600 text-sm px-4 py-3">
+                <div className="rounded-xl border border-danger/30 bg-danger/10 px-4 py-3 text-sm text-danger">
                     <i className="fa-solid fa-circle-exclamation mr-1.5" />
                     {error}
                 </div>
             )}
 
-            <div className="bg-white rounded-xl shadow-sm p-4 mb-4">
+            <div className="rounded-2xl border border-border bg-surface p-4">
                 <div className="mb-4">
                     <SearchBox
                         value={draft.q}
@@ -133,50 +147,54 @@ export default function TourImageList() {
                     />
                 </div>
 
-                <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
-                    <div className="flex flex-col sm:flex-row gap-3">
+                <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
+                    <div className="flex flex-col gap-3 sm:flex-row">
                         <div>
-                            <label htmlFor="tour-image-region" className="block text-xs font-medium text-gray-500 mb-1">Miền</label>
-                            <select
+                            <label htmlFor="tour-image-region" className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-muted">Miền</label>
+                            <SelectMenu
                                 id="tour-image-region"
+                                ariaLabel="Lọc theo miền"
+                                icon="fa-solid fa-location-dot"
                                 value={current.region}
-                                onChange={(e) => applyFilters({ region: e.target.value })}
-                                className="w-full sm:w-44 border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white cursor-pointer outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
-                            >
-                                <option value="">Tất cả miền</option>
-                                {regions.map((region) => (
-                                    <option key={region} value={region}>{region}</option>
-                                ))}
-                            </select>
+                                onChange={(value) => applyFilters({ region: value })}
+                                options={[
+                                    { value: "", label: "Tất cả miền", icon: "fa-solid fa-earth-asia" },
+                                    ...regions.map((region) => ({
+                                        value: region,
+                                        label: region,
+                                        icon: "fa-solid fa-location-dot",
+                                    })),
+                                ]}
+                                className="sm:w-48"
+                            />
                         </div>
 
                         <div>
-                            <label htmlFor="tour-image-sort" className="block text-xs font-medium text-gray-500 mb-1">Sắp xếp</label>
-                            <select
+                            <label htmlFor="tour-image-sort" className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-muted">Sắp xếp</label>
+                            <SelectMenu
                                 id="tour-image-sort"
+                                ariaLabel="Sắp xếp danh sách tour"
+                                icon="fa-solid fa-arrow-down-wide-short"
                                 value={current.sort}
-                                onChange={(e) => applyFilters({ sort: e.target.value })}
-                                className="w-full sm:w-44 border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white cursor-pointer outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
-                            >
-                                <option value="newest">Mới nhất</option>
-                                <option value="name_asc">Tên A-Z</option>
-                                <option value="most_images">Nhiều ảnh nhất</option>
-                            </select>
+                                onChange={(value) => applyFilters({ sort: value })}
+                                options={SORT_OPTIONS}
+                                className="sm:w-48"
+                            />
                         </div>
                     </div>
 
                     <div className="flex items-center gap-4 sm:justify-end">
-                        <p className="text-sm text-gray-500">
-                            Tìm thấy <b className="text-gray-800">{pagination?.total ?? tours.length}</b> tour
+                        <p className="text-sm text-muted">
+                            Tìm thấy <b className="text-foreground">{pagination?.total ?? tours.length}</b> tour
                             {refetching && (
-                                <i className="fa-solid fa-spinner fa-spin text-blue-600 text-xs ml-1.5" aria-hidden="true" />
+                                <i className="fa-solid fa-spinner fa-spin ml-1.5 text-xs text-primary" aria-hidden="true" />
                             )}
                         </p>
                         {hasFilters && (
                             <button
                                 type="button"
                                 onClick={clearFilters}
-                                className="text-sm text-blue-600 hover:text-blue-800 font-medium cursor-pointer"
+                                className="cursor-pointer text-sm font-semibold text-primary transition-colors duration-150 hover:text-primary-dark"
                             >
                                 <i className="fa-solid fa-rotate-left mr-1" />
                                 Xóa bộ lọc
@@ -188,8 +206,8 @@ export default function TourImageList() {
 
             <div className={`transition-opacity duration-150 ${refetching ? "opacity-60 pointer-events-none" : ""}`}>
                 {tours.length === 0 ? (
-                    <div className="bg-white rounded-xl shadow-sm text-center text-gray-500 py-16">
-                        <i className="fa-solid fa-image text-blue-600 mb-3" style={{ fontSize: 40 }} />
+                    <div className="rounded-2xl border border-border bg-surface py-16 text-center text-muted">
+                        <i className="fa-solid fa-images mb-3 text-primary" style={{ fontSize: 40 }} />
                         <p>Không có tour nào phù hợp.</p>
                     </div>
                 ) : (
@@ -198,55 +216,68 @@ export default function TourImageList() {
                             {tours.map((tour) => (
                                 <div
                                     key={tour.id}
-                                    className="bg-white rounded-xl shadow-sm p-3 flex flex-col sm:flex-row gap-4"
+                                    className="flex flex-col gap-4 rounded-2xl border border-border bg-surface p-3 sm:flex-row"
                                 >
-                                    <div className="sm:w-72 shrink-0">
+                                    <div className="shrink-0 sm:w-72">
                                         {tour.cover_image ? (
-                                            <img
-                                                src={tour.cover_image}
-                                                alt={tour.name}
-                                                className="w-full h-40 sm:h-[150px] object-cover rounded-xl"
-                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => setPreview({ src: tour.cover_image, alt: tour.name, caption: tour.name })}
+                                                title="Bấm để xem ảnh bìa"
+                                                className="group relative block w-full cursor-zoom-in overflow-hidden rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+                                            >
+                                                <img
+                                                    src={tour.cover_image}
+                                                    alt={tour.name}
+                                                    className="h-40 w-full object-cover transition-transform duration-200 group-hover:scale-105 sm:h-[150px]"
+                                                />
+                                                <span className="absolute inset-0 flex items-center justify-center bg-slate-950/0 text-white opacity-0 transition-opacity duration-200 group-hover:bg-slate-950/35 group-hover:opacity-100">
+                                                    <i className="fa-solid fa-magnifying-glass-plus" style={{ fontSize: 22 }} />
+                                                </span>
+                                            </button>
                                         ) : (
-                                            <div className="w-full h-40 sm:h-[150px] bg-gray-100 rounded-xl flex items-center justify-center">
-                                                <i className="fa-solid fa-image text-gray-400" style={{ fontSize: 32 }} />
+                                            <div className="flex h-40 w-full items-center justify-center rounded-xl bg-primary-50 sm:h-[150px]">
+                                                <i className="fa-solid fa-image text-primary" style={{ fontSize: 32 }} />
                                             </div>
                                         )}
                                     </div>
 
-                                    <div className="flex-1 min-w-0 p-4 sm:p-5">
+                                    <div className="min-w-0 flex-1 p-4 sm:p-5">
                                         <div className="flex items-start gap-3">
-                                            <div className="flex-1 min-w-0">
-                                                <div className="text-xs text-gray-400 mb-1">Mã tour #{tour.id}</div>
-                                                <h3 className="font-semibold text-base text-gray-900 line-clamp-2">
+                                            <div className="min-w-0 flex-1">
+                                                <div className="mb-1 text-xs text-muted">Mã tour #{tour.id}</div>
+                                                <h3 className="line-clamp-2 text-base font-semibold text-foreground">
                                                     {tour.name}
                                                 </h3>
                                             </div>
                                             <div className="shrink-0">
                                                 <button
                                                     type="button"
-                                                    onClick={() => navigate(`/admin/tour-images/${tour.id}/edit`)}
-                                                    className="border border-blue-600 text-blue-600 hover:bg-blue-50 font-medium px-3 py-1.5 rounded-lg text-sm transition-colors cursor-pointer"
+                                                    onClick={() => setEditing(tour)}
+                                                    className="flex cursor-pointer items-center gap-1.5 rounded-xl bg-primary px-3 py-1.5 text-sm font-semibold text-white transition-colors duration-150 hover:bg-primary-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
                                                 >
-                                                    <i className="fa-solid fa-pen-to-square mr-1.5" />
+                                                    <i className="fa-solid fa-pen" />
                                                     Chỉnh sửa ảnh
                                                 </button>
                                             </div>
                                         </div>
 
                                         <div className="mt-3 grid grid-cols-2 gap-x-6 gap-y-2 text-sm">
-                                            <span className="text-gray-600">
-                                                <span className="text-gray-400">Miền:</span> {tour.region || "—"}
+                                            <span className="text-muted">
+                                                <span className="text-primary/70">Miền:</span>{" "}
+                                                <span className="font-medium text-foreground">{tour.region || "—"}</span>
                                             </span>
-                                            <span className="text-gray-600">
-                                                <span className="text-gray-400">Thời gian:</span> {tour.duration || "—"}
+                                            <span className="text-muted">
+                                                <span className="text-primary/70">Thời gian:</span>{" "}
+                                                <span className="font-medium text-foreground">{tour.duration || "—"}</span>
                                             </span>
-                                            <span className="text-gray-600">
-                                                <span className="text-gray-400">Địa điểm:</span> {tour.location || "—"}
+                                            <span className="text-muted">
+                                                <span className="text-primary/70">Địa điểm:</span>{" "}
+                                                <span className="font-medium text-foreground">{tour.location || "—"}</span>
                                             </span>
-                                            <span className="text-gray-600">
-                                                <span className="text-gray-400">Số ảnh:</span>{" "}
-                                                <span className={`font-semibold ${tour.image_count > 0 ? "text-blue-600" : "text-amber-600"}`}>
+                                            <span className="text-muted">
+                                                <span className="text-primary/70">Số ảnh:</span>{" "}
+                                                <span className={`font-bold ${tour.image_count > 0 ? "text-primary" : "text-warning"}`}>
                                                     {tour.image_count}
                                                 </span>
                                             </span>
@@ -262,6 +293,23 @@ export default function TourImageList() {
                     </>
                 )}
             </div>
+
+            {editing && (
+                <TourImageFormModal
+                    tour={editing}
+                    onClose={() => setEditing(null)}
+                    onSaved={loadTours}
+                />
+            )}
+
+            {preview && (
+                <ImageLightbox
+                    src={preview.src}
+                    alt={preview.alt}
+                    caption={preview.caption}
+                    onClose={() => setPreview(null)}
+                />
+            )}
         </div>
     );
 }

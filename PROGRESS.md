@@ -78,7 +78,6 @@
 - [x] Chạy `npm run seed` + verify: 33 users / 50 bookings / 172 passengers; 0 đơn lệch giá; 0 sai ngày; 0 lệch passenger
 - [x] Test API admin: `/stats`, `/trips`, `/top-packages`, list, `/:id` đều `success=true` với dữ liệu mới
 
-
 ### ⬜ Việc có thể làm tiếp (backlog, chưa làm)
 
 - [ ] Nút **Add Booking** trên dashboard — đã bỏ theo yêu cầu, chỉ thêm lại khi cần
@@ -94,14 +93,14 @@
 
 Base: `/api/admin/bookings` — tất cả yêu cầu header `Authorization: Bearer <token>` và role `admin` hoặc `booking-staff`.
 
-| Method | Endpoint | Query / Body | Mô tả |
-|---|---|---|---|
-| GET | `/` | `page`, `limit`, `search`, `status`, `fromDate`, `toDate` | Danh sách + tìm kiếm + lọc trạng thái + lọc ngày khởi hành + phân trang |
-| GET | `/stats` | — | 3 thẻ thống kê + sparkline 12 tháng |
-| GET | `/trips` | `range=7d\|30d\|3m\|12m` | Số chuyến `done` / `canceled` theo thời gian |
-| GET | `/top-packages` | `range=12m`, `limit=5` | Top tour theo số lượt đặt |
-| GET | `/:id` | — | Chi tiết booking + passengers + `history` (lịch sử suy ra) |
-| PUT | `/:id/status` | `{ "status": "pending\|confirmed\|cancelled" }` | Đổi trạng thái, tự hoàn/trừ ghế |
+| Method | Endpoint        | Query / Body                                              | Mô tả                                                                   |
+| ------ | --------------- | --------------------------------------------------------- | ----------------------------------------------------------------------- |
+| GET    | `/`             | `page`, `limit`, `search`, `status`, `fromDate`, `toDate` | Danh sách + tìm kiếm + lọc trạng thái + lọc ngày khởi hành + phân trang |
+| GET    | `/stats`        | —                                                         | 3 thẻ thống kê + sparkline 12 tháng                                     |
+| GET    | `/trips`        | `range=7d\|30d\|3m\|12m`                                  | Số chuyến `done` / `canceled` theo thời gian                            |
+| GET    | `/top-packages` | `range=12m`, `limit=5`                                    | Top tour theo số lượt đặt                                               |
+| GET    | `/:id`          | —                                                         | Chi tiết booking + passengers + `history` (lịch sử suy ra)              |
+| PUT    | `/:id/status`   | `{ "status": "pending\|confirmed\|cancelled" }`           | Đổi trạng thái, tự hoàn/trừ ghế                                         |
 
 ### Quy tắc nghiệp vụ đã chốt
 
@@ -122,25 +121,25 @@ Base: `/api/admin/bookings` — tất cả yêu cầu header `Authorization: Bea
 ```json
 // GET /api/admin/bookings
 {
-  "success": true,
-  "data": [
-    {
-      "id": 18,
-      "code": "BK-00018",
-      "name": "Trần Quốc Lan",
-      "package": "Tour Quy Nhơn – Phú Yên 3N2Đ",
-      "duration": "3 ngày 2 đêm",
-      "date": "05/10/2026",
-      "price": 5729895,
-      "status": "confirmed",
-      "status_label": "Đã xác nhận",
-      "payment_status": "unpaid",
-      "adults": 4,
-      "children": 0,
-      "created_at": "2026-10-17T09:26:18.000Z"
-    }
-  ],
-  "pagination": { "currentPage": 1, "totalPages": 2, "total": 20, "limit": 10 }
+	"success": true,
+	"data": [
+		{
+			"id": 18,
+			"code": "BK-00018",
+			"name": "Trần Quốc Lan",
+			"package": "Tour Quy Nhơn – Phú Yên 3N2Đ",
+			"duration": "3 ngày 2 đêm",
+			"date": "05/10/2026",
+			"price": 5729895,
+			"status": "confirmed",
+			"status_label": "Đã xác nhận",
+			"payment_status": "unpaid",
+			"adults": 4,
+			"children": 0,
+			"created_at": "2026-10-17T09:26:18.000Z"
+		}
+	],
+	"pagination": { "currentPage": 1, "totalPages": 2, "total": 20, "limit": 10 }
 }
 ```
 
@@ -150,38 +149,38 @@ Base: `/api/admin/bookings` — tất cả yêu cầu header `Authorization: Bea
 
 ### Backend (mới)
 
-| File | Vai trò |
-|---|---|
-| `backend/src/features/admin/bookings/booking.routes.js` | Khai báo route, phân quyền |
-| `backend/src/features/admin/bookings/booking.controller.js` | HTTP handler, format response |
-| `backend/src/features/admin/bookings/booking.service.js` | Nghiệp vụ, map DTO, tính %, transaction đổi trạng thái |
+| File                                                        | Vai trò                                                           |
+| ----------------------------------------------------------- | ----------------------------------------------------------------- |
+| `backend/src/features/admin/bookings/booking.routes.js`     | Khai báo route, phân quyền                                        |
+| `backend/src/features/admin/bookings/booking.controller.js` | HTTP handler, format response                                     |
+| `backend/src/features/admin/bookings/booking.service.js`    | Nghiệp vụ, map DTO, tính %, transaction đổi trạng thái            |
 | `backend/src/features/admin/bookings/booking.repository.js` | Knex query builder (list/stats/trips/top/detail/passengers/seats) |
-| `backend/src/features/admin/bookings/booking.validate.js` | Validate query/param/body |
+| `backend/src/features/admin/bookings/booking.validate.js`   | Validate query/param/body                                         |
 
 ### Backend (sửa)
 
-| File | Thay đổi |
-|---|---|
-| `backend/src/app.js` | Import + mount `/api/admin/bookings` |
+| File                                                     | Thay đổi                                                     |
+| -------------------------------------------------------- | ------------------------------------------------------------ |
+| `backend/src/app.js`                                     | Import + mount `/api/admin/bookings`                         |
 | `backend/src/features/admin/bookings/booking.service.js` | Thêm `buildHistory()` + trả `history` trong chi tiết booking |
 
 ### Frontend (mới)
 
-| File | Vai trò |
-|---|---|
-| `frontend/src/features/admin/bookings/bookings.api.js` | Gọi 6 endpoint admin bookings |
-| `frontend/src/features/admin/bookings/BookingDetail/` | Trang chi tiết booking: `index.jsx`, `BookingHeader`, `TourInfoSection`, `CustomerSection`, `PassengersSection`, `TotalPriceCard`, `ActivityHistory`, `InvoiceModal`, `common`, `bookingMeta`, `detailFormat` |
+| File                                                   | Vai trò                                                                                                                                                                                                       |
+| ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `frontend/src/features/admin/bookings/bookings.api.js` | Gọi 6 endpoint admin bookings                                                                                                                                                                                 |
+| `frontend/src/features/admin/bookings/BookingDetail/`  | Trang chi tiết booking: `index.jsx`, `BookingHeader`, `TourInfoSection`, `CustomerSection`, `PassengersSection`, `TotalPriceCard`, `ActivityHistory`, `InvoiceModal`, `common`, `bookingMeta`, `detailFormat` |
 
 ### Frontend (sửa)
 
-| File | Thay đổi |
-|---|---|
-| `frontend/src/features/admin/bookings/DashboardBooking.jsx` | Tải stats + top packages thật, nhãn thẻ tiếng Việt |
-| `frontend/src/features/admin/bookings/components/TripsOverview.jsx` | Tự fetch theo range, trục Y động, tiêu đề/chú thích tiếng Việt |
+| File                                                                | Thay đổi                                                                                                                            |
+| ------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `frontend/src/features/admin/bookings/DashboardBooking.jsx`         | Tải stats + top packages thật, nhãn thẻ tiếng Việt                                                                                  |
+| `frontend/src/features/admin/bookings/components/TripsOverview.jsx` | Tự fetch theo range, trục Y động, tiêu đề/chú thích tiếng Việt                                                                      |
 | `frontend/src/features/admin/bookings/components/BookingsTable.jsx` | Mã booking cột đầu (link chi tiết), cả dòng bấm được để mở chi tiết, search debounce, lọc ngày + trạng thái, phân trang server-side |
-| `frontend/src/features/admin/bookings/components/TopPackages.jsx` | Top tour theo lượt đặt trong 12 tháng, nhãn tiếng Việt |
-| `frontend/src/features/admin/bookings/dashboard.css` | Style bộ lọc `.filter-box`, `.filter-select`, trạng thái tải/rỗng, dòng bấm được `.row-clickable`, link mã `.booking-code-link` |
-| `frontend/src/routes/AdminRoutes.jsx` | Thêm route `bookings/:id` → trang chi tiết booking |
+| `frontend/src/features/admin/bookings/components/TopPackages.jsx`   | Top tour theo lượt đặt trong 12 tháng, nhãn tiếng Việt                                                                              |
+| `frontend/src/features/admin/bookings/dashboard.css`                | Style bộ lọc `.filter-box`, `.filter-select`, trạng thái tải/rỗng, dòng bấm được `.row-clickable`, link mã `.booking-code-link`     |
+| `frontend/src/routes/AdminRoutes.jsx`                               | Thêm route `bookings/:id` → trang chi tiết booking                                                                                  |
 
 ### Đã xóa
 
@@ -237,6 +236,7 @@ Invoke-RestMethod -Uri "http://localhost:3000/api/admin/bookings/top-packages?ra
 ### 2026-10-20 — Seed DB thực tế: user thật + 50 booking + passenger khớp
 
 **Đã làm:**
+
 - [x] `00_reset.js`: xóa theo thứ tự FK rồi `ALTER TABLE ... AUTO_INCREMENT = 1` → id sạch bắt đầu từ 1.
 - [x] `01_users.js`: **giữ nguyên email admin/staff** (`admin@`, `tourstaff@`, `bookingstaff@viettour.vn`); thay 30 khách hàng bằng tên thật + email theo tên thật (vd `nguyenvanan@gmail.com`) + SĐT/địa chỉ đầy đủ, ngày đăng ký trải đều.
 - [x] `04_bookings.js`: 50 booking sinh theo PRNG có seed (chạy lại ổn định):
@@ -250,14 +250,17 @@ Invoke-RestMethod -Uri "http://localhost:3000/api/admin/bookings/top-packages?ra
 - [x] `seed-config.js`: `users: 30`, `services: 10`, `bookings: 50`, `reviews: 40`.
 
 **File liên quan:**
+
 - Sửa: `backend/db/seeds/00_reset.js`, `01_users.js`, `04_bookings.js`, `05_reviews.js`, `backend/db/seed-config.js`
 
 **Kiểm tra:**
+
 - `cd backend; npm run seed` → `Ran 6 seed files`.
 - Query verify: 33 users / 30 customers / 50 bookings / 172 passengers / 30 reviews; **0** đơn lệch `total_price`; **0** đơn `created_at >= departure_date`; **0** đơn `updated_at < created_at`; **0** đơn lệch số passenger.
 - Test API admin: `/stats` (50 bookings, 172 khách, earnings `402.660.000 đ`, sparkline 12 tháng), `/trips`, `/top-packages`, list, `/:id` (có `history` 3 mốc cho đơn `cancelled/refunded`) đều `success=true`.
 
 **Ghi chú:**
+
 - Chạy `npm run seed` sẽ **xóa toàn bộ** dữ liệu hiện có và dựng lại DB sạch; redis không cần cho bước seed.
 
 ---
@@ -265,14 +268,17 @@ Invoke-RestMethod -Uri "http://localhost:3000/api/admin/bookings/top-packages?ra
 ### 2026-10-19 — Chỉnh nền header card + màu khối "Chưa thu"
 
 **Đã làm:**
+
 - [x] Header các card (Thông tin tour, Thông tin khách hàng, Danh sách hành khách, Tổng tiền, Lịch sử hoạt động) dùng nền xanh nhạt `bg-primary-50/60`.
 - [x] Khối **Chưa thu** đổi từ nền vàng (amber) sang xanh dương (`bg-sky-100`, chữ `text-sky-700`).
 - [x] Đưa tiêu đề Tổng tiền / Lịch sử hoạt động vào header card thống nhất với các card còn lại.
 
 **File liên quan:**
+
 - Sửa: `frontend/src/features/admin/bookings/BookingDetail/common.jsx`, `TotalPriceCard.jsx`, `ActivityHistory.jsx`
 
 **Kiểm tra:**
+
 - `npm run lint` pass, `npm run build` pass.
 
 ---
@@ -280,6 +286,7 @@ Invoke-RestMethod -Uri "http://localhost:3000/api/admin/bookings/top-packages?ra
 ### 2026-10-19 — Trang Admin Booking Detail + click dòng mở chi tiết
 
 **Đã làm:**
+
 - [x] Thêm route `/admin/bookings/:id`; bấm một dòng (hoặc mã booking) trong bảng sẽ mở chi tiết đúng `id`.
 - [x] Tạo thư mục `frontend/src/features/admin/bookings/BookingDetail/` và tách component: header, thông tin tour, khách hàng, hành khách, tổng tiền, lịch sử hoạt động, modal hóa đơn.
 - [x] Component **Tổng tiền**: dòng người lớn/trẻ em + dòng "Ưu đãi / điều chỉnh" khi lệch tổng, tổng cộng, khối thu tiền theo `payment_status` (ĐÃ THU / CHƯA THU / ĐÃ HOÀN TIỀN).
@@ -289,14 +296,17 @@ Invoke-RestMethod -Uri "http://localhost:3000/api/admin/bookings/top-packages?ra
 - [x] Skeleton khi tải + alert/nút thử lại khi lỗi.
 
 **File liên quan:**
+
 - Thêm: `frontend/src/features/admin/bookings/BookingDetail/` (index, BookingHeader, TourInfoSection, CustomerSection, PassengersSection, TotalPriceCard, ActivityHistory, InvoiceModal, common, bookingMeta, detailFormat)
 - Sửa: `backend/src/features/admin/bookings/booking.service.js`, `frontend/src/routes/AdminRoutes.jsx`, `frontend/src/features/admin/bookings/components/BookingsTable.jsx`, `frontend/src/features/admin/bookings/dashboard.css`
 
 **Kiểm tra:**
+
 - `npm run lint` pass, `npm run build` pass.
 - Test API `GET /api/admin/bookings/:id`: booking hủy trả `history` 2 mốc (hủy + khởi tạo) đúng thứ tự; kèm `passengers` và `status_label`.
 
 **Ghi chú:**
+
 - Lịch sử là **suy ra** từ `created_at`/`updated_at` + trạng thái; chưa có bảng audit riêng. Booking seed đều `unpaid` nên khối thu tiền hiển thị "CHƯA THU".
 - Trang chi tiết hiện chỉ hiển thị, chưa có nút đổi trạng thái.
 
@@ -305,15 +315,18 @@ Invoke-RestMethod -Uri "http://localhost:3000/api/admin/bookings/top-packages?ra
 ### 2026-10-19 — Chỉnh độ tương phản nhãn % Top Packages
 
 **Đã làm:**
+
 - [x] Nhãn phần trăm trong Top Packages dùng **chữ trắng**.
 - [x] Nền nhãn giữ đúng **màu tương ứng với lát donut** của từng tour.
 - [x] Thêm bóng chữ nhẹ để chữ trắng dễ đọc hơn trên nền sáng.
 - [x] Giữ nguyên màu lát donut.
 
 **File liên quan:**
+
 - Sửa: `TopPackages.jsx`, `dashboard.css`
 
 **Kiểm tra:**
+
 - `npm run lint` pass, `npm run build` pass.
 
 ---
@@ -321,6 +334,7 @@ Invoke-RestMethod -Uri "http://localhost:3000/api/admin/bookings/top-packages?ra
 ### 2026-10-19 — Việt hóa dashboard + bộ lọc ngày/trạng thái + Top Packages theo lượt đặt
 
 **Đã làm:**
+
 - [x] Việt hóa toàn bộ nhãn: thẻ thống kê, Tổng quan chuyến đi, Tour đặt nhiều nhất, bảng booking, phân trang.
 - [x] Top Packages: tính tổng lượt đặt trong 12 tháng, xếp tour nhiều booking nhất lên đầu, `%` theo tổng lượt đặt.
 - [x] Bảng booking: cột **Mã booking** đầu tiên, **Tên khách** thứ hai.
@@ -329,16 +343,19 @@ Invoke-RestMethod -Uri "http://localhost:3000/api/admin/bookings/top-packages?ra
 - [x] Backend list nhận `fromDate`, `toDate` và trả `status` raw + `status_label` tiếng Việt.
 
 **File liên quan:**
+
 - Sửa backend: `booking.repository.js`, `booking.service.js`, `booking.validate.js`
 - Sửa frontend: `DashboardBooking.jsx`, `TripsOverview.jsx`, `TopPackages.jsx`, `BookingsTable.jsx`, `dashboard.css`
 
 **Kiểm tra:**
+
 - `npm run lint` pass, `npm run build` pass.
 - Test API: lọc `fromDate=2026-10-01&toDate=2026-12-31&status=confirmed` → 4 booking đúng.
 - Test validate: ngày sai định dạng / from > to → 400.
 - Test top-packages: `totalBookings = 20`, tour top 3 booking (15%).
 
 **Ghi chú:**
+
 - TopPackages hiện cố định range `12m` trong `DashboardBooking`.
 - Bộ lọc ngày áp lên `tour_departures.departure_date` (Ngày khởi hành).
 
@@ -347,6 +364,7 @@ Invoke-RestMethod -Uri "http://localhost:3000/api/admin/bookings/top-packages?ra
 ### 2026-10-19 — Nối dashboard Admin Bookings với DB thật
 
 **Đã làm:**
+
 - Tạo mới toàn bộ backend feature `admin/bookings` với 6 endpoint.
 - Nối `DashboardBooking`, `TripsOverview`, `BookingsTable`, `TopPackages` với API thật.
 - Xóa mock data.
@@ -355,11 +373,13 @@ Invoke-RestMethod -Uri "http://localhost:3000/api/admin/bookings/top-packages?ra
 - Test đổi trạng thái `confirmed → cancelled → confirmed`, ghế được hoàn/trừ đúng và đã khôi phục dữ liệu test.
 
 **File liên quan:**
+
 - Thêm: `backend/src/features/admin/bookings/*` (5 file), `frontend/src/features/admin/bookings/bookings.api.js`
 - Sửa: `backend/src/app.js`, `DashboardBooking.jsx`, `TripsOverview.jsx`, `BookingsTable.jsx`, `TopPackages.jsx`, `dashboard.css`
 - Xóa: `frontend/src/features/admin/bookings/data/mockData.js`
 
 **Ghi chú:**
+
 - Earnings = `0 đ` vì toàn bộ booking seed là `unpaid`.
 - Sparkline chỉ có 1 tháng có dữ liệu vì mọi booking được tạo cùng ngày `2026-10-17`.
 
@@ -371,17 +391,21 @@ Invoke-RestMethod -Uri "http://localhost:3000/api/admin/bookings/top-packages?ra
 ### YYYY-MM-DD — <Tên việc>
 
 **Đã làm:**
+
 - [x] ...
 - [x] ...
 
 **File liên quan:**
+
 - Thêm: ...
 - Sửa: ...
 - Xóa: ...
 
 **Kiểm tra:**
+
 - `npm run lint` / `npm run build` / test API ...
 
 **Ghi chú / việc còn lại:**
+
 - ...
 ```

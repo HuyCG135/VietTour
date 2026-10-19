@@ -1,5 +1,5 @@
 import { SectionCard, PaymentPill } from "./common";
-import { formatVnd } from "../../../booking/bookingPrices";
+import { formatVnd } from "../../book-tour/bookingPrices";
 
 export default function PaymentSummary({ booking, priceRows }) {
     const b = booking;

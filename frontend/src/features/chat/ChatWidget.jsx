@@ -3,7 +3,7 @@ import { sendChat } from "./chat.api";
 
 const WELCOME = {
     role: "assistant",
-    content: "Xin chào! Tôi là trợ lý du lịch VietTour. Bạn cần tìm hiểu thông tin về tour nào?",
+    content: "Xin chào! Tôi là trợ lý du lịch Vietravel. Bạn cần tìm hiểu thông tin về tour nào?",
 };
 
 export default function ChatWidget() {
@@ -60,7 +60,7 @@ export default function ChatWidget() {
                     <div className="flex items-center justify-between px-4 py-3 bg-primary text-white shrink-0">
                         <div>
                             <p className="font-semibold text-sm">Trợ lý du lịch</p>
-                            <p className="text-xs opacity-80">VietTour</p>
+                            <p className="text-xs opacity-80">Vietravel</p>
                         </div>
                         <button
                             onClick={() => setOpen(false)}

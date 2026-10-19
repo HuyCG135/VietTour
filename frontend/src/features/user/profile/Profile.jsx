@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import EditableField from "./EditableField";
 import ChangePasswordForm from "./ChangePasswordForm";
 import UserPageHeader from "../../../components/UserPageHeader";
-import { getProfile, patchProfile } from "../user.api";
+import { getProfile, patchProfile } from "./profile.api";
 import { getUser, setUser } from "../../auth/auth.api.js";
 import { useToast } from "../../../context/ToastContext";
 
