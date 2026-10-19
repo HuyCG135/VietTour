@@ -35,10 +35,10 @@ Lệnh chạy trong `backend/` (cần MySQL đang chạy + `DB_PASSWORD` đúng 
 - `npm run migrate:make <name>` — tạo migration mới; tự đặt số thứ tự theo thứ tự bảng (bảng con phải sau bảng cha vì FK).
 
 Seed structure (`backend/db/`):
-- `seeds/00_reset.js` → xóa toàn bộ dữ liệu (thứ tự FK). `01..05` seed từng nhóm: users, tours(+images/itineraries/departures), services, bookings, reviews.
+- `seeds/00_reset.js` → xóa toàn bộ dữ liệu (thứ tự FK) + reset `AUTO_INCREMENT` để id bắt đầu từ 1. `01..05` seed từng nhóm: users, tours(+images/itineraries/departures), services, bookings, reviews.
 - Vì Knex chạy từng file độc lập (không share id), mỗi seed tự query lại id FK theo field duy nhất (email/slug) chứ không nhận id truyền vào.
 - `db/seed-data/tours.js` — `TOUR_SEED`: **18 tour thật** chắt lọc từ file `db_vietravel_KTPM.sql` (đồ án KTPM), gồm description, images (cloudinary), itineraries, departures. Seeder `02_tours.js` đọc từ đây.
-- `db/factories.js` — hàm sinh dữ liệu mẫu bằng faker (users/services); `db/seed-config.js` — tập trung số lượng (users/services/bookings/reviews; `tours` không còn dùng vì đã dùng data thật). **KHÔNG đặt file không-có-seed-fn trong `db/seeds/`** (Knex sẽ báo "must have a seed function").
+- `db/factories.js` — hàm sinh dữ liệu mẫu bằng faker (`makeService`; `makeUser` không còn dùng vì users seed từ danh sách thật); `db/seed-config.js` — tập trung số lượng (users/services/bookings/reviews; `tours` không còn dùng vì đã dùng data thật). **KHÔNG đặt file không-có-seed-fn trong `db/seeds/`** (Knex sẽ báo "must have a seed function").
 - Muốn thêm bảng mới: thêm migration + tạo `seeds/0X_<ten>.js` (số X sau các bảng nó phụ thuộc).
 
 > ✅ **Repository dùng Knex query builder** (`src/config/knex.js`), khớp schema mới (`price_default`, `cover_image`, `departure_id`, `adults`/`children`, `contact_*`).

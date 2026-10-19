@@ -1,14 +1,25 @@
 export async function seed(knex) {
     // Order matters for FK
-    await knex("wishlist").del();
-    await knex("reviews").del();
-    await knex("passengers").del();
-    await knex("bookings").del();
-    await knex("tour_services").del();
-    await knex("services").del();
-    await knex("tour_departures").del();
-    await knex("tour_itineraries").del();
-    await knex("tour_images").del();
-    await knex("tours").del();
-    await knex("users").del();
+    const tables = [
+        "wishlist",
+        "reviews",
+        "passengers",
+        "bookings",
+        "tour_services",
+        "services",
+        "tour_departures",
+        "tour_itineraries",
+        "tour_images",
+        "tours",
+        "users",
+    ];
+
+    for (const table of tables) {
+        await knex(table).del();
+    }
+
+    // Reset AUTO_INCREMENT để id bắt đầu lại từ 1 => DB "sạch" đúng nghĩa.
+    for (const table of tables) {
+        await knex.raw(`ALTER TABLE \`${table}\` AUTO_INCREMENT = 1`);
+    }
 }

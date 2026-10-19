@@ -8,7 +8,7 @@
 
 ## 1. Trạng thái hiện tại
 
-- **Cập nhật gần nhất:** 2026-10-19
+- **Cập nhật gần nhất:** 2026-10-20
 - **Backend:** Express + MySQL (`db_viet_travel`, port `3307`), chạy `npm run dev` trong `backend/`.
 - **Frontend:** React + Vite, chạy `npm run dev` trong `frontend/` (proxy `/api` → `http://localhost:3000`).
 - **Đăng nhập admin test:** `admin@viettour.vn` / `123456` (field là `username`).
@@ -63,6 +63,21 @@
 - [x] Skeleton khi tải, alert + nút thử lại khi lỗi
 - [x] `npm run lint` + `npm run build` pass; test API `GET /:id` có `history`
 
+### ✅ Seed DB thực tế — users + 50 bookings + passengers (2026-10-20)
+
+- [x] `00_reset.js`: xóa theo thứ tự FK + reset `AUTO_INCREMENT` để id sạch từ 1
+- [x] `01_users.js`: 3 tài khoản nội bộ **giữ nguyên email** + 30 khách hàng tên thật, email theo tên thật, SĐT/địa chỉ đầy đủ
+- [x] `04_bookings.js`: 50 booking, `total_price` tính đúng từ giá tour + phụ thu lịch khởi hành
+- [x] `created_at` trải 13 tháng (luôn trước ngày khởi hành ≥ 5 ngày); `updated_at` sau `created_at` (xác nhận/thanh toán/hủy)
+- [x] Nhiều tổ hợp trạng thái: `confirmed/paid`, `confirmed/unpaid`, `pending/unpaid`, `cancelled/refunded`, `cancelled/unpaid`
+- [x] `contact_name/phone/email/dob/gender` lấy từ tài khoản khách thật (15% đơn khách vãng lai)
+- [x] `passengers` khớp đúng `adults + children`, đủ tên/giới tính/ngày sinh/loại khách
+- [x] Trừ `seats_available` của lịch khởi hành theo số khách đã đặt (không tính đơn hủy)
+- [x] `05_reviews.js`: đánh giá chỉ cho đơn đã xác nhận & đã đi, ngày sau khởi hành, nội dung đa dạng
+- [x] `seed-config.js`: `users: 30`, `services: 10`, `bookings: 50`, `reviews: 40`
+- [x] Chạy `npm run seed` + verify: 33 users / 50 bookings / 172 passengers; 0 đơn lệch giá; 0 sai ngày; 0 lệch passenger
+- [x] Test API admin: `/stats`, `/trips`, `/top-packages`, list, `/:id` đều `success=true` với dữ liệu mới
+
 
 ### ⬜ Việc có thể làm tiếp (backlog, chưa làm)
 
@@ -70,7 +85,7 @@
 - [ ] Sắp xếp theo cột (Name / Date / Price…) — backend chưa hỗ trợ sort
 - [ ] Đổi trạng thái booking ngay trên UI — API `PUT /api/admin/bookings/:id/status` đã sẵn sàng
 - [ ] Xử lý 401 → chuyển về `/login` (hiện chỉ hiện toast lỗi)
-- [ ] Thêm vài booking `payment_status = 'paid'` để thấy Earnings khác 0
+- [x] Thêm booking `payment_status = 'paid'` / `refunded` để thấy Earnings + sparkline nhiều tháng
 - [ ] Đồng bộ `TripsOverview` và `TopPackages` dùng chung một range
 
 ---
@@ -179,7 +194,7 @@ Base: `/api/admin/bookings` — tất cả yêu cầu header `Authorization: Bea
 - Backend dùng DB **`db_viet_travel`** trên port **`3307`** (xem `backend/.env`). Công cụ MySQL MCP của môi trường có thể trỏ sang DB khác (`db_viet_tour`) — **đừng sửa dữ liệu test qua MCP**, hãy kiểm tra bằng chính backend/Knex.
 - `mysql2` trả `DECIMAL`/`SUM` dạng **string** → luôn `Number(...)` trước khi tính toán/format.
 - Route tĩnh (`/stats`, `/trips`, `/top-packages`) phải khai báo **trước** `/:id`.
-- Toàn bộ booking seed đang `created_at = 2026-10-17` và `payment_status = 'unpaid'` → sparkline chỉ có 1 cột, Earnings = `0 đ`. Đây là dữ liệu thật, không phải lỗi.
+- Seed hiện tại: **33 user** (3 nội bộ + 30 khách), **50 booking**, **172 passenger**, trải 13 tháng với đủ trạng thái `confirmed/paid`, `confirmed/unpaid`, `pending/unpaid`, `cancelled/refunded`, `cancelled/unpaid`. Chạy `cd backend; npm run seed` để dựng lại DB sạch (reset id từ 1).
 - Login dùng field `username` (không phải `email`).
 - Khi thêm endpoint mới: giữ format response `{ success, data?, message? }` và cập nhật file này.
 
@@ -218,6 +233,34 @@ Invoke-RestMethod -Uri "http://localhost:3000/api/admin/bookings/top-packages?ra
 ---
 
 ## 7. Lịch sử cập nhật
+
+### 2026-10-20 — Seed DB thực tế: user thật + 50 booking + passenger khớp
+
+**Đã làm:**
+- [x] `00_reset.js`: xóa theo thứ tự FK rồi `ALTER TABLE ... AUTO_INCREMENT = 1` → id sạch bắt đầu từ 1.
+- [x] `01_users.js`: **giữ nguyên email admin/staff** (`admin@`, `tourstaff@`, `bookingstaff@viettour.vn`); thay 30 khách hàng bằng tên thật + email theo tên thật (vd `nguyenvanan@gmail.com`) + SĐT/địa chỉ đầy đủ, ngày đăng ký trải đều.
+- [x] `04_bookings.js`: 50 booking sinh theo PRNG có seed (chạy lại ổn định):
+  - `total_price` = `adults*(price_default + price_moving) + children*(price_child + price_moving_child)` — **tính toán, không bịa**.
+  - `created_at` trải 13 tháng gần nhất, luôn **trước** ngày khởi hành ≥ 5 ngày; `updated_at` = lúc xác nhận/thanh toán/hủy (sau `created_at`).
+  - Đủ trạng thái: `confirmed/paid` (28), `confirmed/unpaid` (7), `pending/unpaid` (7), `cancelled/refunded` (6), `cancelled/unpaid` (2).
+  - `contact_name/phone/email/dob/gender` lấy từ tài khoản khách thật; ~15% đơn là khách vãng lai nhưng vẫn đủ thông tin.
+  - `passengers` khớp đúng `adults + children` (172 hành khách), đủ tên/giới tính/ngày sinh/`passenger_type`.
+  - Cập nhật `seats_available` của `tour_departures` theo số khách đã đặt (bỏ qua đơn hủy).
+- [x] `05_reviews.js`: chỉ đánh giá đơn đã xác nhận & đã đi, ngày sau khởi hành, rating/nội dung đa dạng, phủ tối thiểu mỗi tour.
+- [x] `seed-config.js`: `users: 30`, `services: 10`, `bookings: 50`, `reviews: 40`.
+
+**File liên quan:**
+- Sửa: `backend/db/seeds/00_reset.js`, `01_users.js`, `04_bookings.js`, `05_reviews.js`, `backend/db/seed-config.js`
+
+**Kiểm tra:**
+- `cd backend; npm run seed` → `Ran 6 seed files`.
+- Query verify: 33 users / 30 customers / 50 bookings / 172 passengers / 30 reviews; **0** đơn lệch `total_price`; **0** đơn `created_at >= departure_date`; **0** đơn `updated_at < created_at`; **0** đơn lệch số passenger.
+- Test API admin: `/stats` (50 bookings, 172 khách, earnings `402.660.000 đ`, sparkline 12 tháng), `/trips`, `/top-packages`, list, `/:id` (có `history` 3 mốc cho đơn `cancelled/refunded`) đều `success=true`.
+
+**Ghi chú:**
+- Chạy `npm run seed` sẽ **xóa toàn bộ** dữ liệu hiện có và dựng lại DB sạch; redis không cần cho bước seed.
+
+---
 
 ### 2026-10-19 — Chỉnh nền header card + màu khối "Chưa thu"
 
