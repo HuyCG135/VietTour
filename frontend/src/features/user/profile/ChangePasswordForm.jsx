@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { changePassword } from "../user.api";
+import { changePassword } from "./profile.api";
 import { useToast } from "../../../context/ToastContext";
 
 const PASSWORD_FIELDS = [
