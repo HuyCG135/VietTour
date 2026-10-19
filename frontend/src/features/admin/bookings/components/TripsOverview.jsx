@@ -47,7 +47,7 @@ export default function TripsOverview({ rangeOptions }) {
         <div className="card trips-card">
             {/* Tiêu đề + chọn khoảng thời gian */}
             <div className="card-header">
-                <h3 className="card-title">Trips Overview</h3>
+                <h3 className="card-title">Tổng quan chuyến đi</h3>
                 <div className="select-wrap">
                     <select
                         className="btn-primary select-primary"
@@ -66,8 +66,8 @@ export default function TripsOverview({ rangeOptions }) {
 
             {/* Chú thích */}
             <div className="legend">
-                <span className="legend-item"><i className="legend-line" /> Done</span>
-                <span className="legend-item"><i className="legend-line dashed" /> Canceled</span>
+                <span className="legend-item"><i className="legend-line" /> Đã xác nhận</span>
+                <span className="legend-item"><i className="legend-line dashed" /> Đã hủy</span>
             </div>
 
             {/* Biểu đồ */}
@@ -87,8 +87,8 @@ export default function TripsOverview({ rangeOptions }) {
                                 allowDecimals={false}
                             />
                             <Tooltip />
-                            <Area type="monotone" dataKey="done" stroke="#44a8f8" strokeWidth={2} fill="#44a8f8" fillOpacity={0.15} />
-                            <Line type="monotone" dataKey="canceled" stroke="#4b5563" strokeWidth={1.5} strokeDasharray="4 3" dot={false} />
+                            <Area type="monotone" dataKey="done" name="Đã xác nhận" stroke="#44a8f8" strokeWidth={2} fill="#44a8f8" fillOpacity={0.15} />
+                            <Line type="monotone" dataKey="canceled" name="Đã hủy" stroke="#4b5563" strokeWidth={1.5} strokeDasharray="4 3" dot={false} />
                         </ComposedChart>
                     </ResponsiveContainer>
                 )}

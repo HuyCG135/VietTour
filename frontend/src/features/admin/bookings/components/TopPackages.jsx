@@ -5,12 +5,12 @@ const numberFormatter = new Intl.NumberFormat("vi-VN");
 
 // Biểu đồ donut + danh sách top package
 export default function TopPackages({ data }) {
-    const { period, totalParticipants, items } = data;
+    const { period, totalBookings, items } = data;
 
     return (
         <div className="card top-packages">
             <div className="card-header">
-                <h3 className="card-title">Top Packages</h3>
+                <h3 className="card-title">Tour đặt nhiều nhất</h3>
                 <button className="icon-btn">
                     <MoreHorizontal size={18} />
                 </button>
@@ -40,8 +40,8 @@ export default function TopPackages({ data }) {
                     <span className="donut-period">
                         {period} <ChevronDown size={10} />
                     </span>
-                    <strong>{numberFormatter.format(totalParticipants)}</strong>
-                    <span className="donut-sub">Total Participants</span>
+                    <strong>{numberFormatter.format(totalBookings)}</strong>
+                    <span className="donut-sub">Tổng lượt đặt</span>
                 </div>
             </div>
 
@@ -57,7 +57,7 @@ export default function TopPackages({ data }) {
                         </span>
                         <div>
                             <div className="package-name">{it.name}</div>
-                            <div className="package-sub">{it.participants} Participants</div>
+                            <div className="package-sub">{numberFormatter.format(it.bookings)} lượt đặt</div>
                         </div>
                     </li>
                 ))}

@@ -13,10 +13,26 @@ const isPositiveInt = (value) => {
     return Number.isInteger(number) && number >= 1;
 };
 
+// Chấp nhận đúng định dạng YYYY-MM-DD và là ngày có thật.
+const isValidDate = (value) => {
+    if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+        return false;
+    }
+
+    const [year, month, day] = value.split("-").map(Number);
+    const date = new Date(year, month - 1, day);
+
+    return (
+        date.getFullYear() === year &&
+        date.getMonth() === month - 1 &&
+        date.getDate() === day
+    );
+};
+
 // GET /api/admin/bookings
 export const validateListQuery = (req, res, next) => {
     const errors = [];
-    const { page, limit, status, search } = req.query;
+    const { page, limit, status, search, fromDate, toDate } = req.query;
 
     if (page !== undefined && !isPositiveInt(page)) {
         errors.push("page phải là số nguyên dương");
@@ -35,6 +51,22 @@ export const validateListQuery = (req, res, next) => {
 
     if (typeof search === "string" && search.length > 100) {
         errors.push("Từ khóa tìm kiếm không được vượt quá 100 ký tự");
+    }
+
+    if (fromDate !== undefined && !isValidDate(fromDate)) {
+        errors.push("fromDate phải có định dạng YYYY-MM-DD");
+    }
+
+    if (toDate !== undefined && !isValidDate(toDate)) {
+        errors.push("toDate phải có định dạng YYYY-MM-DD");
+    }
+
+    if (
+        isValidDate(fromDate) &&
+        isValidDate(toDate) &&
+        fromDate > toDate
+    ) {
+        errors.push("fromDate không được lớn hơn toDate");
     }
 
     if (errors.length > 0) {

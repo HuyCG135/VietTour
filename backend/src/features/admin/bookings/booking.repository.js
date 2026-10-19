@@ -6,8 +6,8 @@ const toNumber = (value) =>
 // Data access thuần cho admin booking (Knex query builder).
 // Mọi phép tính tiền/tổng đều convert sang Number vì mysql2 trả DECIMAL dạng string.
 class AdminBooking {
-    // Query danh sách: join user + lịch khởi hành + tour, áp filter search/status.
-    static buildListQuery({ search, status } = {}) {
+    // Query danh sách: join user + lịch khởi hành + tour, áp filter search/status/ngày.
+    static buildListQuery({ search, status, fromDate, toDate } = {}) {
         const query = db("bookings as b")
             .leftJoin("users as u", "b.user_id", "u.id")
             .leftJoin("tour_departures as d", "b.departure_id", "d.id")
@@ -15,6 +15,15 @@ class AdminBooking {
 
         if (status) {
             query.where("b.status", status);
+        }
+
+        // Lọc theo ngày khởi hành (cột Date đang hiển thị trên bảng).
+        if (fromDate) {
+            query.where("d.departure_date", ">=", fromDate);
+        }
+
+        if (toDate) {
+            query.where("d.departure_date", "<=", toDate);
         }
 
         const keyword = typeof search === "string" ? search.trim() : "";
@@ -39,10 +48,10 @@ class AdminBooking {
     }
 
     // Danh sách booking có phân trang, mới nhất trước.
-    static async list({ page, limit, search, status }) {
+    static async list({ page, limit, search, status, fromDate, toDate }) {
         const pageNum = Math.max(1, Number(page) || 1);
         const limitNum = Math.min(100, Math.max(1, Number(limit) || 10));
-        const filters = { search, status };
+        const filters = { search, status, fromDate, toDate };
 
         const countRows = await this.buildListQuery(filters).count({ total: "b.id" });
         const total = toNumber(countRows?.[0]?.total);
@@ -238,24 +247,25 @@ class AdminBooking {
             .orderBy("period", "asc");
     }
 
-    // Top tour theo tổng số khách (adults + children) trong khoảng thời gian.
+    // Top tour theo số lượt đặt (booking) trong khoảng thời gian.
     static async getTopPackages(from, limit) {
         return db("bookings as b")
             .join("tour_departures as d", "b.departure_id", "d.id")
             .join("tours as t", "d.tour_id", "t.id")
             .where("b.created_at", ">=", from)
             .select("t.id", "t.name")
-            .select(db.raw("COALESCE(SUM(b.adults + b.children), 0) as participants"))
+            .select(db.raw("COUNT(b.id) as bookings"))
             .groupBy("t.id", "t.name")
-            .orderBy("participants", "desc")
+            .orderBy("bookings", "desc")
+            .orderBy("t.id", "asc")
             .limit(limit);
     }
 
-    // Tổng khách của tất cả tour trong khoảng (mẫu số tính %).
-    static async getParticipantsTotal(from) {
+    // Tổng số lượt đặt trong khoảng (mẫu số tính %).
+    static async getBookingsTotal(from) {
         const row = await db("bookings")
             .where("created_at", ">=", from)
-            .select(db.raw("COALESCE(SUM(adults + children), 0) as total"))
+            .count({ total: "id" })
             .first();
 
         return toNumber(row?.total);

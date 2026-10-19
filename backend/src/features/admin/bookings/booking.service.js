@@ -9,9 +9,9 @@ const createHttpError = (status, message) => {
 
 // Chỉ 3 trạng thái theo yêu cầu (không suy diễn "Completed").
 const STATUS_LABEL = {
-    pending: "Pending",
-    confirmed: "Confirmed",
-    cancelled: "Cancelled",
+    pending: "Chờ xử lý",
+    confirmed: "Đã xác nhận",
+    cancelled: "Đã hủy",
 };
 
 // Cấu hình range cho TripsOverview + TopPackages.
@@ -93,6 +93,8 @@ export const listBookingsService = async (query = {}) => {
         limit: query.limit,
         search: typeof query.search === "string" ? query.search.trim() : "",
         status: query.status,
+        fromDate: query.fromDate,
+        toDate: query.toDate,
     });
 
     return {
@@ -104,7 +106,8 @@ export const listBookingsService = async (query = {}) => {
             duration: row.duration || "",
             date: row.departure_date_text || "",
             price: Number(row.total_price) || 0,
-            status: STATUS_LABEL[row.status] || row.status,
+            status: row.status,
+            status_label: STATUS_LABEL[row.status] || row.status,
             payment_status: row.payment_status,
             adults: Number(row.adults) || 0,
             children: Number(row.children) || 0,
@@ -202,28 +205,29 @@ export const getTripsOverviewService = async (range) => {
     return data;
 };
 
-// TopPackages: top tour theo tổng khách, percent tính trên toàn bộ khách trong range.
+// TopPackages: top tour theo số lượt đặt trong 1 năm,
+// percent tính trên tổng lượt đặt của range (tour nhiều booking nhất đứng đầu).
 export const getTopPackagesService = async (range, limit) => {
     const resolved = resolveRange(range);
     const limitNum = Math.min(20, Math.max(1, Number(limit) || 5));
 
-    const [rows, totalParticipants] = await Promise.all([
+    const [rows, totalBookings] = await Promise.all([
         AdminBooking.getTopPackages(resolved.from, limitNum),
-        AdminBooking.getParticipantsTotal(resolved.from),
+        AdminBooking.getBookingsTotal(resolved.from),
     ]);
 
     return {
         period: resolved.label,
-        totalParticipants,
+        totalBookings,
         items: rows.map((row) => {
-            const participants = Number(row.participants) || 0;
+            const bookings = Number(row.bookings) || 0;
             return {
                 id: row.id,
                 name: row.name,
-                participants,
+                bookings,
                 percent:
-                    totalParticipants > 0
-                        ? Math.round((participants / totalParticipants) * 100)
+                    totalBookings > 0
+                        ? Math.round((bookings / totalBookings) * 100)
                         : 0,
             };
         }),

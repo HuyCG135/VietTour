@@ -36,15 +36,27 @@
 - [x] Chạy `npm run lint` + `npm run build` (pass)
 - [x] Test API bằng tài khoản admin thật (20 bookings / 63 khách / 0 đ earnings)
 
+### ✅ Cập nhật giao diện tiếng Việt + bộ lọc (2026-10-19)
+
+- [x] Đổi toàn bộ nhãn dashboard sang tiếng Việt (StatCards, Trips Overview, Top Packages, bảng booking)
+- [x] Top Packages: tính theo **số lượt đặt trong 12 tháng**, xếp tour nhiều booking nhất lên đầu
+- [x] Đổi % Top Packages = số booking của tour / tổng booking trong năm
+- [x] Bảng booking: đưa **Mã booking** lên cột đầu, **Tên khách** cột thứ hai
+- [x] Bỏ nút **Add Booking**
+- [x] Thay nút **Today** bằng bộ lọc **Từ ngày / Đến ngày** (ngày khởi hành)
+- [x] Thêm bộ lọc **Trạng thái** (Chờ xử lý / Đã xác nhận / Đã hủy)
+- [x] Backend list hỗ trợ `fromDate`, `toDate`
+- [x] Trả về `status` (raw) + `status_label` (tiếng Việt)
+- [x] `npm run lint` + `npm run build` pass; test API lọc ngày + trạng thái
+
+
 ### ⬜ Việc có thể làm tiếp (backlog, chưa làm)
 
-- [ ] Nút **Add Booking** trên dashboard (hiện chỉ là nút trang trí)
-- [ ] Bộ lọc trạng thái (Pending / Confirmed / Cancelled) trên thanh công cụ bảng
+- [ ] Nút **Add Booking** trên dashboard — đã bỏ theo yêu cầu, chỉ thêm lại khi cần
 - [ ] Sắp xếp theo cột (Name / Date / Price…) — backend chưa hỗ trợ sort
 - [ ] Modal xem chi tiết booking — API `GET /api/admin/bookings/:id` đã sẵn sàng
 - [ ] Đổi trạng thái booking ngay trên UI — API `PUT /api/admin/bookings/:id/status` đã sẵn sàng
 - [ ] Xử lý 401 → chuyển về `/login` (hiện chỉ hiện toast lỗi)
-- [ ] Nút **Today** trên bảng (hiện chỉ trang trí)
 - [ ] Thêm vài booking `payment_status = 'paid'` để thấy Earnings khác 0
 - [ ] Đồng bộ `TripsOverview` và `TopPackages` dùng chung một range
 
@@ -56,10 +68,10 @@ Base: `/api/admin/bookings` — tất cả yêu cầu header `Authorization: Bea
 
 | Method | Endpoint | Query / Body | Mô tả |
 |---|---|---|---|
-| GET | `/` | `page`, `limit`, `search`, `status` | Danh sách + phân trang + tìm theo tên/mã/tour |
+| GET | `/` | `page`, `limit`, `search`, `status`, `fromDate`, `toDate` | Danh sách + tìm kiếm + lọc trạng thái + lọc ngày khởi hành + phân trang |
 | GET | `/stats` | — | 3 thẻ thống kê + sparkline 12 tháng |
 | GET | `/trips` | `range=7d\|30d\|3m\|12m` | Số chuyến `done` / `canceled` theo thời gian |
-| GET | `/top-packages` | `range`, `limit=5` | Top tour theo tổng khách |
+| GET | `/top-packages` | `range=12m`, `limit=5` | Top tour theo số lượt đặt |
 | GET | `/:id` | — | Chi tiết booking + passengers |
 | PUT | `/:id/status` | `{ "status": "pending\|confirmed\|cancelled" }` | Đổi trạng thái, tự hoàn/trừ ghế |
 
@@ -68,9 +80,10 @@ Base: `/api/admin/bookings` — tất cả yêu cầu header `Authorization: Bea
 - **Earnings** = `SUM(total_price)` với `payment_status = 'paid'`.
 - **Trục thời gian thống kê** = `bookings.created_at`.
 - **Tên khách** = `users.fullname`, fallback `bookings.contact_name` nếu `user_id` null.
-- **Trạng thái hiển thị** chỉ có 3 nhãn: `Pending`, `Confirmed`, `Cancelled` (không có `Completed`).
+- **Trạng thái hiển thị** chỉ có 3 nhãn tiếng Việt: `Chờ xử lý`, `Đã xác nhận`, `Đã hủy` (không có `Hoàn thành`). API trả thêm `status` raw (`pending/confirmed/cancelled`) để lọc.
 - **Trips Overview:** `done = confirmed`, `canceled = cancelled`.
-- **Top Packages:** `SUM(adults + children)` theo tour, lấy top 5, tính % trên tổng khách trong range.
+- **Top Packages:** đếm **số lượt đặt** (`COUNT(bookings.id)`) theo tour trong **12 tháng**, xếp tour nhiều booking nhất lên đầu; `% = số booking của tour / tổng booking trong kỳ`.
+- **Lọc ngày trên bảng:** `fromDate` / `toDate` áp lên `tour_departures.departure_date` (cột Ngày khởi hành), định dạng `YYYY-MM-DD`.
 - **% thay đổi:** tháng hiện tại vs tháng trước; kỳ trước = 0 → `0%` (hoặc `100%` nếu kỳ này có dữ liệu).
 - **Đổi trạng thái:** hủy booking → hoàn ghế; mở lại booking đã hủy → kiểm tra đủ chỗ rồi trừ ghế; tất cả trong transaction.
 
@@ -89,7 +102,8 @@ Base: `/api/admin/bookings` — tất cả yêu cầu header `Authorization: Bea
       "duration": "3 ngày 2 đêm",
       "date": "05/10/2026",
       "price": 5729895,
-      "status": "Confirmed",
+      "status": "confirmed",
+      "status_label": "Đã xác nhận",
       "payment_status": "unpaid",
       "adults": 4,
       "children": 0,
@@ -130,11 +144,11 @@ Base: `/api/admin/bookings` — tất cả yêu cầu header `Authorization: Bea
 
 | File | Thay đổi |
 |---|---|
-| `frontend/src/features/admin/bookings/DashboardBooking.jsx` | Tải stats + top packages thật, map sang props component con |
-| `frontend/src/features/admin/bookings/components/TripsOverview.jsx` | Tự fetch theo range, trục Y động, trạng thái loading/rỗng |
-| `frontend/src/features/admin/bookings/components/BookingsTable.jsx` | Search debounce + phân trang server-side, format VND |
-| `frontend/src/features/admin/bookings/components/TopPackages.jsx` | Format số theo `vi-VN` |
-| `frontend/src/features/admin/bookings/dashboard.css` | Thêm `.chart-state`, `.table-state`, `.trips-chart.is-loading` |
+| `frontend/src/features/admin/bookings/DashboardBooking.jsx` | Tải stats + top packages thật, nhãn thẻ tiếng Việt |
+| `frontend/src/features/admin/bookings/components/TripsOverview.jsx` | Tự fetch theo range, trục Y động, tiêu đề/chú thích tiếng Việt |
+| `frontend/src/features/admin/bookings/components/BookingsTable.jsx` | Mã booking cột đầu, search debounce, lọc ngày + trạng thái, phân trang server-side |
+| `frontend/src/features/admin/bookings/components/TopPackages.jsx` | Top tour theo lượt đặt trong 12 tháng, nhãn tiếng Việt |
+| `frontend/src/features/admin/bookings/dashboard.css` | Style bộ lọc `.filter-box`, `.filter-select`, trạng thái tải/rỗng |
 
 ### Đã xóa
 
@@ -177,6 +191,7 @@ $login = Invoke-RestMethod -Uri "http://localhost:3000/api/auth/login" -Method P
 $headers = @{ Authorization = "Bearer $($login.data.token)" }
 
 Invoke-RestMethod -Uri "http://localhost:3000/api/admin/bookings?page=1&limit=10" -Headers $headers
+Invoke-RestMethod -Uri "http://localhost:3000/api/admin/bookings?fromDate=2026-10-01&toDate=2026-12-31&status=confirmed" -Headers $headers
 Invoke-RestMethod -Uri "http://localhost:3000/api/admin/bookings/stats" -Headers $headers
 Invoke-RestMethod -Uri "http://localhost:3000/api/admin/bookings/trips?range=12m" -Headers $headers
 Invoke-RestMethod -Uri "http://localhost:3000/api/admin/bookings/top-packages?range=12m&limit=5" -Headers $headers
@@ -185,6 +200,32 @@ Invoke-RestMethod -Uri "http://localhost:3000/api/admin/bookings/top-packages?ra
 ---
 
 ## 7. Lịch sử cập nhật
+
+### 2026-10-19 — Việt hóa dashboard + bộ lọc ngày/trạng thái + Top Packages theo lượt đặt
+
+**Đã làm:**
+- [x] Việt hóa toàn bộ nhãn: thẻ thống kê, Tổng quan chuyến đi, Tour đặt nhiều nhất, bảng booking, phân trang.
+- [x] Top Packages: tính tổng lượt đặt trong 12 tháng, xếp tour nhiều booking nhất lên đầu, `%` theo tổng lượt đặt.
+- [x] Bảng booking: cột **Mã booking** đầu tiên, **Tên khách** thứ hai.
+- [x] Bỏ nút **Add Booking**.
+- [x] Thay nút **Today** bằng bộ lọc **Từ ngày / Đến ngày** + **Trạng thái**.
+- [x] Backend list nhận `fromDate`, `toDate` và trả `status` raw + `status_label` tiếng Việt.
+
+**File liên quan:**
+- Sửa backend: `booking.repository.js`, `booking.service.js`, `booking.validate.js`
+- Sửa frontend: `DashboardBooking.jsx`, `TripsOverview.jsx`, `TopPackages.jsx`, `BookingsTable.jsx`, `dashboard.css`
+
+**Kiểm tra:**
+- `npm run lint` pass, `npm run build` pass.
+- Test API: lọc `fromDate=2026-10-01&toDate=2026-12-31&status=confirmed` → 4 booking đúng.
+- Test validate: ngày sai định dạng / from > to → 400.
+- Test top-packages: `totalBookings = 20`, tour top 3 booking (15%).
+
+**Ghi chú:**
+- TopPackages hiện cố định range `12m` trong `DashboardBooking`.
+- Bộ lọc ngày áp lên `tour_departures.departure_date` (Ngày khởi hành).
+
+---
 
 ### 2026-10-19 — Nối dashboard Admin Bookings với DB thật
 

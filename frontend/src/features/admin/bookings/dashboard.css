@@ -400,6 +400,44 @@ button.btn-primary:hover {
     color: #9aa5b1;
 }
 
+.filter-box {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    border: 1px solid var(--color-border);
+    border-radius: 10px;
+    background: var(--color-surface);
+    font-size: 12px;
+    color: var(--color-muted);
+}
+
+.filter-box input[type="date"] {
+    border: none;
+    outline: none;
+    background: transparent;
+    font-size: 12px;
+    color: var(--color-foreground);
+}
+
+.filter-select {
+    padding: 7px 10px;
+    border: 1px solid var(--color-border);
+    border-radius: 10px;
+    background: var(--color-surface);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--color-foreground);
+    cursor: pointer;
+}
+
+.filter-box:focus-within,
+.filter-select:focus-visible {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-primary) 25%, transparent);
+}
+
 .table-card {
     overflow: hidden;
     border: 1px solid var(--color-border);

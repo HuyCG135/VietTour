@@ -1,9 +1,17 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Search, Calendar, ChevronDown, ChevronLeft, ChevronRight, Plus, ArrowUpDown } from "lucide-react";
+import { Search, ChevronDown, ChevronLeft, ChevronRight, ArrowUpDown } from "lucide-react";
 import { useToast } from "../../../../context/ToastContext";
 import { getBookings } from "../bookings.api";
 
-const columns = ["Name", "Booking Code", "Package", "Duration", "Date", "Price", "Status"];
+const columns = [
+    "Mã booking",
+    "Tên khách",
+    "Tour",
+    "Thời lượng",
+    "Ngày khởi hành",
+    "Giá",
+    "Trạng thái",
+];
 const PAGE_LIMIT = 10;
 const SEARCH_DEBOUNCE_MS = 350;
 
@@ -31,13 +39,18 @@ const buildPageNumbers = (currentPage, totalPages) => {
 };
 
 // Toàn bộ phần Bookings: thanh công cụ + bảng + phân trang.
-// Search và phân trang chạy phía server qua /api/admin/bookings.
+// Search, lọc ngày khởi hành, lọc trạng thái và phân trang chạy phía server.
 export default function BookingsTable() {
     const toast = useToast();
     const requestSeq = useRef(0);
-    const skipFirstSearch = useRef(true);
 
     const [search, setSearch] = useState("");
+    const [debouncedSearch, setDebouncedSearch] = useState("");
+    const [status, setStatus] = useState("");
+    const [fromDate, setFromDate] = useState("");
+    const [toDate, setToDate] = useState("");
+    const [page, setPage] = useState(1);
+
     const [rows, setRows] = useState([]);
     const [pagination, setPagination] = useState({
         currentPage: 1,
@@ -48,7 +61,7 @@ export default function BookingsTable() {
     const [loading, setLoading] = useState(true);
 
     const runFetch = useCallback(
-        async (keyword, targetPage) => {
+        async ({ keyword, targetPage, statusFilter, from, to }) => {
             const seq = ++requestSeq.current;
             setLoading(true);
 
@@ -57,6 +70,9 @@ export default function BookingsTable() {
                     search: keyword,
                     page: targetPage,
                     limit: PAGE_LIMIT,
+                    status: statusFilter,
+                    fromDate: from,
+                    toDate: to,
                 });
 
                 if (seq !== requestSeq.current) return;
@@ -84,24 +100,26 @@ export default function BookingsTable() {
         [toast],
     );
 
-    // Lần đầu mở trang: tải trang 1, không lọc.
-    useEffect(() => {
-        runFetch("", 1);
-    }, [runFetch]);
-
     // Gõ tìm kiếm: debounce rồi quay về trang 1.
     useEffect(() => {
-        if (skipFirstSearch.current) {
-            skipFirstSearch.current = false;
-            return undefined;
-        }
-
         const timer = setTimeout(() => {
-            runFetch(search.trim(), 1);
+            setDebouncedSearch(search.trim());
+            setPage(1);
         }, SEARCH_DEBOUNCE_MS);
 
         return () => clearTimeout(timer);
-    }, [search, runFetch]);
+    }, [search]);
+
+    // Mọi thay đổi filter/trang đều đi qua đúng một lần fetch.
+    useEffect(() => {
+        runFetch({
+            keyword: debouncedSearch,
+            targetPage: page,
+            statusFilter: status,
+            from: fromDate,
+            to: toDate,
+        });
+    }, [debouncedSearch, page, status, fromDate, toDate, runFetch]);
 
     const goToPage = (targetPage) => {
         if (
@@ -112,7 +130,22 @@ export default function BookingsTable() {
         ) {
             return;
         }
-        runFetch(search.trim(), targetPage);
+        setPage(targetPage);
+    };
+
+    const handleStatusChange = (event) => {
+        setStatus(event.target.value);
+        setPage(1);
+    };
+
+    const handleFromDateChange = (event) => {
+        setFromDate(event.target.value);
+        setPage(1);
+    };
+
+    const handleToDateChange = (event) => {
+        setToDate(event.target.value);
+        setPage(1);
     };
 
     const pageNumbers = buildPageNumbers(pagination.currentPage, pagination.totalPages);
@@ -123,7 +156,7 @@ export default function BookingsTable() {
         <section className="bookings">
             {/* Thanh công cụ */}
             <div className="bookings-toolbar">
-                <h3 className="section-title">Bookings</h3>
+                <h3 className="section-title">Danh sách booking</h3>
                 <div className="toolbar-actions">
                     <label className="search-box">
                         <Search size={14} color="#9aa5b1" />
@@ -133,12 +166,40 @@ export default function BookingsTable() {
                             onChange={(e) => setSearch(e.target.value)}
                         />
                     </label>
-                    <button type="button" className="btn-outline">
-                        <Calendar size={14} /> Today <ChevronDown size={12} />
-                    </button>
-                    <button type="button" className="btn-primary">
-                        <Plus size={14} /> Add Booking
-                    </button>
+
+                    <label className="filter-box">
+                        <span>Từ</span>
+                        <input
+                            type="date"
+                            value={fromDate}
+                            max={toDate || undefined}
+                            onChange={handleFromDateChange}
+                            aria-label="Từ ngày khởi hành"
+                        />
+                    </label>
+
+                    <label className="filter-box">
+                        <span>Đến</span>
+                        <input
+                            type="date"
+                            value={toDate}
+                            min={fromDate || undefined}
+                            onChange={handleToDateChange}
+                            aria-label="Đến ngày khởi hành"
+                        />
+                    </label>
+
+                    <select
+                        className="filter-select"
+                        value={status}
+                        onChange={handleStatusChange}
+                        aria-label="Lọc trạng thái booking"
+                    >
+                        <option value="">Tất cả trạng thái</option>
+                        <option value="pending">Chờ xử lý</option>
+                        <option value="confirmed">Đã xác nhận</option>
+                        <option value="cancelled">Đã hủy</option>
+                    </select>
                 </div>
             </div>
 
@@ -173,15 +234,15 @@ export default function BookingsTable() {
                             ) : (
                                 rows.map((row) => (
                                     <tr key={row.id}>
-                                        <td className="cell-strong">{row.name}</td>
                                         <td>{row.code}</td>
+                                        <td className="cell-strong">{row.name}</td>
                                         <td>{row.package}</td>
                                         <td>{row.duration}</td>
                                         <td>{row.date}</td>
                                         <td>{priceFormatter.format(row.price)} đ</td>
                                         <td>
-                                            <span className={`status-badge status-${row.status.toLowerCase()}`}>
-                                                {row.status}
+                                            <span className={`status-badge status-${String(row.status).toLowerCase()}`}>
+                                                {row.status_label || row.status}
                                             </span>
                                         </td>
                                     </tr>
@@ -191,15 +252,15 @@ export default function BookingsTable() {
                     </table>
                 </div>
 
-                {/* Chân bảng: Showing + phân trang */}
+                {/* Chân bảng: hiển thị + phân trang */}
                 <div className="bookings-footer">
                     <div className="showing">
-                        <span>Showing</span>
+                        <span>Hiển thị</span>
                         <button type="button" className="btn-outline btn-small">
                             {pagination.limit} <ChevronDown size={12} />
                         </button>
                         <span>
-                            out of {pagination.total} ({from}-{to})
+                            trong tổng {pagination.total} ({from}-{to})
                         </span>
                     </div>
 
@@ -210,23 +271,23 @@ export default function BookingsTable() {
                             disabled={pagination.currentPage === 1 || loading}
                             onClick={() => goToPage(pagination.currentPage - 1)}
                         >
-                            <ChevronLeft size={12} /> Previous
+                            <ChevronLeft size={12} /> Trước
                         </button>
 
-                        {pageNumbers.map((page, index) =>
-                            page === "dots" ? (
+                        {pageNumbers.map((pageNumber, index) =>
+                            pageNumber === "dots" ? (
                                 <span key={`dots-${index}`} className="page-dots">
                                     ...
                                 </span>
                             ) : (
                                 <button
                                     type="button"
-                                    key={page}
-                                    className={`page-btn ${page === pagination.currentPage ? "active" : ""}`}
+                                    key={pageNumber}
+                                    className={`page-btn ${pageNumber === pagination.currentPage ? "active" : ""}`}
                                     disabled={loading}
-                                    onClick={() => goToPage(page)}
+                                    onClick={() => goToPage(pageNumber)}
                                 >
-                                    {page}
+                                    {pageNumber}
                                 </button>
                             ),
                         )}
@@ -241,7 +302,7 @@ export default function BookingsTable() {
                             }
                             onClick={() => goToPage(pagination.currentPage + 1)}
                         >
-                            Next <ChevronRight size={12} />
+                            Sau <ChevronRight size={12} />
                         </button>
                     </div>
                 </div>

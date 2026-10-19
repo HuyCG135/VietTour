@@ -43,7 +43,7 @@ const buildStatCards = (stats) => [
     {
         id: "bookings",
         icon: "calendar",
-        title: "Total Booking",
+        title: "Tổng đặt tour",
         value: numberFormatter.format(stats.totalBookings),
         change: stats.totalBookingsChange,
         trend: stats.totalBookingsTrend,
@@ -53,7 +53,7 @@ const buildStatCards = (stats) => [
     {
         id: "participants",
         icon: "users",
-        title: "Participants",
+        title: "Số khách",
         value: numberFormatter.format(stats.participants),
         change: stats.participantsChange,
         trend: stats.participantsTrend,
@@ -63,7 +63,7 @@ const buildStatCards = (stats) => [
     {
         id: "earnings",
         icon: "dollar",
-        title: "Earnings",
+        title: "Doanh thu",
         value: `${numberFormatter.format(stats.earnings)} đ`,
         change: stats.earningsChange,
         trend: stats.earningsTrend,
@@ -125,7 +125,7 @@ export default function DashboardBooking() {
     const statData = buildStatCards(stats ?? EMPTY_STATS);
     const packageData = {
         period: packages?.period ?? "12 tháng gần nhất",
-        totalParticipants: packages?.totalParticipants ?? 0,
+        totalBookings: packages?.totalBookings ?? 0,
         items: (packages?.items ?? []).map((item, index) => ({
             ...item,
             color: PACKAGE_COLORS[index % PACKAGE_COLORS.length],
