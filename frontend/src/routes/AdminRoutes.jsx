@@ -4,9 +4,7 @@ import ItineraryList from "../features/admin/itineraries/List";
 import DepartureList from "../features/admin/departures/List";
 import BookingDashboard from "../features/admin/bookings/DashboardBooking";
 import ServiceList from "../features/admin/services/List";
-import ServiceForm from "../features/admin/services/Form";
 import TourServiceList from "../features/admin/tour-services/List";
-import TourServiceForm from "../features/admin/tour-services/Form";
 import TourImageList from "../features/admin/tour-images/List";
 import UserList from "../features/admin/users/List";
 import Statistics from "../features/admin/statistics/List";
@@ -23,10 +21,10 @@ export default function AdminRoutes() {
             <Route path="departures" element={<DepartureList />} />
             <Route path="bookings" element={<BookingDashboard />} />
             <Route path="services" element={<ServiceList />} />
-            <Route path="services/new" element={<ServiceForm />} />
-            <Route path="services/:id/edit" element={<ServiceForm />} />
+            <Route path="services/new" element={<Navigate to="/admin/services" replace />} />
+            <Route path="services/:id/edit" element={<Navigate to="/admin/services" replace />} />
             <Route path="tour-services" element={<TourServiceList />} />
-            <Route path="tour-services/:tourId/edit" element={<TourServiceForm />} />
+            <Route path="tour-services/:tourId/edit" element={<Navigate to="/admin/tour-services" replace />} />
             <Route path="tour-images" element={<TourImageList />} />
             <Route path="tour-images/:tourId/edit" element={<Navigate to="/admin/tour-images" replace />} />
             <Route path="users" element={<UserList />} />
